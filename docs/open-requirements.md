@@ -1,6 +1,6 @@
 # Open requirements and unresolved questions
 
-Status: current after Milestone 5 (2026-10-28). The implemented room, catalogue, cart and simulated checkout are not blocked by these items, but assessment sign-off and real deployment still are.
+Status: current after M6 local verification (2026-10-28). Real MySQL integration and local QA are evidenced; assessment sign-off and public deployment remain subject to the items below.
 
 ## Questions for the tutor
 
@@ -24,10 +24,11 @@ No additional games, reviews, release dates, artwork or commercial claims should
 
 ## Technical verification still open
 
-- **MySQL runtime:** schema, shared-record seed and transactional repository exist, but the `mysql` client was not installed and no server was configured. All executed order tests used `DB_DRIVER=memory`. Run schema/seed and repeat API/order tests against MySQL before reporting that integration as working.
-- **Real hardware:** visible-tab GPU frame rate, physical phone layout and touch drag-to-look are unverified.
+- **Database operations:** local MySQL 8.0.46 connectivity, seed, transactions, checks, retry idempotency and process-restart persistence are verified. The portable database is in a temporary directory; managed storage, backup restoration and upgrades from an older M5 schema are not verified.
+- **Real hardware:** emulated touch dragging and 844×390 landscape now pass, but physical phones and visible-tab real-GPU frame rate remain unverified.
 - **Cross-browser and assistive technology:** only Chromium has run. Firefox, Safari and a real screen-reader session remain open.
-- **Deployment:** production files and API passed locally; DNS, HTTPS, hosting, backups and operational security have not been configured.
+- **Deployment:** production files/API passed locally; DNS, HTTPS, hosting, compression, monitoring, retention policy, rate limiting and operational security still need review. Local timings are not deployment benchmarks.
+- **Checkout recovery scope:** idempotency survives retries within a mounted checkout page, not a browser reload. Reloading after an undelivered committed response can create another simulated order; retry in the same page instead. Offering changes may invalidate an older quote. No authenticated order history or cross-refresh retry recovery exists.
 
 ## Resolved direction
 

@@ -1,0 +1,33 @@
+Commerce API adapter: memory; http://127.0.0.1:5198
+PASS  C24 room cassette leads through real game details to its store offering
+PASS  C1 catalogue renders from shared game data — {"title":"[PLACEHOLDER] Untitled game","cards":1}
+PASS  C2 catalogue navigates to reusable game details
+PASS  C3 store adds a validated contribution
+PASS  C4 cart line survives navigation and reload
+PASS  C5 cart updates a contribution without adding a quantity
+PASS  C6 cart removes a line and shows an honest empty state
+PASS  C7 checkout associates validation with the invalid field
+PASS  C8 server rejects a tampered contribution even with a forged total
+PASS  C9 checkout creates and displays a simulated order — SAL-741CA18675150D1B912235F1FEEC2B13
+PASS  C10 safe reference retrieves one persistent order without exposing customer data
+PASS  C11 an identical checkout retry returns the original order
+PASS  C12 a checkout identifier cannot be reused for different details
+PASS  C13 order creation requires a valid checkout interaction identifier
+PASS  C14 malformed and oversized JSON receive safe client errors
+PASS  C15 successful checkout clears the browser cart
+PASS  C16 no-JS store keeps offering content and hides nonfunctional controls
+PASS  C23 no-JS checkout hides dead controls and order retains a heading
+PASS  C18-390 keyboard cart-to-order journey and error focus at 390px
+PASS  C18-768 keyboard cart-to-order journey and error focus at 768px
+PASS  C18-900 keyboard cart-to-order journey and error focus at 900px
+PASS  C18-1280 keyboard cart-to-order journey and error focus at 1280px
+PASS  C19 lost-response retry retains cart and identifier without duplicating the committed order
+PASS  C25 truncated success JSON preserves the cart and safely retries the committed order
+PASS  C26 missing success reference preserves the cart and safely retries the committed order
+PASS  C20 failed quote hides checkout and offers a working cart return
+PASS  C21 server ignores forged currency and totals for a valid amount
+PASS  C22 unknown offerings and malformed references are rejected
+PASS  C27 duplicate offering aliases cannot create an order
+PASS  C17 commerce pages produce no uncaught browser errors
+
+30 passed, 0 failed

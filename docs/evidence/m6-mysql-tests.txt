@@ -1,0 +1,24 @@
+Repository under test: mysql
+✔ server quote recomputes the total from validated offering lines (24.7667ms)
+✔ server quote rejects tampered, malformed and unavailable offerings (10.1888ms)
+✔ fixed offering prices come from the server record, not the submitted amount (0.3431ms)
+✔ customer validation trims and normalises valid values and rejects invalid values (0.9579ms)
+✔ order references are unguessable and match the confirmation route format (0.4517ms)
+✔ checkout interaction identifiers are valid UUIDs and normalised for storage (0.567ms)
+✔ order fingerprints are deterministic and change with validated order details (2.0958ms)
+✔ selected adapter creates and retrieves one order with its validated lines (11.9364ms)
+✔ repeating the same checkout interaction returns the original order (9.3783ms)
+✔ reusing a checkout interaction for different details is rejected (10.0589ms)
+✔ concurrent retries do not exhaust the connection pool or duplicate orders (35.6019ms)
+✔ MySQL rolls back the order and first line when the second line fails (6.3839ms)
+✔ MySQL enforces checks, preserves snapshots and restricts referenced deletion (21.0604ms)
+✔ MySQL order survives a verified application process restart (657.3395ms)
+ℹ Persisted SAL-FFE5098D4EE4F1999EAF71D01551F451; terminated PID 21468, retrieved via PID 7868
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 993.2714

@@ -2,7 +2,8 @@ import './cartBadge.js'
 import { formatMoney } from '../store/money.js'
 import { requestJson } from '../store/api.js'
 
-const main = document.getElementById('order-confirmation')
+const main = document.getElementById('order-content')
+const heading = document.getElementById('order-heading')
 const reference = new URLSearchParams(window.location.search).get('reference')
 
 async function loadOrder() {
@@ -13,7 +14,6 @@ async function loadOrder() {
   try {
     const { order } = await requestJson(`/api/orders/${encodeURIComponent(reference)}`)
     main.replaceChildren()
-    const heading = document.createElement('h1')
     heading.textContent = 'Simulated order confirmed'
     const notice = document.createElement('p')
     notice.className = 'unavailable-note'
@@ -35,7 +35,7 @@ async function loadOrder() {
     back.className = 'button secondary'
     back.href = '/games/'
     back.textContent = 'Return to the catalogue'
-    main.append(heading, notice, id, list, total, status, back)
+    main.append(notice, id, list, total, status, back)
   } catch (error) {
     main.textContent = `${error.message} Check the reference or return to the store.`
     const back = document.createElement('a')

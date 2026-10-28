@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-28T02:46:06.197Z",
+  "environment": "Local MySQL 8.0.46 on loopback port 3307; application on 5196 uses restricted account. Database deliberately shut down for outage check.",
+  "version": "8.0.46",
+  "orders": [
+    {
+      "reference": "SAL-E631D45324D77825D6D6A9379D65EE04",
+      "currency": "GBP",
+      "total": 12.5,
+      "status": "simulated"
+    }
+  ],
+  "lines": [
+    {
+      "offering_id": "studio-support",
+      "offering_title": "Voluntary studio support",
+      "unit_amount": 12.5,
+      "line_total": 12.5
+    }
+  ],
+  "duplicateGroups": 0,
+  "applicationGrants": [
+    "GRANT USAGE ON *.* TO `saleshi_app`@`localhost`",
+    "GRANT SELECT ON `saleshi`.`offerings` TO `saleshi_app`@`localhost`",
+    "GRANT SELECT, INSERT ON `saleshi`.`order_lines` TO `saleshi_app`@`localhost`",
+    "GRANT SELECT, INSERT ON `saleshi`.`orders` TO `saleshi_app`@`localhost`"
+  ],
+  "outage": {
+    "healthStatus": 500,
+    "healthBody": {
+      "error": "The server could not complete this request."
+    },
+    "orderStatus": 500,
+    "orderBody": {
+      "error": "The server could not complete this request."
+    },
+    "cacheControl": "no-store"
+  },
+  "startupWithoutDatabase": {
+    "exitCode": 1,
+    "connectionRefused": true,
+    "announcedReady": false
+  },
+  "recovery": {
+    "checkedAt": "2026-10-28T02:56:28.080Z",
+    "healthStatus": 200,
+    "databaseDriver": "mysql",
+    "orderStatus": 200,
+    "reference": "SAL-E631D45324D77825D6D6A9379D65EE04",
+    "total": 12.5,
+    "lineCount": 1,
+    "cacheControl": "no-store"
+  }
+}

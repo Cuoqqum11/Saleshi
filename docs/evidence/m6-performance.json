@@ -1,0 +1,329 @@
+{
+  "date": "2026-10-28T03:06:25.684Z",
+  "node": "v24.19.0",
+  "chromium": "156.0.8078.4",
+  "baseUrl": "http://127.0.0.1:5196",
+  "environment": "Windows, local production Express with restricted MySQL account, 1280x800 headless Chromium, SwiftShader, no network/CPU throttling, fresh browser context per run; not real-device or deployment measurements",
+  "method": "Observe LCP, cumulative layout shift and long tasks from navigation until 1200 ms after networkidle. LCP is a document metric, not a measure of 3D canvas readiness. Transfer includes navigation/resource response bytes and headers; gzip build estimates are separate.",
+  "buildSha256": {
+    "assets/api-DV7cCjh9.js": "27fe9c73b7a35bbe4cec2ae5354f7c4190a3a883b710257c638c46987527984f",
+    "assets/base-BtV7wjId.css": "35f89f34f8510a11fd7a6465f23bb65bb4e6afd2e6fb60278472a824dcbef9c7",
+    "assets/base-CSOEcOZI.js": "418c206484b89b68ef5f067277831e583fc9193a62aadf4de269acaaeb12a85f",
+    "assets/cart-DJsLJecK.js": "17fb1ac95fda10ef875cc1db1b901026ac029c027e0e15610dd5334284cb5be6",
+    "assets/cart-DzkH7WK6.js": "23e22b96a45214e01438fedb779e2e032122d382044aee8866ea264d505d9edc",
+    "assets/cartBadge-DOtbnTjW.js": "c1d2ae7bf725c03fb7854a236a01e67dda77295a1aba1649dfeba552dbc2fe70",
+    "assets/cartBadge-mGEYJmMO.css": "08791ce8e0f366e9057ab2bf382cfb365049aa6f9f294979ae3196c0f965551a",
+    "assets/checkout-CSwtTJdj.js": "54565f1513982dd85d33bccbab21d60bab186fd684ecc31501a4ef9df4c48906",
+    "assets/order-CuacqCZ-.js": "35bafd8700665ec3d2643309e38d61f909e8f2e801f69a6d633448b936a40184",
+    "assets/room-Q_VDVbjy.js": "f6f8b6a43fff8fa0575f80fd420fc43f0567aa54f250abb9bd9872f5dcd8c251",
+    "assets/room-Uzc3kh5l.css": "b716e4d70ef9fb2f4ce71b57c13e1b8b6ba57a2317fd018c2c502dbbc08b7f42",
+    "assets/startRoom-CG7IOWHB.js": "7b8273458d2d662ae276aefcc6d91b023ecef4a6b11a23de6e50e9213e27d59e",
+    "assets/store-yaZlB4h8.js": "b8babaea9c1c2732ca149113440e9f80d969b543c8c11d17f0da0f6896786762",
+    "cart/index.html": "e730fa6462aab7edcef2ccb24261ff7ce9e2164a0a37482e9874846936551e3c",
+    "checkout/index.html": "f82415174f1ec91687fe3586149d2be4341bc101f45907fb3003c34ab5d8255e",
+    "games/index.html": "a9d449a61d77538d38be31b8bbcc2e47c7f00cd3af1521484a077a803515e8d6",
+    "games/placeholder-slug/index.html": "f0cd000f7c63318027cfe02c8177b4eefb536b0e12e8d0e54a401deafb49f17c",
+    "index.html": "9fcea32f8757eb66aac61781382fb9bc0ddfe8df24ce91e08bd65a3d8ef53d84",
+    "order/index.html": "b0a34d907775fc22cd854e042da67bd227aeea8e93f3290361d4f551f3a7ddc3",
+    "store/index.html": "e00b13b049c92a36ecb04f0f3da35f28219fc94cfd567daf1085f18c8f3f168a"
+  },
+  "runs": [
+    {
+      "path": "/?view=list",
+      "run": 1,
+      "lcp": 100,
+      "cls": 0,
+      "longTasks": [
+        53
+      ],
+      "domContentLoadedMs": 76.5,
+      "loadMs": 77.20000000111759,
+      "transferBytes": 26349,
+      "requestCount": 5,
+      "roomChunkLoaded": false,
+      "javascript": [
+        {
+          "path": "/assets/room-Q_VDVbjy.js",
+          "encodedBytes": 5164,
+          "decodedBytes": 5164
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/?view=list",
+      "run": 2,
+      "lcp": 100,
+      "cls": 0,
+      "longTasks": [],
+      "domContentLoadedMs": 66.69999999925494,
+      "loadMs": 67.5,
+      "transferBytes": 26349,
+      "requestCount": 5,
+      "roomChunkLoaded": false,
+      "javascript": [
+        {
+          "path": "/assets/room-Q_VDVbjy.js",
+          "encodedBytes": 5164,
+          "decodedBytes": 5164
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/?view=list",
+      "run": 3,
+      "lcp": 112,
+      "cls": 0,
+      "longTasks": [
+        53
+      ],
+      "domContentLoadedMs": 72.90000000037253,
+      "loadMs": 73.59999999962747,
+      "transferBytes": 26349,
+      "requestCount": 5,
+      "roomChunkLoaded": false,
+      "javascript": [
+        {
+          "path": "/assets/room-Q_VDVbjy.js",
+          "encodedBytes": 5164,
+          "decodedBytes": 5164
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "run": 1,
+      "lcp": 88,
+      "cls": 0.15111273221969607,
+      "longTasks": [
+        186
+      ],
+      "domContentLoadedMs": 85.09999999962747,
+      "loadMs": 86.29999999888241,
+      "transferBytes": 653288,
+      "requestCount": 7,
+      "roomChunkLoaded": true,
+      "javascript": [
+        {
+          "path": "/assets/room-Q_VDVbjy.js",
+          "encodedBytes": 5164,
+          "decodedBytes": 5164
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        },
+        {
+          "path": "/assets/startRoom-CG7IOWHB.js",
+          "encodedBytes": 623517,
+          "decodedBytes": 623517
+        },
+        {
+          "path": "/assets/cart-DJsLJecK.js",
+          "encodedBytes": 2822,
+          "decodedBytes": 2822
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "run": 2,
+      "lcp": 96,
+      "cls": 0.030151256847381593,
+      "longTasks": [
+        55,
+        156
+      ],
+      "domContentLoadedMs": 71.40000000037253,
+      "loadMs": 72.60000000149012,
+      "transferBytes": 653288,
+      "requestCount": 7,
+      "roomChunkLoaded": true,
+      "javascript": [
+        {
+          "path": "/assets/room-Q_VDVbjy.js",
+          "encodedBytes": 5164,
+          "decodedBytes": 5164
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        },
+        {
+          "path": "/assets/startRoom-CG7IOWHB.js",
+          "encodedBytes": 623517,
+          "decodedBytes": 623517
+        },
+        {
+          "path": "/assets/cart-DJsLJecK.js",
+          "encodedBytes": 2822,
+          "decodedBytes": 2822
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/",
+      "run": 3,
+      "lcp": 104,
+      "cls": 0.030151256847381593,
+      "longTasks": [
+        56,
+        170
+      ],
+      "domContentLoadedMs": 73.90000000037253,
+      "loadMs": 74.80000000074506,
+      "transferBytes": 653288,
+      "requestCount": 7,
+      "roomChunkLoaded": true,
+      "javascript": [
+        {
+          "path": "/assets/room-Q_VDVbjy.js",
+          "encodedBytes": 5164,
+          "decodedBytes": 5164
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        },
+        {
+          "path": "/assets/startRoom-CG7IOWHB.js",
+          "encodedBytes": 623517,
+          "decodedBytes": 623517
+        },
+        {
+          "path": "/assets/cart-DJsLJecK.js",
+          "encodedBytes": 2822,
+          "decodedBytes": 2822
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/store/",
+      "run": 1,
+      "lcp": 64,
+      "cls": 0,
+      "longTasks": [],
+      "domContentLoadedMs": 20.5,
+      "loadMs": 27.300000000745058,
+      "transferBytes": 16516,
+      "requestCount": 7,
+      "roomChunkLoaded": false,
+      "javascript": [
+        {
+          "path": "/assets/store-yaZlB4h8.js",
+          "encodedBytes": 545,
+          "decodedBytes": 545
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        },
+        {
+          "path": "/assets/cart-DJsLJecK.js",
+          "encodedBytes": 2822,
+          "decodedBytes": 2822
+        },
+        {
+          "path": "/assets/cartBadge-DOtbnTjW.js",
+          "encodedBytes": 120,
+          "decodedBytes": 120
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/store/",
+      "run": 2,
+      "lcp": 68,
+      "cls": 0,
+      "longTasks": [],
+      "domContentLoadedMs": 22.299999998882413,
+      "loadMs": 29.699999999254942,
+      "transferBytes": 16516,
+      "requestCount": 7,
+      "roomChunkLoaded": false,
+      "javascript": [
+        {
+          "path": "/assets/store-yaZlB4h8.js",
+          "encodedBytes": 545,
+          "decodedBytes": 545
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        },
+        {
+          "path": "/assets/cartBadge-DOtbnTjW.js",
+          "encodedBytes": 120,
+          "decodedBytes": 120
+        },
+        {
+          "path": "/assets/cart-DJsLJecK.js",
+          "encodedBytes": 2822,
+          "decodedBytes": 2822
+        }
+      ],
+      "errors": []
+    },
+    {
+      "path": "/store/",
+      "run": 3,
+      "lcp": 64,
+      "cls": 0,
+      "longTasks": [],
+      "domContentLoadedMs": 20.300000000745058,
+      "loadMs": 26.90000000037253,
+      "transferBytes": 16516,
+      "requestCount": 7,
+      "roomChunkLoaded": false,
+      "javascript": [
+        {
+          "path": "/assets/store-yaZlB4h8.js",
+          "encodedBytes": 545,
+          "decodedBytes": 545
+        },
+        {
+          "path": "/assets/base-CSOEcOZI.js",
+          "encodedBytes": 670,
+          "decodedBytes": 670
+        },
+        {
+          "path": "/assets/cart-DJsLJecK.js",
+          "encodedBytes": 2822,
+          "decodedBytes": 2822
+        },
+        {
+          "path": "/assets/cartBadge-DOtbnTjW.js",
+          "encodedBytes": 120,
+          "decodedBytes": 120
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

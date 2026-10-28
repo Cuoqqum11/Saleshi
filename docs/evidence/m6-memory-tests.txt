@@ -1,0 +1,27 @@
+
+> saleshi@0.0.0 test:commerce
+> node --test tests/commerce.test.mjs
+
+Repository under test: memory
+✔ server quote recomputes the total from validated offering lines (1.27ms)
+✔ server quote rejects tampered, malformed and unavailable offerings (1.0149ms)
+✔ fixed offering prices come from the server record, not the submitted amount (0.2602ms)
+✔ customer validation trims and normalises valid values and rejects invalid values (0.9283ms)
+✔ order references are unguessable and match the confirmation route format (0.467ms)
+✔ checkout interaction identifiers are valid UUIDs and normalised for storage (0.5234ms)
+✔ order fingerprints are deterministic and change with validated order details (0.7734ms)
+✔ selected adapter creates and retrieves one order with its validated lines (1.4435ms)
+✔ repeating the same checkout interaction returns the original order (0.4263ms)
+✔ reusing a checkout interaction for different details is rejected (0.6276ms)
+✔ concurrent retries do not exhaust the connection pool or duplicate orders (0.6692ms)
+﹣ MySQL rolls back the order and first line when the second line fails (0.1328ms) # SKIP
+﹣ MySQL enforces checks, preserves snapshots and restricts referenced deletion (0.0778ms) # SKIP
+﹣ MySQL order survives a verified application process restart (0.0942ms) # SKIP
+ℹ tests 14
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 3
+ℹ todo 0
+ℹ duration_ms 182.9526

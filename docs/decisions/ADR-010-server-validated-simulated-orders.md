@@ -14,6 +14,6 @@ Use a persistent browser cart for offering identifiers and contribution amounts 
 
 - The complete demonstration works without a payment provider and every confirmation says no payment was taken.
 - Tampered prices, totals, amounts and offering identifiers are rejected or replaced by authoritative server values.
-- MySQL work is separated from HTTP and browser code, but must still be exercised against a real server before being reported as verified.
+- At M5, MySQL execution remained unverified. M6 exercised MySQL 8.0.46 locally: constraints, transactional rollback, concurrent retries, restricted-account checkout and retrieval across a verified application restart. This does not establish public deployment readiness.
 - Memory-adapter order persistence survives page reloads, not server restarts; this limitation is stated in setup and evidence.
 - Real payment processing remains disabled and would require separate approval and a new security/design review.

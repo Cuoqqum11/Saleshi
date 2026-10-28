@@ -1,0 +1,19 @@
+PASS  W1 toggle enters walk mode at standing eye height — mode=walk y=1.50 station=null
+PASS  W1b toggle reports its state — aria-pressed=true label=Stop walking
+PASS  W2 walking forward stops at the desk instead of passing through it — z=-1.84 (desk front limit -1.85, started -1.62)
+PASS  W2b the side panel stays inside the stage and outside the room while walking at the desk — inside=true separate=true layout=side
+SKIP  W2c walk-mode view at the desk captured for human review — docs/evidence/m6-movement-walk-desk-anchored.png — judged by eye
+PASS  W3 strafing west is stopped by the chair instead of passing through it — x=1.033 (chair face 1.025, started x=1.60)
+PASS  W3b backing off the chair then strafing west reaches the west wall — z after backing up=0.19 (chair clears at -1.00) x=-3.25 (wall limit -3.25)
+PASS  W4 walking the clear corridor stops at the north wall — corridor x=-0.90 z=-2.75 (wall limit -2.75)
+PASS  W5 turning 180 degrees and walking reaches the south wall — yaw=3.09 z=2.75 (wall limit 2.75)
+PASS  W6 walking east stops at the east wall — x=3.25 (wall limit 3.25)
+PASS  W7 selecting a cassette while walking keeps the walker in place — mode=walk selected=placeholder-slug drift=0.000
+PASS  W7b the side panel stays inside the stage and outside the room with the monitor out of view — inside=true separate=true layout=side
+PASS  W8 a station button leaves walk mode and travels — mode=station station=desk
+PASS  W9 stopping walk returns to the nearest station — station=desk
+SKIP  W10 mid-room walking screenshot captured for human review — docs/evidence/m6-movement-walk-midroom.png — judged by eye, not asserted
+PASS  W11 reduced motion: walking moves but stops on release with no coasting — reduced=true moved=0.85 coasted=0.000
+PASS  W12 reduced motion: station travel is an instant cut — pose=-2.20,-0.75 read in the same tick as the click
+
+15 passed, 0 failed, 2 noted

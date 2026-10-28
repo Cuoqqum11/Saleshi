@@ -44,3 +44,67 @@ viewport/panel layout rather than the obsolete anchored panel.
 
 The sequence m1-01 → m1-08 is the lighting iteration, and is the honest record of it: two of these
 frames are wrong, and they were corrected by measurement rather than by guessing.
+
+## M6 — local MySQL integration and quality assurance, 28 October 2026
+
+All `m6-*.png` captures are **full-page screenshots**, including the DOM controls; none is a
+canvas-only capture. They supplement, rather than replace, the earlier milestone evidence.
+Screenshots cannot prove database persistence, rollback or safe error handling: use the labelled
+logs and direct database JSON for those claims.
+
+Provenance:
+
+- `m6-01`, `m6-02`, `m6-08` and the `m6-gate-*`, `m6-papers-*`, `m6-movement-*` images come from
+  instrumented Vite on `127.0.0.1:5190`. They show room/DOM behavior, not sales API persistence.
+- `m6-03`…`m6-07`, `m6-09` and `m6-10` come from the last production commerce run on
+  `127.0.0.1:5196`, using actual MySQL 8.0.46 with the restricted application account. The explicit
+  memory comparison ran first; the MySQL run wrote these shared screenshot filenames last.
+- All browser tests use headless Chromium; phone/tablet sizes and touch are emulated. These are
+  not physical-device, screen-reader or real-GPU frame-rate evidence.
+- All customers/orders are synthetic and all contributions are simulated. No card details,
+  passwords or administrator environment files are included here.
+
+### Full-page captures
+
+| File | What it shows |
+| --- | --- |
+| `m6-01-computer-catalogue.png` | Direct game-selection URL restores the room computer's catalogue state, with the viewport and HTML panel in separate regions. |
+| `m6-02-phone-panel.png` | 390 px touch-device emulation, selected cassette and bounded scrollable drawer beneath the room viewport; conventional content remains below. |
+| `m6-03-catalogue.png` | One shared placeholder game in the conventional catalogue; no invented extra products. |
+| `m6-04-store.png` | Voluntary support terms, explicit simulated checkout and successful add-to-cart feedback. |
+| `m6-05-cart.png` | £12.50 contribution after editing, with server-checked total and no quantity control. |
+| `m6-06-checkout.png` | Server-reviewed £12.50 order and name/email fields only, before submission. |
+| `m6-07-order-confirmation.png` | Real MySQL-backed £12.50 simulated order confirmation, high-entropy reference and no-payment statement. |
+| `m6-08-phone-landscape.png` | 844×390 room layout after short-landscape spacing correction; R10 separately measures control bounds and panel separation. |
+| `m6-09-phone-order.png` | 390 px £8 confirmation after the keyboard validation/correction journey; long reference wraps without horizontal overflow. |
+| `m6-10-checkout-retry.png` | Error state after the real API committed an order but a test route substituted a 503 delivery-error response. Inputs/cart remain, submit is enabled; C19 verifies the same-key retry. Not an actual database-outage screenshot. |
+| `m6-gate-phone-room.png` | Capable emulated phone enters the room, retains station controls and hides keyboard-only walking. |
+| `m6-gate-desk-integrated.png` | Desk selection with all DOM chips and the separate computer panel. |
+| `m6-gate-shelf-integrated.png` | Shelf station with chips contained in the room viewport. |
+| `m6-papers-paper-open.png` | Readable studio-letter dialog with room backdrop and clearly marked placeholder content. |
+| `m6-papers-wall-notes.png` | Selected cassette and physically pinned papers in the grey-box room. |
+| `m6-movement-walk-desk-anchored.png` | Walk view at the desk. Filename retains the old test name; the panel is now a separate grid region, not an anchored overlay. |
+| `m6-movement-walk-shelf-selected.png` | Cassette selected while walking near the shelf; selection does not teleport the walker. |
+| `m6-movement-walk-midroom.png` | Mid-room walking view. This and the desk image remain visual notes, not additional automated assertions. |
+
+### Logs and measured data
+
+| File | Evidence and limitation |
+| --- | --- |
+| `m6-mysql-tests.txt` | Real MySQL repository tests: validation, UUID/fingerprint behavior, identical/conflicting/concurrent retries, actual line-failure rollback, CHECK/FK enforcement and historical snapshots. Includes verified old-process exit/port closure/new PID and persisted-order retrieval. Constraint tests use the isolated administrator connection. |
+| `m6-memory-tests.txt` | Explicit memory-adapter comparison. The three MySQL-only checks are skipped and do not count as database evidence. |
+| `m6-mysql-commerce.txt` | Driver-labelled restricted-account production journey and API checks, four keyboard viewport journeys, malformed responses, retry recovery and duplicate-alias rejection. |
+| `m6-memory-commerce.txt` | Same browser checks with explicit memory storage; does not demonstrate restart persistence. |
+| `m6-routes-tests.txt` | Direct selection/history, tablet and phone layout, trusted emulated touch with measured yaw/pitch, landscape bounds, no-WebGL/no-JS/reduced-data fallbacks, seven-route metadata and local-link/fragment audit. Synthetic panel fixtures are explicitly test-only. |
+| `m6-gate-tests.txt` | Room entry, Enter/Space, chip containment and panel separation. |
+| `m6-papers-tests.txt` | Native dialog close/Escape focus restoration, paused/resumed movement, direct canvas raycast selection and no uncaught render errors. |
+| `m6-movement-tests.txt` | Collision, preserved selection, station shortcuts and measured reduced-motion behavior; 15 assertions and two visual notes. |
+| `m6-database-verification.json` | Actual server version, direct SQL order/line projection, duplicate-key group count and restricted grants; actual database shutdown, safe API errors, failed startup with no DB and successful recovery of the same order. The reference is from a separate test run and need not match the final confirmation screenshot. No credentials/customer fields are retained. |
+| `m6-build.txt` | Seven final HTML pages and actual emitted asset sizes; the >500 kB lazy-room warning is retained. Gzip sizes are build estimates, not network measurements. |
+| `m6-performance.json` | Nine fresh-context local production measurements, browser/Node/environment/method and SHA-256 hashes of the measured build. Transfer bytes, document LCP, layout shifts and long tasks are not hardware fps or deployment results; document LCP does not measure 3D readiness. |
+| `m6-dependency-audit.json` | `npm audit --omit=dev --json` output at execution time; zero known production-dependency vulnerabilities is not a full security review. |
+
+Exact counts, defects, re-run commands and remaining gaps are in [the test plan](../../tests/test-plan.md).
+The database is a portable local instance in a temporary directory, not a backed-up service.
+Fresh-schema integration is verified; populated-schema migration, backup restoration, public
+hosting/DNS/HTTPS, other browsers, physical devices and assistive technology remain unverified.

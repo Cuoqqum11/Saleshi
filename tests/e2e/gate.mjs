@@ -114,7 +114,7 @@ try {
   const mobileSelect = await mobile.evaluate(() => window.__saleshiRoom.stats().selectedGameId)
   record('E5', 'a touch tap on a cassette chip selects the game',
     mobileSelect === 'placeholder-slug', `selected=${mobileSelect}`)
-  await mobile.screenshot({ path: OUT('m4-03-phone-room.png') })
+  await mobile.screenshot({ path: OUT('m6-gate-phone-room.png'), fullPage: true })
   await mobile.close()
 
   // --- G1: Enter activates the focused cassette button -------------------------
@@ -136,7 +136,7 @@ try {
 
   // Integrated screenshot: the travel to the desk has finished by now.
   await page.waitForTimeout(1200)
-  await page.screenshot({ path: OUT('m2-01-desk-integrated.png') })
+  await page.screenshot({ path: OUT('m6-gate-desk-integrated.png'), fullPage: true })
   const panel = await page.evaluate(() => {
     const screen = document.getElementById('monitor-screen')
     const links = [...screen.querySelectorAll('a')].map((a) => a.textContent.trim())
@@ -175,7 +175,7 @@ try {
   await page.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
   await page.click('[data-station-id="shelf"]')
   await page.waitForTimeout(1300)
-  await page.screenshot({ path: OUT('m2-02-shelf-integrated.png') })
+  await page.screenshot({ path: OUT('m6-gate-shelf-integrated.png'), fullPage: true })
   const shelf = await page.evaluate(() => {
     const viewport = document.getElementById('room-viewport').getBoundingClientRect()
     const chips = [...document.querySelectorAll('.proxy')].map((b) => {

@@ -107,12 +107,12 @@ try {
   record('W2', 'walking forward stops at the desk instead of passing through it',
     s.pose.z > deskFront - EPS && s.pose.z < before.z - 0.1,
     `z=${s.pose.z.toFixed(2)} (desk front limit ${deskFront}, started ${before.z.toFixed(2)})`)
-  await page.screenshot({ path: OUT('m2-05-walk-desk-anchored.png') })
+  await page.screenshot({ path: OUT('m6-movement-walk-desk-anchored.png'), fullPage: true })
   let panel = await panelInsideStage(page)
   record('W2b', 'the side panel stays inside the stage and outside the room while walking at the desk',
     panel.inside && panel.separate, `inside=${panel.inside} separate=${panel.separate} layout=${panel.layout}`)
   note('W2c', 'walk-mode view at the desk captured for human review',
-    'docs/evidence/m2-05-walk-desk-anchored.png — judged by eye')
+    'docs/evidence/m6-movement-walk-desk-anchored.png — judged by eye')
 
   // --- W3: the chair beside the desk is solid too ------------------------------------
   // At desk-front depth the chair (x 0.325..0.775) sits between the desk station and the
@@ -176,7 +176,7 @@ try {
     `mode=${s.mode} selected=${s.selected} drift=${Math.hypot(s.pose.x - walkPose.x, s.pose.z - walkPose.z).toFixed(3)}`)
 
   await page.waitForTimeout(400)
-  await page.screenshot({ path: OUT('m2-03-walk-shelf-selected.png') })
+  await page.screenshot({ path: OUT('m6-movement-walk-shelf-selected.png'), fullPage: true })
   panel = await panelInsideStage(page)
   record('W7b', 'the side panel stays inside the stage and outside the room with the monitor out of view',
     panel.inside && panel.separate, `inside=${panel.inside} separate=${panel.separate} layout=${panel.layout}`)
@@ -205,9 +205,9 @@ try {
   await page.waitForTimeout(700)
   await face(page, Math.PI / 4, 0.15)
   await hold(page, 'w', 500)
-  await page.screenshot({ path: OUT('m2-04-walk-midroom.png') })
+  await page.screenshot({ path: OUT('m6-movement-walk-midroom.png'), fullPage: true })
   note('W10', 'mid-room walking screenshot captured for human review',
-    'docs/evidence/m2-04-walk-midroom.png — judged by eye, not asserted')
+    'docs/evidence/m6-movement-walk-midroom.png — judged by eye, not asserted')
 
   await context.close()
 

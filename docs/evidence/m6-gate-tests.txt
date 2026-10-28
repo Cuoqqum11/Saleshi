@@ -1,0 +1,13 @@
+PASS  E1 a plain load starts the room and gives it the first viewport — stageTop=62 controlsBottom=800 letterTop=800 vh=800
+PASS  E2 ?view=list keeps the room off and the text view first — running=false launcher=true letterTop=510
+PASS  E3 a narrow screen that explicitly enters the room lays out without overflow — scrollWidth=390 stageHeight=425 controlsBottom=844 vh=844
+PASS  E4 a capable phone enters the room by default and hides the keyboard-only walk control — coarse=true walkToggle=false stations=2
+PASS  E5 a touch tap on a cassette chip selects the game — selected=placeholder-slug
+PASS  G1a Tab reaches the cassette button with real key events
+PASS  G1b Enter selects the cassette — selected=placeholder-slug url=?view=room&game=placeholder-slug
+PASS  G1c computer side panel is visible with live and unavailable actions — links=["View full game details","Review cart and simulated checkout"] chips=["Tape 1","Computer","Letter","Note"] layout=side
+PASS  G4 the computer chip remains clickable at the desk with the panel open (D11) — hit=BUTTON.proxy
+PASS  G2 Space selects the cassette — selected=placeholder-slug url=?view=room&game=placeholder-slug
+PASS  G3 shelf station renders with every chip inside the room viewport — [{"label":"Tape 1","inside":true},{"label":"Computer","inside":true},{"label":"Letter","inside":true},{"label":"Note","inside":true}]
+
+11/11 gate checks passed

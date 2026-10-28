@@ -1,0 +1,10 @@
+PASS  P1 both pinned papers render as focus-proxy chips — chips=["Tape 1","Computer","Letter","Note"]
+PASS  P2 clicking the letter chip opens a readable HTML view — open=true title="A note from the studio" body starts "A note from the studio placeholder PLACE…"
+PASS  P3 closing returns focus to the chip and preserves camera and selection — focus="The studio letter pinned to the wall. Opens the studio introduction at readable size." station=shelf drift=0.0000
+PASS  P4 Tab+Enter opens the instruction note and Escape closes it — reached="The instruction note pinned to the wall. Opens a short note on how to explore the room." opened=true closed=true
+PASS  P8 clicking the visible 3D instruction sheet opens it through raycast picking — point=118,220 hit=CANVAS. open=true title="How to explore this room"
+PASS  P5 a note opened mid-walk freezes movement and the selection survives — reached="The instruction note pinned to the wall. Opens a short note on how to explore the room." frozen=true resumedAfterClose=0.697m mode=walk selected=placeholder-slug
+PASS  P6 the scene still renders with the papers added — chips=4 drawCalls=14
+PASS  P7 no uncaught error from the render loop
+
+8/8 paper checks passed

@@ -17,6 +17,15 @@ CREATE TABLE IF NOT EXISTS offerings (
   maximum_amount DECIMAL(10,2) NULL,
   fixed_amount DECIMAL(10,2) NULL,
   CONSTRAINT fk_offerings_game FOREIGN KEY (game_id) REFERENCES games(id)
+    ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT chk_offerings_pricing CHECK (
+    (pricing_model = 'pay-what-you-want'
+      AND minimum_amount IS NOT NULL AND maximum_amount IS NOT NULL
+      AND minimum_amount >= 0 AND maximum_amount >= minimum_amount AND fixed_amount IS NULL)
+    OR
+    (pricing_model = 'fixed' AND fixed_amount IS NOT NULL AND fixed_amount >= 0
+      AND minimum_amount IS NULL AND maximum_amount IS NULL)
+  )
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -27,7 +36,10 @@ CREATE TABLE IF NOT EXISTS orders (
   currency CHAR(3) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
   status ENUM('simulated') NOT NULL DEFAULT 'simulated',
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  idempotency_key CHAR(36) NOT NULL UNIQUE,
+  request_hash CHAR(64) NOT NULL,
+  CONSTRAINT chk_orders_total CHECK (total >= 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS order_lines (
@@ -37,6 +49,13 @@ CREATE TABLE IF NOT EXISTS order_lines (
   offering_title VARCHAR(200) NOT NULL,
   unit_amount DECIMAL(10,2) NOT NULL,
   line_total DECIMAL(10,2) NOT NULL,
-  CONSTRAINT fk_order_lines_order FOREIGN KEY (order_id) REFERENCES orders(id),
+  INDEX idx_order_lines_order (order_id),
+  INDEX idx_order_lines_offering (offering_id),
+  CONSTRAINT fk_order_lines_order FOREIGN KEY (order_id) REFERENCES orders(id)
+    ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT fk_order_lines_offering FOREIGN KEY (offering_id) REFERENCES offerings(id)
+    ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT chk_order_lines_amounts CHECK (
+    unit_amount >= 0 AND line_total >= 0 AND line_total = unit_amount
+  )
 ) ENGINE=InnoDB;

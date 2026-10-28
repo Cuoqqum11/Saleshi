@@ -76,7 +76,7 @@ try {
     d.open && d.title === 'A note from the studio' && d.body.includes('PLACEHOLDER')
       && !d.body.includes('skip the room'),
     `open=${d.open} title="${d.title}" body starts "${d.body.slice(0, 40)}…"`)
-  await page.screenshot({ path: OUT('m4-01-paper-open.png') })
+  await page.screenshot({ path: OUT('m6-papers-paper-open.png'), fullPage: true })
 
   // --- P3: closing restores focus and leaves the room untouched ---------------------
   await page.click('#paper-view-close')
@@ -170,7 +170,7 @@ try {
 
   await page.click('[data-station-id="shelf"]')
   await page.waitForTimeout(1300)
-  await page.screenshot({ path: OUT('m4-02-wall-notes.png') })
+  await page.screenshot({ path: OUT('m6-papers-wall-notes.png'), fullPage: true })
   await context.close()
 } catch (error) {
   record('P0', 'papers run completed without throwing', false, String(error).slice(0, 300))

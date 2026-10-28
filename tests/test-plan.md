@@ -1,14 +1,15 @@
 # Test plan and results
 
-Living record of what was actually exercised, per milestone. Scope of each milestone is stated
-with it. M5 adds the store, back end and a simulated order workflow; real payment processing remains
-out of scope unless separately approved.
+Living record of what was actually exercised, per milestone. Scope and environment are stated
+with each milestone. M5 adds the store, back end and a simulated order workflow; M6 verifies real
+MySQL persistence and expands quality assurance. Real payments remain out of scope unless
+separately approved. Earlier results are historical, not claims about the current test count.
 
-Environment for every row: Chromium (headless where noted) against `npm run dev` on
-`http://localhost:5173`, Windows 10, `prefers-reduced-motion: reduce` active at the operating
-system level unless a row says otherwise. Results marked *measured* were read out of the running
-page, not inferred. From Milestone 2 onward the instrument is Playwright with **real trusted key
-and pointer events**, which also closed gaps B1 and B3 from Milestone 1.
+The early room tests used Chromium (headless where noted) against `npm run dev` on
+`http://localhost:5173`, Windows, with `prefers-reduced-motion: reduce` active at the operating
+system level unless a row says otherwise. M5 explicitly used the memory adapter; M6 environments
+are listed below. Results marked *measured* came from the running page, not inference. From
+Milestone 2 onward Playwright supplied **real trusted key and pointer events**, closing B1/B3.
 
 ## Milestone 1 — grey-box room, selection, keyboard path, fallback
 
@@ -190,36 +191,188 @@ Defects found and fixed during M5:
 | D13 | No-JS launcher still looked functional | Added a no-script rule with sufficient specificity to hide launcher and checking status; R8 passes |
 | D14 | Primary computer link text matched its background | Corrected the ID-selector override and added a computed-colour assertion to R1 |
 
+## Milestone 6 — persistence, integration, quality assurance and assignment readiness
+
+Executed **28 October 2026** after preserving M5 in commit `adae819`. Existing suites were extended,
+not replaced. No M6 commit, payment integration, invented product content or paid infrastructure
+was required for these results.
+
+### Environment and retained results
+
+Windows x64, Node **v24.19.0**, Playwright Chromium **156.0.8078.4**, headless with SwiftShader for
+room tests. The database was actual **MySQL Community Server 8.0.46**, loopback port `3307`, fresh
+InnoDB schema and shared-record seed. Docker could not run because WSL was absent, so the official
+portable MySQL distribution was used without changing Windows features. This was not a database
+substitution. Runtime credentials are restricted; administrator credentials were used only for
+setup and explicit database tests. Both local environment files are ignored and excluded from evidence.
+
+- Production MySQL application: `http://127.0.0.1:5196`, serving `dist/` and the API.
+- Explicit memory comparison application: `http://127.0.0.1:5198`.
+- Instrumented room: standalone Vite at `http://127.0.0.1:5190`; this instance has no sales API.
+- Route metadata/link audit: production `5196`; room hooks and synthetic panel fixture: development `5190`.
+- All browser customers/orders are synthetic. All orders are simulated; no payment was taken.
+
+Logs and JSON below are in `../docs/evidence/`.
+
+| Instrument | Result | Retained evidence |
+| --- | --- | --- |
+| MySQL repository/integration, administrator-enabled constraint checks | **14 passed, 0 failed** | `m6-mysql-tests.txt` |
+| Explicit memory repository | **11 passed, 0 failed, 3 MySQL-only skips** | `m6-memory-tests.txt` |
+| Production commerce, restricted MySQL application account | **30 passed, 0 failed** | `m6-mysql-commerce.txt` |
+| Production commerce, explicit memory adapter | **30 passed, 0 failed** | `m6-memory-commerce.txt` |
+| Routes, responsive layout, trusted emulated touch, metadata and local links | **27 passed, 0 failed** | `m6-routes-tests.txt` |
+| Room entry, keyboard activation and panel/chip separation | **11 passed, 0 failed** | `m6-gate-tests.txt` |
+| Papers, keyboard/dialog focus, movement freeze and direct raycast | **8 passed, 0 failed** | `m6-papers-tests.txt` |
+| Movement, collision, station controls and reduced motion | **15 passed, 0 failed, 2 visual notes** | `m6-movement-tests.txt`; notes are not automated passes |
+| Production build | **Passed**, seven HTML routes; large lazy chunk warning remains | `m6-build.txt` |
+| `npm audit --omit=dev --json` | **0 known production-dependency vulnerabilities** at execution time | `m6-dependency-audit.json`; not a complete security assessment |
+
+### Persistence, authority and failure handling
+
+| Check | Exercised result and boundary |
+| --- | --- |
+| Valid order and direct SQL inspection | One £12.50 simulated order and one `studio-support` line at £12.50 exist in real MySQL; `m6-database-verification.json` records the selected columns without customer details. Screenshots alone are not database evidence. |
+| Application restart | Test spawns a production application, creates an order, terminates that exact child, awaits process exit, asserts the old port no longer answers, then starts a different PID and retrieves an identical public order. The reference and PIDs are in `m6-mysql-tests.txt`. |
+| Invalid and manipulated input | Empty/duplicate carts, unknown/unavailable offerings, out-of-range values, fractional precision and injection-like amount strings rejected. Fixed prices come from a server fixture; forged currency/totals for a valid support amount are ignored and GBP 5 is recomputed. The fixture is not an invented shop product. |
+| Customer validation | Trimmed name and normalised email validated server-side. Browser errors identify and focus the invalid field; client checks are not the authority. |
+| Idempotency | Same UUID and validated details return the original order; conflicting details return 409; missing/malformed UUID rejected. Twelve concurrent retries of an existing interaction complete without duplicate references or pool exhaustion. |
+| Lost-response retry | C19 commits the first request through the real API, then a browser route fixture replaces its response with 503. Cart/input state survives, submit is restored, error summary receives focus, and retry uses the same key/reference. This is response-loss simulation, not a physical network outage. |
+| Malformed success responses | C25/C26 replace a committed HTTP 201 response with truncated JSON or an object without an order reference. Both retain the cart, focus the error and retry the same key to retrieve the original order. |
+| Canonical offering identifiers | The pre-fix MySQL query accepted `studio-support` plus `STUDIO-SUPPORT` as two identical resolved lines (£10). Deduplication now uses the server-resolved identifier; actual MySQL repository checks and C27 reject the pair. The memory run rejects its unknown uppercase alias; a canonicalising repository fixture separately covers the same-code path. |
+| Transaction rollback | A second line deliberately references a missing offering. MySQL raises its FK error; neither the order nor its first line remains. |
+| Constraints and history | Negative order/pricing/line updates fail enforced CHECKs. Deleting a referenced offering fails its FK. Temporarily changing its title/availability does not alter historical line snapshots. Administrative mutations are inside a transaction that is always rolled back. |
+| Real database outage and recovery | MySQL was actually shut down: health and order calls returned generic 500 JSON with no SQL/connection details and `no-store`. Starting a new application against the stopped database exited 1 without announcing readiness. After database restart, health is 200/MySQL and the previously inspected order/line remains retrievable. See `m6-database-verification.json`. |
+| Runtime privileges | App account has SELECT on offerings and SELECT/INSERT on orders/lines, not DDL, UPDATE or DELETE. Grant evidence is retained without credentials. Full constraint tests require the separate administrator connection. |
+| Safe errors and confirmation | Malformed JSON returns 400, JSON above 20 KB returns 413, unknown/malformed references return 404, and unexpected failures return generic 500. Public confirmation omits customer fields and internal keys/hashes. API responses use `Cache-Control: no-store`. |
+
+The fresh schema is verified, not an upgrade from populated M5 tables. Database CHECKs do not
+independently enforce aggregate order totals; server computation does. Startup ping verifies
+connectivity, not migration completeness. Idempotency covers retries within a checkout interaction;
+reloading creates a new key and can create another order after a lost committed response, while
+offering changes may cause revalidation to reject a retry. These limits are documented in
+`../docs/commerce.md` rather than hidden behind a production-ready claim.
+
+### Browser journeys, accessibility and fallbacks
+
+| Checks | Measured result |
+| --- | --- |
+| C24, C1–C10, C15 | Actual room cassette → computer details link → game page → store → cart → checkout → confirmation; cart reload/update/remove, server total, confirmation reload and successful cart clearing all pass. |
+| C18 at 390, 768, 900 and 1280 px | Real Tab/type/Enter cart-to-order journeys; invalid email focus/error association, correction and confirmation pass without horizontal overflow. Viewport sizes are emulation, not physical-device evidence. |
+| C16, C23 | No-JS store retains terms/pricing and hides dead add controls; checkout form is hidden without a successful quote; order heading remains even without JavaScript or a reference. |
+| C20 | Injected quote failure hides checkout controls and presents a working Return to cart link. No false success is displayed. |
+| R1–R8 | Direct selection URLs, normal history, panel fixture, tablet/phone grid separation, no-WebGL and reduced-data fallbacks and useful no-JS homepage pass. Unavailable game actions remain explanatory text. |
+| R9a–R9c | CDP touch events reach the canvas as trusted `pointerType=touch`; actual yaw changes +0.252 radians and pitch −0.1512, with no selection, travel, paper opening, URL change or page scroll. Physical touch remains untested. |
+| R10 | At 844×390, room viewport is 476×192.5625; panel stays separate, no horizontal/panel overflow, controls end at 390.4375 px (within the explicit 1 px rounding tolerance). |
+| R11–R12 | Seven real routes have page-specific title/description, `lang=en`, UTF-8, viewport metadata and one H1. All 47 local-link occurrences and 16 fragment targets resolve; synthetic fixture links are excluded. This is not search-engine indexing or ranking evidence. |
+| Gate, papers, movement | Enter/Space activation, focus proxies, paper close/Escape focus restoration, direct mesh picking, collision, stations and reduced-motion cuts/no-coasting remain verified. |
+| C17 and P7 | No uncaught page errors in the complete commerce or paper/render-loop runs. Expected error-response fixtures are distinguished from uncaught JavaScript errors. |
+
+An additional Qoder in-app browser smoke check followed store → cart → checkout, submitted an
+empty form and confirmed invalid-name focus, then completed a £5 MySQL-backed simulated order.
+The cart cleared and the browser recorded no console errors/warnings. This manual check is not
+included in the automated counts and is not physical-device or cross-browser coverage.
+
+### Final-build local performance measurements
+
+`m6-performance.json` identifies the final built HTML/CSS/JS by SHA-256. Three cold browser contexts
+per route at 1280×800 were observed from navigation until 1,200 ms after network idle; no network or
+CPU throttling. These are local headless observations, not real-device, field or deployment scores.
+
+| Route | Transferred bytes including response headers | Requests | Document LCP range | Cumulative layout shift | Longest observed task |
+| --- | --- | --- | --- | --- | --- |
+| `/?view=list` | 26,349 | 5 | 100–112 ms | 0 | 53 ms |
+| `/` room-first | 653,288 | 7 | 88–104 ms | 0.0301513–0.1511128 | 186 ms |
+| `/store/` | 16,516 | 7 | 64–68 ms | 0 | No task above the 50 ms observer threshold |
+
+Only room-first navigation fetched `startRoom-CG7IOWHB.js`: **623.51 kB**, build-estimated gzip
+**167.95 kB**. The entry is 5.16 kB (2.26 kB estimated gzip). Local script encoded/decoded sizes
+match: the server did **not** deliver these scripts gzip-compressed. Build gzip estimates are not
+actual transfer sizes. The room's longer tasks and extra transfer remain a cost; the text/store
+routes demonstrably avoid that chunk. Document LCP does not measure when the 3D canvas is usable.
+No real-GPU fps, Lighthouse result, public-network speed or search ranking is claimed.
+
+### Defects and test-environment problems found during M6
+
+| # | Finding | Resolution and verification |
+| --- | --- | --- |
+| D15 | Duplicate-key recovery could request a second connection while all pool connections were still held by retries | Release the transaction connection before duplicate lookup; 12 simultaneous retries now pass. |
+| D16 | Original/retried timestamps could differ because MySQL stores whole seconds | Round creation time to the column precision; identical-order deep comparisons pass. |
+| D17 | Express 5 listen callback could log readiness even when binding failed | Handle the callback error before readiness output; use the actual bound port for restart tests. |
+| D18 | 844×390 landscape controls extended to 420.31 px | Reduce short-landscape control spacing; measured bottom is now 390.4375 px. No width-only entry gate was introduced. |
+| D19 | Order empty/error rendering removed its only H1 | Keep a static heading outside the replaced content; seven-route metadata and no-JS checks pass. |
+| D20 | No-JS or failed-quote checkout exposed an unusable submit form | Hide it initially and reveal only after a successful quote; no-JS and quote-failure checks pass. |
+| D21 | Unreadable success JSON became an empty object and checkout cleared the cart before finding its missing reference | Propagate unreadable-response errors and validate the reference before clearing; C25/C26 verify cart retention and same-key recovery of the committed order. |
+| D22 | Submitted-ID deduplication did not account for case-insensitive MySQL aliases | Reproduced two resolved `studio-support` lines; deduplicate the server-resolved ID and verify rejection in repository tests and C27. |
+| Environment | Old M5 server and conflicting Vite HMR port produced misleading failures | Use labelled, clean production ports for commerce and a separate Vite port for instrumentation. Do not count stale-server results as current regressions. |
+| Test method | Stopping a shell task did not prove its application child had stopped | Automated PID/exit/old-port/new-process checks replace an unverified manual restart claim. |
+
+**M6 local result:** no outstanding failures in the executed suites. Memory-only skips and visual
+notes are not passes. Remaining checks and assessment dependencies are listed below; neither the
+successful build nor the local MySQL tests establish production readiness.
+
 ## Still not verified — open limitations
 
 | # | Gap | Current status |
 | --- | --- | --- |
 | B2 | Frame rate in a visible tab on real hardware | Open — headless SwiftShader gives no honest hardware fps figure. |
-| B4 | Drag-to-look with touch | Open — E5 taps a chip, but no physical or emulated touch drag has turned the camera. |
+| B4 | Drag-to-look with touch | Closed for trusted emulated touch by R9a–R9c; physical handset input remains open. |
 | B5 | Cross-browser behaviour | Open — Chromium only; Firefox and Safari have not run. |
-| B6 | Intermediate layouts and phone panel | Closed in Chromium — R4 covers 768/900 px; R5 and `m5-02-phone-panel.png` cover the bounded 390 px drawer. Physical handsets and landscape remain open. |
+| B6 | Intermediate layouts and phone panel | Closed in Chromium emulation — 390/768/900/1280 px journeys and 844×390 landscape pass. Physical handsets remain open. |
 | B7 | Reduced-data entry | Closed by R7 using an explicit `saveData` browser fixture. |
-| B8 | Screen-reader session | Open — semantic markup, labels and live regions are asserted, but no assistive-technology session has run. |
+| B8 | Screen-reader session | Open — semantic markup, labels, focus and live regions are asserted, but no assistive-technology session has run. |
 | B9 | Direct 3D paper selection | Closed by P8 — a projected point on the actual sheet hit `CANVAS` and opened the instruction dialog through raycasting. |
-| B10 | Phone panel occlusion | Closed structurally by R5 — the drawer is below the viewport, not over it, and occupied 26.5% of the stage in the measured run. |
-| B11 | MySQL integration | Open — schema, shared-record seed and parameterised transactional repository exist, but `mysql` was not installed and no server was configured. All executed API/order tests explicitly used memory storage. |
-| B12 | Deployed operation | Open — production build/API passed locally; DNS, HTTPS, public hosting, backups and live MySQL remain unverified. |
+| B10 | Phone panel occlusion | Closed structurally by R5 — the drawer is below the viewport, not over it, and occupies 26.5% of the measured stage. |
+| B11 | MySQL integration | Closed locally in M6 with actual 8.0.46, direct rows, rollback, enforced constraints, restricted runtime account, restart and outage/recovery. Not a hosted-database claim. |
+| B12 | Deployed operation | Open — DNS, HTTPS, public hosting, compression/cache policy, backups/restore and operational security have not been configured or verified. |
+| B13 | Durable data location and schema upgrades | Open — portable data lives in a temporary directory; no backup-restore drill or populated-M5 upgrade migration was run. Do not reinitialise or drop existing data. |
+| B14 | Assessment acceptance and content | Tutor approval of category, voluntary support as a sale, simulated checkout and local demonstration remains open. Part 2, real game content and the student's final report are still required. |
 
 ## Re-running these tests
 
-```
-DB_DRIVER=memory npm run dev # explicit test adapter; otherwise configure MySQL
-npm run test:commerce        # six server-side unit tests
-node tests/e2e/gate.mjs      # entry + keyboard + panel/chip separation
-node tests/e2e/papers.mjs    # chip, keyboard and direct raycast paper paths
-node tests/e2e/movement.mjs  # movement, collision, reduced motion and layout
-node tests/e2e/commerce.mjs  # catalogue → store → cart → checkout → confirmation
-node tests/e2e/routes.mjs    # direct URLs, history, responsive and fallback paths
+Configure MySQL using `../docs/commerce.md` first. Use separate terminals for long-running servers
+and tests. Run constraint tests only against an isolated test database: they need administrator
+rights, temporarily change catalogue rows inside a rolled-back transaction, and create synthetic
+orders. The process-restart test needs the production build.
+
+```bash
 npm run build
-DB_DRIVER=memory npm start   # optionally repeat commerce against production
+DB_DRIVER=memory npm run test:commerce
+TEST_MYSQL_CONSTRAINTS=1 node --env-file=.env.mysql-admin.local --test tests/commerce.test.mjs
+npm start  # configured restricted MySQL app; this workstation uses PORT=5196
 ```
 
-Useful handles while developing: `?view=list` forces the text view, `?view=room` forces the room,
+In another terminal, while that application runs:
+
+```bash
+BASE_URL=http://127.0.0.1:5196 node tests/e2e/commerce.mjs
+```
+
+Run an explicit memory comparison on a different port, if needed:
+
+```bash
+DB_DRIVER=memory PORT=5198 npm start
+# In another terminal:
+BASE_URL=http://127.0.0.1:5198 node tests/e2e/commerce.mjs
+```
+
+Room instrumentation is development-only, so start a separate front-end-only server:
+
+```bash
+npm run dev:vite -- --host 127.0.0.1 --port 5190 --strictPort
+# In another terminal:
+BASE_URL=http://127.0.0.1:5190 node tests/e2e/gate.mjs
+BASE_URL=http://127.0.0.1:5190 node tests/e2e/papers.mjs
+BASE_URL=http://127.0.0.1:5190 node tests/e2e/movement.mjs
+BASE_URL=http://127.0.0.1:5190 ROUTES_BASE_URL=http://127.0.0.1:5196 node tests/e2e/routes.mjs
+npm audit --omit=dev --json
+```
+
+Always specify `BASE_URL`; some suites retain historical default ports. A bare repository-test
+command loads `.env`, so explicitly set `DB_DRIVER=memory` when that is the intended adapter.
+Screenshots use fixed M6 filenames: repeat MySQL commerce last to retain MySQL provenance, and
+retain driver-labelled logs. Earlier milestone images are not overwritten.
+
+Useful handles while developing: `?view=list` forces the text view, `?view=room` requests the room,
 `?game=<slug>` preselects a cassette, and in dev mode `window.__saleshiRoom` exposes
 `isRunning()`, `stats()`, `render()`, `snapshot()`, `start()`, `stop()`,
 `projectInteractable()` and the test-only `previewPanelGame()` fixture boundary.

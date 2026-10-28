@@ -1,0 +1,29 @@
+PASS  R1 direct room URL restores selection and readable computer state — {"text":"rgb(22, 32, 15)","background":"rgb(207, 230, 184)"}
+PASS  R2 test-only fixture proves cover, screenshots and available action rendering — {"cover":true,"screenshots":2,"actions":[null,"/fixture-demo/","/fixture-download/","https://example.invalid/fixture"]}
+PASS  R3 real routes support normal browser back and forward navigation
+PASS  R4-768 room and panel remain usable at 768px — {"overflow":false,"separate":true}
+PASS  R4-900 room and panel remain usable at 900px — {"overflow":false,"separate":true}
+PASS  R9a emulated touch drag delivers trusted touch pointer events to the canvas — [{"type":"pointerdown","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointerup","trusted":true,"pointerType":"touch","target":"CANVAS"}]
+PASS  R9b touch drag changes actual camera yaw and pitch — {"before":{"x":-2.2,"y":1.28,"z":-0.75,"yaw":0.12622882121057954,"pitch":-0.09538896968421828},"after":{"x":-2.2,"y":1.28,"z":-0.75,"yaw":0.3782288212105795,"pitch":-0.24658896968421828},"yawDelta":0.25199999999999995,"pitchDelta":-0.1512}
+PASS  R9c touch drag does not accidentally select, travel, open a note or scroll the page — {"selected":null,"station":"shelf","url":"http://127.0.0.1:5190/?view=room","paperOpen":false}
+PASS  R5 phone selection uses a bounded drawer instead of covering the room — {"layout":"drawer","separate":true,"panelRatio":0.26505016722408026,"overflow":false}
+PASS  R10 landscape phone room, panel and controls fit 844x390 without overflow — {"width":844,"height":390,"layout":"side","roomWidth":476,"roomHeight":192.5625,"stageTop":62.4375,"stageBottom":255,"controlsBottom":390.4375,"separate":true,"contained":true,"firstViewport":true,"overflow":false,"panelOverflow":false}
+PASS  R6 no-WebGL entry retains useful catalogue navigation and no fake room control
+PASS  R7 reduced-data preference starts the text view with an optional room launcher
+PASS  R8 no-JS homepage has real shared content and no dead room launcher — {"cards":1,"launcherHidden":true,"statusHidden":true,"storeVisible":true}
+PASS  R11-1 / has page-specific title, metadata, lang and h1 — title=Saleshi — indie game studio [PLACEHOLDER]; h1=Enter the studio
+PASS  R11-2 /games/ has page-specific title, metadata, lang and h1 — title=Games catalogue — Saleshi; h1=Games
+PASS  R11-3 /games/placeholder-slug/ has page-specific title, metadata, lang and h1 — title=[PLACEHOLDER] Untitled game — Saleshi; h1=[PLACEHOLDER] Untitled game
+PASS  R11-4 /store/ has page-specific title, metadata, lang and h1 — title=Store and creator support — Saleshi; h1=Creator support
+PASS  R11-5 /cart/ has page-specific title, metadata, lang and h1 — title=Your cart — Saleshi; h1=Your cart
+PASS  R11-6 /checkout/ has page-specific title, metadata, lang and h1 — title=Simulated checkout — Saleshi; h1=Simulated checkout
+PASS  R11-7 /order/ has page-specific title, metadata, lang and h1 — title=Order confirmation — Saleshi; h1=Order confirmation
+PASS  R12-1 / and every local link resolve to HTTP routes and anchor targets — HTTP 200; 8 local links, 3 fragments
+PASS  R12-2 /games/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 7 local links, 2 fragments
+PASS  R12-3 /games/placeholder-slug/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 7 local links, 3 fragments
+PASS  R12-4 /store/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 7 local links, 2 fragments
+PASS  R12-5 /cart/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+PASS  R12-6 /checkout/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+PASS  R12-7 /order/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+
+27 passed, 0 failed

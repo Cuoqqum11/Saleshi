@@ -245,6 +245,11 @@ noscript .paper { margin-top: var(--space-2); }
 }
 .paper-dialog .station-button:hover { color: var(--text-on-paper); border-color: var(--text-on-paper); }
 
+@media (min-width: 701px) and (max-height: 500px) {
+  .room-controls { gap: 0.25rem; padding: 0.25rem 0.75rem; }
+  .room-controls .room-hint { font-size: 0.75rem; line-height: 1.35; }
+}
+
 @media (max-width: 700px) {
   .stage {
     grid-template-columns: minmax(0, 1fr);
