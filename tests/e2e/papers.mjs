@@ -102,6 +102,23 @@ try {
     noteLabel !== null && openedByKeyboard && !d.open,
     `reached="${noteLabel}" opened=${openedByKeyboard} closed=${!d.open}`)
 
+  // --- P8: a trusted click on the 3D sheet itself uses raycast picking ----------------
+  await page.click('[data-station-id="desk"]')
+  await page.waitForTimeout(1300)
+  const sheetPoint = await page.evaluate(() => {
+    const point = window.__saleshiRoom.projectInteractable('how-to', { x: 0.055, y: -0.09, z: 0.002 })
+    const hit = document.elementFromPoint(point.x, point.y)
+    return { ...point, hit: hit ? `${hit.tagName}.${hit.className}` : null }
+  })
+  await page.mouse.click(sheetPoint.x, sheetPoint.y)
+  await page.waitForTimeout(250)
+  d = await dialogState(page)
+  record('P8', 'clicking the visible 3D instruction sheet opens it through raycast picking',
+    !sheetPoint.behind && sheetPoint.hit === 'CANVAS.' && d.open && d.title === 'How to explore this room',
+    `point=${sheetPoint.x.toFixed(0)},${sheetPoint.y.toFixed(0)} hit=${sheetPoint.hit} open=${d.open} title="${d.title}"`)
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(250)
+
   // --- P5: selection survives a note opened while walking, and movement freezes -----
   // Walking happens from the shelf station because the north wall is ~2 m clear there; from the
   // desk a single W press runs into the desk collider and nothing can be measured. Each press is

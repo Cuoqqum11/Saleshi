@@ -10,7 +10,7 @@ import { createApp, h, shallowRef } from 'vue'
 import { createScene } from './scene.js'
 import { createCameraController } from './cameraController.js'
 import { createPicking } from './picking.js'
-import { createFocusProxy, createScreenAnchor } from './focusProxy.js'
+import { createFocusProxy } from './focusProxy.js'
 import { cassetteAnchor } from '../objects/shelf.js'
 import { games, shelf } from '../data/games.js'
 import { getSelectedGame, restoreFromUrl, selectGame, subscribe } from '../ui/selection.js'
@@ -18,7 +18,7 @@ import { createPaperView } from '../ui/paperView.js'
 import MonitorPanel from '../ui/monitorPanel.vue'
 
 export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
-  const view = createScene({ stage: els.stage, games, shelfCapacity: shelf.capacity })
+  const view = createScene({ stage: els.viewport, games, shelfCapacity: shelf.capacity })
   const { scene, camera, renderer, interactables, cassetteMeshes, screenMesh, noteMeshes } = view
   const controller = createCameraController(camera, { reducedMotion })
 
@@ -142,18 +142,16 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
     onHoverFromDom: (id) => picking?.setHoverFromDom(id),
   })
 
-  const screenAnchor = createScreenAnchor({ camera, element: els.screenEl, mesh: screenMesh })
-
   // --- Pointer -----------------------------------------------------------------------
   picking = createPicking({
-    element: els.stage,
+    element: els.viewport,
     camera,
     targets: interactables,
     controller,
     onSelect: handleSelect,
     onHoverChange: (id) => {
       hoveredId = id
-      els.stage.style.cursor = id ? 'pointer' : 'grab'
+      els.viewport.style.cursor = id ? 'pointer' : 'grab'
     },
   })
 
@@ -280,12 +278,12 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
 
   // --- Sizing, and pausing when the room is not on screen ----------------------------
   function measure() {
-    const rect = els.stage.getBoundingClientRect()
+    const rect = els.viewport.getBoundingClientRect()
     size = { width: Math.max(1, rect.width), height: Math.max(1, rect.height) }
     view.resize(size.width, size.height)
   }
   const resizeObserver = new ResizeObserver(measure)
-  resizeObserver.observe(els.stage)
+  resizeObserver.observe(els.viewport)
   measure()
 
   let onScreen = true
@@ -295,7 +293,7 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
     },
     { threshold: 0.05 },
   )
-  visibilityObserver.observe(els.stage)
+  visibilityObserver.observe(els.viewport)
 
   // --- Animation loop ----------------------------------------------------------------
   let lastTime = performance.now()
@@ -322,7 +320,6 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
     animateCassettes()
     picking.refreshHover()
     focusProxy.update(size.width, size.height)
-    screenAnchor.update(size.width, size.height)
     framesInWindow += 1
     if (now - fpsWindowStart >= 1000) {
       lastFps = Math.round((framesInWindow * 1000) / (now - fpsWindowStart))
@@ -374,7 +371,6 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
       focusProxy.dispose()
       panelApp.unmount()
       els.screenEl.hidden = true
-      els.screenEl.removeAttribute('style')
       view.dispose()
     },
 
@@ -390,6 +386,25 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
     /** PNG data URL of the current room frame, used to capture test evidence. */
     snapshot() {
       return renderer.domElement.toDataURL('image/png')
+    },
+
+    previewPanelGame(game) {
+      selected.value = game
+    },
+
+    /** A viewport point on an actual mesh, so tests can exercise raycasting rather than chips. */
+    projectInteractable(id, offset = { x: 0, y: 0, z: 0 }) {
+      const entry = proxyEntries.find((candidate) => candidate.id === id)
+      if (!entry) return null
+      const point = entry.object.position.clone().set(offset.x, offset.y, offset.z)
+      entry.object.localToWorld(point)
+      point.project(camera)
+      const rect = els.viewport.getBoundingClientRect()
+      return {
+        x: rect.left + (point.x * 0.5 + 0.5) * rect.width,
+        y: rect.top + (-point.y * 0.5 + 0.5) * rect.height,
+        behind: point.z > 1,
+      }
     },
 
     getStats() {
@@ -408,7 +423,7 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
         proxyMetrics: focusProxy.getMetrics(),
         proxies: els.proxyLayer.querySelectorAll('.proxy').length,
         clampedProxies: els.proxyLayer.querySelectorAll('.proxy.is-clamped').length,
-        screenDocked: els.screenEl.classList.contains('is-docked'),
+        panelLayout: window.matchMedia('(max-width: 700px)').matches ? 'drawer' : 'side',
         reducedMotion,
       }
     },

@@ -1,8 +1,6 @@
 <!doctype html>
 <html lang="en" data-room="off">
   <head>
-    <script type="module" src="/@vite/client"></script>
-
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Saleshi — indie game studio [PLACEHOLDER]</title>
@@ -10,9 +8,10 @@
       name="description"
       content="A virtual studio room where games are shelved as cassette tapes. Select a tape and the room's computer shows the game's details and available actions. Milestone 1: grey-box room, placeholder content."
     />
-    <link rel="stylesheet" href="/src/styles/base.css" />
-    <link rel="stylesheet" href="/src/styles/room.css" />
-    <script type="module" src="/src/js/main.js?t=1792807003465"></script>
+    <script type="module" crossorigin src="/assets/room-qU8NZA3M.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/base-CSOEcOZI.js">
+    <link rel="stylesheet" crossorigin href="/assets/base-BtV7wjId.css">
+    <link rel="stylesheet" crossorigin href="/assets/room-cTtF8naZ.css">
   </head>
   <body>
     <a class="skip-link" href="#studio-letter">Skip the 3D room and go to the studio letter</a>
@@ -21,12 +20,13 @@
       <a class="brand" href="/">
         Saleshi <span class="placeholder-flag">studio name not final</span>
       </a>
-      <!-- Nav only points at things that exist. Devlog, About and Store links are
-           added when those pages exist. -->
       <nav class="site-nav" aria-label="Main">
         <ul>
           <li><a href="#room">The room</a></li>
-          <li><a href="#games">Games</a></li>
+          <li><a href="#studio-letter">Studio letter</a></li>
+          <li><a href="/games/">Games</a></li>
+          <li><a href="/store/">Store</a></li>
+          <li><a href="/cart/">Cart <span data-cart-count hidden></span></a></li>
         </ul>
       </nav>
     </header>
@@ -54,9 +54,11 @@
         </div>
 
         <div class="stage" id="stage" hidden>
-          <!-- Three.js inserts its canvas here. -->
-          <div id="room-proxy-layer"></div>
-          <div id="monitor-screen" hidden aria-label="The studio computer"></div>
+          <div class="room-viewport" id="room-viewport">
+            <!-- Three.js inserts its canvas here. -->
+            <div id="room-proxy-layer"></div>
+          </div>
+          <section id="monitor-screen" hidden aria-label="The studio computer"></section>
         </div>
 
         <div class="room-controls" id="room-controls" hidden>
@@ -67,10 +69,16 @@
               <a class="station-button" href="#games">Browse the games as a list</a>
             </li>
           </ul>
+          <p class="room-hint" id="move-hint">
+            Drag inside the room to look around. Walk freely to move with W, A, S, D or the
+            arrow keys; Esc stops walking. Select a cassette to see it on the computer, or a
+            pinned note to read it.
+          </p>
           <p class="room-hint" id="selection-status" role="status"></p>
         </div>
 
         <noscript>
+          <style>html[data-room] #room-launcher,html[data-room] #room-status{display:none}</style>
           <p class="unavailable-note">
             JavaScript is switched off, so the 3D room is not running. Everything the room
             contains — the studio letter, the games and what is available for each one — is
@@ -98,7 +106,7 @@
             show that game — what it is, how far along it is, and the ways you can get it or
             support its making.
           </p>
-          <p>
+          <p data-note-exclude>
             <a href="#games">Or skip the room and read the list of games.</a>
           </p>
         </article>
@@ -114,41 +122,54 @@
           </p>
         </header>
 
-        <ul class="game-list">
-          <li class="game-card">
-            <h3>
-              <a href="/games/placeholder-slug/">[PLACEHOLDER] Untitled game</a>
-            </h3>
-            <p><span class="status-badge">In development</span></p>
-            <p>
-              PLACEHOLDER — a description of the game has not been supplied yet. Cover artwork,
-              screenshots and a playable build are also still to come.
-            </p>
-            <p class="unavailable-note">
-              Browser demo, download and itch.io links are not available yet, so they are not
-              offered as buttons here either.
-            </p>
-          </li>
-          <li class="game-card is-empty">
-            <h3>Shelf position 2</h3>
-            <p>Empty. Reserved for a future project; nothing has been announced.</p>
-          </li>
-          <li class="game-card is-empty">
-            <h3>Shelf position 3</h3>
-            <p>Empty. Reserved for a future project; nothing has been announced.</p>
-          </li>
-          <li class="game-card is-empty">
-            <h3>Shelf position 4</h3>
-            <p>Empty. Reserved for a future project; nothing has been announced.</p>
-          </li>
-        </ul>
+        <ul class="game-list"><li class="game-card">
+    <h3><a href="/games/placeholder-slug/">[PLACEHOLDER] Untitled game</a></h3>
+    <p><span class="status-badge">In development</span></p>
+    <p>PLACEHOLDER — a one-line description of the game has not been supplied.</p>
+    <p class="media-placeholder">Cover artwork not supplied.</p>
+    <p class="unavailable-note">Currently no browser demo, no download, no itch.io address; these are not shown as working controls.</p>
+    <p><a href="/games/placeholder-slug/">Read the full game details</a></p>
+  </li></ul>
+  <p class="empty-state">Only 1 game is listed. The other shelf positions are empty; no additional titles, release dates or projects have been invented to fill them.</p>
+        <p><a href="/games/">Open the full catalogue</a> · <a href="/store/">View creator support</a></p>
       </section>
     </main>
 
+    <!-- The readable paper view. Hidden until a pinned note is selected; the text it shows
+         is cloned from the page's own HTML (the studio letter above, the template below). -->
+    <dialog id="paper-view" class="paper-dialog" aria-labelledby="paper-view-title">
+      <form method="dialog" class="paper-dialog-bar">
+        <h2 id="paper-view-title"></h2>
+        <button class="station-button" type="submit" id="paper-view-close">Close this note</button>
+      </form>
+      <div id="paper-view-body" class="paper"></div>
+    </dialog>
+
+    <template id="note-how-to">
+      <p>
+        You are standing inside the studio. Drag anywhere in the room to look around; the
+        buttons under the room move you to the shelf or the computer.
+      </p>
+      <p>
+        The shelf is the catalogue: each cassette is a real project. Select one and the
+        computer on the desk shows what it is, how far along it is, and only the actions that
+        genuinely exist for it today.
+      </p>
+      <p>
+        Papers pinned to the walls carry the studio's own words. Select one to read it at
+        full size; closing it returns you to exactly where you were standing.
+      </p>
+      <p>
+        Everything in this room also exists as ordinary text: use the list link under the
+        room, or scroll down.
+      </p>
+    </template>
+
     <footer class="site-footer">
       <p>
-        Milestone 1 — grey-box room. Placeholder content throughout, no store and no back end
-        yet. See <code>docs/open-requirements.md</code> for what is still unresolved.
+        Grey-box room prototype with placeholder game information. Creator support uses a
+        simulated checkout: no payment is taken. Unresolved content and product decisions are
+        recorded in <code>docs/open-requirements.md</code>.
       </p>
     </footer>
   </body>

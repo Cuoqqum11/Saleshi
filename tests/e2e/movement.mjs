@@ -35,14 +35,16 @@ const stats = (page) => page.evaluate(() => {
   const s = window.__saleshiRoom.stats()
   return { mode: s.mode, station: s.station, selected: s.selectedGameId, pose: s.pose }
 })
-/** The HTML panel must never hang off the stage, whichever mode or anchor state it is in. */
+/** The side panel/drawer must stay inside the stage and outside the interactive room viewport. */
 const panelInsideStage = (page) => page.evaluate(() => {
   const stage = document.querySelector('.stage').getBoundingClientRect()
+  const viewport = document.getElementById('room-viewport').getBoundingClientRect()
   const panel = document.getElementById('monitor-screen').getBoundingClientRect()
   return {
     inside: panel.top >= stage.top - 1 && panel.bottom <= stage.bottom + 1
       && panel.left >= stage.left - 1 && panel.right <= stage.right + 1,
-    docked: document.getElementById('monitor-screen').classList.contains('is-docked'),
+    separate: panel.left >= viewport.right - 1 || panel.top >= viewport.bottom - 1,
+    layout: window.__saleshiRoom.stats().panelLayout,
   }
 })
 
@@ -107,8 +109,8 @@ try {
     `z=${s.pose.z.toFixed(2)} (desk front limit ${deskFront}, started ${before.z.toFixed(2)})`)
   await page.screenshot({ path: OUT('m2-05-walk-desk-anchored.png') })
   let panel = await panelInsideStage(page)
-  record('W2b', 'the panel stays inside the stage and on the monitor while walking at the desk',
-    panel.inside && panel.docked === false, `inside=${panel.inside} docked=${panel.docked}`)
+  record('W2b', 'the side panel stays inside the stage and outside the room while walking at the desk',
+    panel.inside && panel.separate, `inside=${panel.inside} separate=${panel.separate} layout=${panel.layout}`)
   note('W2c', 'walk-mode view at the desk captured for human review',
     'docs/evidence/m2-05-walk-desk-anchored.png — judged by eye')
 
@@ -176,8 +178,8 @@ try {
   await page.waitForTimeout(400)
   await page.screenshot({ path: OUT('m2-03-walk-shelf-selected.png') })
   panel = await panelInsideStage(page)
-  record('W7b', 'the panel stays inside the stage with the monitor out of view',
-    panel.inside, `inside=${panel.inside} docked=${panel.docked}`)
+  record('W7b', 'the side panel stays inside the stage and outside the room with the monitor out of view',
+    panel.inside && panel.separate, `inside=${panel.inside} separate=${panel.separate} layout=${panel.layout}`)
 
   // --- W8: station shortcuts still work from walk mode -----------------------------
   await page.click('[data-station-id="desk"]')

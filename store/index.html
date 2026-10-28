@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Store and creator support — Saleshi</title>
+    <meta name="description" content="View currently configured Saleshi offerings, contribution rules and simulated-checkout terms." />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/pages.css" />
+    <script type="module" src="/src/js/pages/store.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#offerings">Skip to the offerings</a>
+    <header class="site-header">
+      <a class="brand" href="/">Saleshi <span class="placeholder-flag">studio name not final</span></a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="/#room">The room</a></li>
+          <li><a href="/games/">Games</a></li>
+          <li><a href="/store/" aria-current="page">Store</a></li>
+          <li><a href="/cart/">Cart <span data-cart-count hidden></span></a></li>
+        </ul>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <header class="page-heading">
+        <p class="screen-cue">Store · simulated checkout</p>
+        <h1>Creator support</h1>
+        <p>Offerings are configured separately from game records. The current contribution is voluntary support, not a premium game edition, and includes no exclusive content or download.</p>
+        <p class="unavailable-note">Checkout creates a demonstration order only. No payment is taken, no card details are requested and no automatic delivery is promised.</p>
+      </header>
+      <div class="offering-list" id="offerings"><div data-static-content="store-offerings"></div></div>
+      <noscript><p>JavaScript is off, so the cart controls are hidden. All offering details and contribution limits remain readable above.</p></noscript>
+      <p><a class="button secondary" href="/cart/">Review cart</a></p>
+    </main>
+    <footer class="site-footer"><p>Commercial terms and prices come from one shared offering configuration. The server rechecks them before accepting a simulated order.</p></footer>
+  </body>
+</html>

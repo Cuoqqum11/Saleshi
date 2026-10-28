@@ -1,75 +1,70 @@
 # Saleshi
 
-An indie game studio website: a navigable 3D room where games are represented as cassette
-tapes on a shelf, and a computer in the room presents each game's information and available
-actions. It doubles as the practical evidence for Pearson BTEC Level 5 HND Computing
-Unit 13: Website Design & Development.
+Saleshi is an indie game studio website built around a navigable 3D room. Cassettes represent the game catalogue, the desk computer presents game information and creator-support actions, and pinned papers open readable HTML views. A conventional multi-page catalogue and store remain available without WebGL. The project is practical evidence for Pearson BTEC Level 5 HND Computing Unit 13.
 
-**Status: Milestone 4 — the room is the entry experience and it carries the studio's words.** On a
-device that can render it, the room opens full-viewport on load: walk it freely with collision
-against the furniture, or use the camera stations as shortcuts; select a cassette and the computer
-shows that game; select a paper pinned to a wall and it opens at readable size in a dialog that
-leaves the camera and the selection exactly where they were. Entry is decided by capability and
-usability, not by window width — a phone that can render the room gets the room, and a device that
-only reports a coarse pointer is not offered a keyboard walking control. The studio letter and the
-game list continue below the fold and are the whole experience without JavaScript, without WebGL,
-or on `?view=list`. There is no game content, no finished art, no store and no back end yet.
-
-## The idea, in one paragraph
-
-The room *is* the website. Visitors arrive inside a virtual studio, find games represented as
-cassettes on a shelf, select one, and the computer screen shows that game's details and the
-actions that genuinely exist for it; the studio letter is readable as ordinary text. A
-conventional list of the same games is always available for anyone who cannot or does not want
-to use the room.
+**Status: Milestone 5 complete.** The room, catalogue, reusable game page, store, persistent browser cart, Express API and simulated checkout are integrated. Checkout collects no card details, takes no payment and creates only a clearly labelled simulated order. Game content remains marked as placeholder; no additional titles or artwork have been invented.
 
 ## Stack
 
-- **Front end:** HTML, CSS and native ES modules, built with Vite as a multi-page site.
-- **3D:** Three.js, loaded only when the room actually starts.
-- **Islands:** Vue 3, used only for interface blocks with reactive state (the computer screen
-  now; the cart and checkout later). No SPA shell, no router, no state library.
-- **Back end (Phase 7):** Node.js + Express + MySQL. Not implemented yet.
+- HTML, CSS and native JavaScript modules, built by Vite 8 as a multi-page site.
+- Three.js for the grey-box room, loaded only when the room starts.
+- Vue 3 for the reactive computer panel; cart and checkout use focused DOM controllers.
+- Node.js and Express for quoting, order creation and confirmation.
+- MySQL through `mysql2`, with parameterised queries and transactional order/order-line writes.
+- A separate `DB_DRIVER=memory` adapter for local automated tests only. It is never selected silently and loses orders when the server stops.
 
-See `docs/decisions/` for why, and `docs/open-requirements.md` for what is still unresolved.
+## Routes
 
-## Running it
+| Route | Purpose |
+| --- | --- |
+| `/` | Room-first homepage plus conventional studio/game content |
+| `/games/` | Static-HTML catalogue generated from shared game records |
+| `/games/placeholder-slug/` | Reusable game-details page |
+| `/store/` | Offerings, prices, terms and add-to-cart enhancement |
+| `/cart/` | Persistent cart, amount editing, removal and server quote |
+| `/checkout/` | Server-reviewed simulated checkout with minimal customer details |
+| `/order/?reference=…` | Safe-reference simulated order confirmation |
+
+`/?view=list` forces the text experience, `/?view=room` requests the room where WebGL exists, and `/?game=placeholder-slug` restores a selection. Ordinary links provide normal back/forward navigation.
+
+## Run locally
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm run build    # production output in dist/
-npm run preview  # serve dist/ locally
+cp .env.example .env   # optional for defaults; never commit .env
+npm run dev            # Express + Vite at http://localhost:5173
+npm run build
+npm start              # serve dist/ and the API
 ```
 
-No environment variables are required at this milestone; `.env.example` documents what the
-sales workflow will need later. Never commit real secrets.
+The default database driver is `mysql`. Create and seed the database before using the sales API:
 
-## URL parameters
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS saleshi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p saleshi < server/schema.sql
+node server/seed.js
+```
 
-| Parameter | Effect |
-| --- | --- |
-| `?game=<id>` | Pre-selects that game in the room and on the screen. |
-| `?view=list` | Forces the conventional view, skipping Three.js entirely. |
-| `?view=room` | Forces the immersive view even on a narrow screen. |
+Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` in `.env`. Do not commit real credentials. For an explicitly isolated local test run:
 
-## Placeholder policy
+```bash
+DB_DRIVER=memory npm run dev
+npm run test:commerce
+node tests/e2e/commerce.mjs
+node tests/e2e/routes.mjs
+node tests/e2e/gate.mjs
+node tests/e2e/papers.mjs
+node tests/e2e/movement.mjs
+```
 
-Nothing about the studio or its games has been invented. `PLACEHOLDER` marks text awaiting
-real content, and unavailable actions are shown as unavailable with a reason instead of being
-rendered as controls that do nothing.
+Use `BASE_URL` when the server is not on port 5173. `npm run dev:vite` remains available for front-end-only work, but its sales API will not exist.
 
-## Where things are
+**Verification boundary:** the production and development sales flows passed with the explicit memory adapter. The MySQL schema and repository are implemented, but the MySQL client was not installed and no configured server was available in this session, so MySQL connectivity, migration and transaction behaviour remain unverified. Real-device, physical touch-drag, cross-browser, screen-reader and visible-tab GPU performance testing also remain open.
 
-| Path | Contents |
-| --- | --- |
-| `index.html`, `games/*/index.html` | the real HTML pages — every route is a file, not a client-side route |
-| `src/js/room/` | the Three.js room: scene, lights, camera controller, picking, focus proxies |
-| `src/js/objects/` | grey-box geometry, one file per piece of furniture |
-| `src/js/ui/` | the selection store and the Vue monitor panel |
-| `src/js/data/games.js` | the single source of truth for studio and game content |
-| `docs/decisions/` | five short records of why the architecture is what it is |
-| `docs/deployment-options.md` | hosting options, with nothing purchased |
-| `docs/open-requirements.md` | what is unresolved, including the six questions for the tutor |
-| `docs/evidence/` | captured frames and the raw no-JavaScript HTML, indexed by a README |
-| `tests/test-plan.md` | Per-milestone tests with measured results, defects found and open gaps |
+## Shared content and commercial rules
+
+`src/js/data/games.js` contains creative game records only. `src/js/data/offerings.js` contains acquisition/support offerings and commercial configuration. Vite's static-content plugin renders the homepage, catalogue, game details and store from those records, while the room uses the same modules. The MySQL seed mirrors the offering used by the server.
+
+The cart stores only `{ offeringId, amount }` under `saleshi-cart-v1`. Voluntary support has an amount, not a quantity. Browser totals are display-only: the server loads each offering again, validates availability and amount rules, recomputes the total, and writes the order and lines in one transaction. Confirmation references contain 128 bits of randomness and responses omit customer name/email.
+
+See `docs/commerce.md`, `docs/decisions/`, `docs/evidence/`, `docs/unit13-mapping.md` and `tests/test-plan.md` for implementation and assessment evidence.

@@ -6,6 +6,7 @@
 const els = {
   html: document.documentElement,
   stage: document.getElementById('stage'),
+  viewport: document.getElementById('room-viewport'),
   proxyLayer: document.getElementById('room-proxy-layer'),
   screenEl: document.getElementById('monitor-screen'),
   controlsEl: document.getElementById('room-controls'),
@@ -170,5 +171,7 @@ if (import.meta.env.DEV) {
     },
     start: startRoomInstance,
     stop: stopRoom,
+    previewPanelGame: (game) => room?.previewPanelGame(game),
+    projectInteractable: (id, offset) => room?.projectInteractable(id, offset) ?? null,
   }
 }

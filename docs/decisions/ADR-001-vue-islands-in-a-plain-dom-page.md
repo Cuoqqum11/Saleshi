@@ -18,7 +18,7 @@ is exactly what HTML renders well and 3D renders badly.
   `shallowRef`.
 - The room is plain Three.js. Vue does not manage the scene graph, and Three.js is not wrapped by
   a Vue renderer.
-- Cart and checkout will use the same island pattern when they exist.
+- Cart and checkout remain real multi-page routes. Their M5 controllers use plain DOM code because local form/list updates do not justify another Vue mount; the reactive computer panel remains Vue.
 
 ## Consequences
 

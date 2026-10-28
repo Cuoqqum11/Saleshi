@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simulated checkout — Saleshi</title>
+    <meta name="description" content="Review a server-checked contribution total and create a simulated Saleshi order without payment." />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/pages.css" />
+    <script type="module" src="/src/js/pages/checkout.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#checkout-form">Skip to customer information</a>
+    <header class="site-header">
+      <a class="brand" href="/">Saleshi <span class="placeholder-flag">studio name not final</span></a>
+      <nav class="site-nav" aria-label="Main"><ul>
+        <li><a href="/#room">The room</a></li><li><a href="/games/">Games</a></li>
+        <li><a href="/store/">Store</a></li><li><a href="/cart/">Cart <span data-cart-count hidden></span></a></li>
+      </ul></nav>
+    </header>
+    <main class="page-shell">
+      <header class="page-heading"><p class="screen-cue">Demonstration only</p><h1>Simulated checkout</h1>
+        <p class="unavailable-note">No payment is taken. Do not enter card details. This form only records a demonstration order and its server-validated contribution lines.</p>
+      </header>
+      <div id="checkout-error" class="error-summary" role="alert" tabindex="-1"></div>
+      <section class="checkout-review" aria-labelledby="review-heading"><h2 id="review-heading">Order review</h2><div id="checkout-review"><p>Checking your cart with the server…</p></div></section>
+      <form id="checkout-form" novalidate>
+        <h2>Customer information</h2>
+        <div class="form-field"><label for="customer-name">Name</label><input id="customer-name" name="name" autocomplete="name" minlength="2" maxlength="100" required /></div>
+        <div class="form-field"><label for="customer-email">Email address</label><input id="customer-email" name="email" type="email" autocomplete="email" maxlength="254" required /><small>Used only as demonstration customer data in the selected order database.</small></div>
+        <button class="button" type="submit">Create simulated order — no payment</button>
+      </form>
+      <noscript><p class="unavailable-note">JavaScript is required for the interactive checkout. Offering terms remain available on the <a href="/store/">store page</a>.</p></noscript>
+    </main>
+    <footer class="site-footer"><p>The browser cannot set the final price or order total. Every offering and amount is revalidated on the server.</p></footer>
+  </body>
+</html>

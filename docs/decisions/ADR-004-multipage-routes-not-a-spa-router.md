@@ -15,23 +15,27 @@ cannot run.
 Each route is a real `.html` file built by Vite through `rollupOptions.input`:
 
 ```
-index.html                      → the room + conventional fallback content
+index.html                       → the room + conventional fallback content
+games/index.html                 → catalogue
 games/placeholder-slug/index.html → the game page
+store/index.html                 → offerings
+cart/index.html                  → persistent cart
+checkout/index.html              → simulated checkout
+order/index.html                 → confirmation
 ```
 
 No router library exists in the project. Links are ordinary `<a href>` elements. Vue mounts only
-inside the room page, and only after the room starts.
+inside the room page, and only after the room starts. M5 adds a Vite static-content transform so
+data-heavy cards and details are generated from shared records in both development and production.
 
 ## Consequences
 
-- Every page's content is in the served HTML before any script runs. Verified by fetching the
-  room page with `curl` and confirming the studio letter, the game title, the three empty shelf
-  positions and the link to the game page are all present (T08).
-- The game page ships **zero JavaScript** — the built page references only the shared stylesheet.
-- Deep links work on any static host without rewrite rules, which narrows the hosting choice.
-- Cost: shared markup (header, footer, fallback list) is duplicated between pages rather than
-  composed once. With two pages that duplication is cheaper than a templating layer. If the store
-  adds four more pages, the duplication should be revisited — a build-time include or a small
-  component-rendered-to-HTML step, not a client router.
+- Catalogue, game and store information is in served HTML before scripts run, verified by R8 and
+  C12 with JavaScript disabled. Interactive cart/checkout/order pages explain their JS requirement.
+- The game page loads only the small shared cart-badge controller; its substantive content does
+  not depend on that script.
+- Deep links work on static directory hosts; sales routes additionally require the Express API.
+- Cost: shared header/footer markup is duplicated between pages. Data-heavy content is generated
+  by the build-time plugin rather than copied, and normal browser history is preserved.
 - State that must survive between pages lives in the URL (`?game=<slug>`, `?view=list`), which is
   also what makes a shared room/game selection linkable.

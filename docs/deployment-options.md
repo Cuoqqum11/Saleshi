@@ -7,11 +7,12 @@ record of the options, written so the choice can be made later without re-derivi
 
 Two different things, which is why one host may not be enough:
 
-1. **Static front end** — `npm run build` produces plain HTML/CSS/JS in `dist/`. The room page and
-   the game page both work with no server logic at all (verified: the game page loads zero
-   JavaScript).
-2. **Back end** — the pay-what-you-want / support flow needs a server that recomputes prices and
-   writes orders to a database. That is planned as Express + MySQL and does not exist yet.
+1. **Static front end** — `npm run build` produces plain HTML/CSS/JS in `dist/`. Room, catalogue,
+   game and store information remains readable without the API, while cart and checkout need their
+   browser controllers and server.
+2. **Back end** — Express recomputes prices and writes simulated orders through the MySQL
+   repository. The implementation exists and passed with the explicit memory test adapter; a real
+   MySQL deployment has not yet been verified.
 
 ## Options
 

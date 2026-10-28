@@ -141,11 +141,21 @@ try {
     const screen = document.getElementById('monitor-screen')
     const links = [...screen.querySelectorAll('a')].map((a) => a.textContent.trim())
     const chips = [...document.querySelectorAll('.proxy')].map((b) => b.textContent.trim())
-    return { hidden: screen.hidden, links, chips, docked: screen.classList.contains('is-docked') }
+    return { hidden: screen.hidden, links, chips, layout: window.__saleshiRoom.stats().panelLayout }
   })
-  record('G1c', 'computer panel is visible with live and unavailable actions',
-    panel.hidden === false && panel.links.length >= 1,
-    `links=${JSON.stringify(panel.links)} chips=${JSON.stringify(panel.chips)} docked=${panel.docked}`)
+  record('G1c', 'computer side panel is visible with live and unavailable actions',
+    panel.hidden === false && panel.links.length >= 1 && panel.layout === 'side',
+    `links=${JSON.stringify(panel.links)} chips=${JSON.stringify(panel.chips)} layout=${panel.layout}`)
+
+  // --- G4: the side panel cannot occlude the computer's own interaction chip ---------
+  const computerHit = await page.evaluate(() => {
+    const chip = document.querySelector('.proxy[data-interact-id="computer"]')
+    const rect = chip.getBoundingClientRect()
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    return { clickable: hit === chip, hit: hit ? `${hit.tagName}.${hit.className}` : null }
+  })
+  record('G4', 'the computer chip remains clickable at the desk with the panel open (D11)',
+    computerHit.clickable, `hit=${computerHit.hit}`)
 
   // --- G2: Space activates the focused cassette button -------------------------
   await page.goto(`${BASE}/?view=room`)
@@ -167,14 +177,14 @@ try {
   await page.waitForTimeout(1300)
   await page.screenshot({ path: OUT('m2-02-shelf-integrated.png') })
   const shelf = await page.evaluate(() => {
-    const stage = document.getElementById('stage').getBoundingClientRect()
+    const viewport = document.getElementById('room-viewport').getBoundingClientRect()
     const chips = [...document.querySelectorAll('.proxy')].map((b) => {
       const r = b.getBoundingClientRect()
-      return { label: b.textContent.trim(), inside: r.left >= stage.left && r.right <= stage.right && r.top >= stage.top && r.bottom <= stage.bottom }
+      return { label: b.textContent.trim(), inside: r.left >= viewport.left && r.right <= viewport.right && r.top >= viewport.top && r.bottom <= viewport.bottom }
     })
     return { station: window.__saleshiRoom.stats().station, chips }
   })
-  record('G3', 'shelf station renders with every chip inside the stage',
+  record('G3', 'shelf station renders with every chip inside the room viewport',
     shelf.station === 'shelf' && shelf.chips.every((c) => c.inside),
     JSON.stringify(shelf.chips))
 } catch (error) {

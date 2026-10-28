@@ -1,79 +1,35 @@
 <!doctype html>
-<html lang="en" data-room="off">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[PLACEHOLDER] Untitled game — Saleshi</title>
-    <meta
-      name="description"
-      content="Placeholder project page for the studio's featured game. Title, description, artwork, demo and download availability have not been supplied yet."
-    />
+    <title>{{GAME_TITLE}} — Saleshi</title>
+    <meta name="description" content="{{GAME_SUMMARY}}" />
     <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/pages.css" />
+    <script type="module" src="/src/js/pages/cartBadge.js"></script>
   </head>
-  <body>
+  <body data-game-id="placeholder-slug">
     <a class="skip-link" href="#game-summary">Skip to the game summary</a>
-
     <header class="site-header">
       <a class="brand" href="/">Saleshi <span class="placeholder-flag">studio name not final</span></a>
       <nav class="site-nav" aria-label="Main">
         <ul>
           <li><a href="/#room">The room</a></li>
-          <li><a href="/#games">Games</a></li>
+          <li><a href="/games/" aria-current="page">Games</a></li>
+          <li><a href="/store/">Store</a></li>
+          <li><a href="/cart/">Cart <span data-cart-count hidden></span></a></li>
         </ul>
       </nav>
     </header>
-
-    <main>
+    <main class="page-shell">
       <article>
-        <header>
-          <h1>[PLACEHOLDER] Untitled game</h1>
-          <p><span class="status-badge">In development</span></p>
-        </header>
-
-        <!-- Deliberately a plain HTML page with no script: the same content the room's
-             computer screen shows has to be readable at a real URL without JavaScript. -->
-        <section id="game-summary">
-          <h2>Description</h2>
-          <p>
-            PLACEHOLDER — the game's premise and description have not been supplied. Nothing is
-            written here that has not been decided by the studio.
-          </p>
-          <p><strong>Genre:</strong> not supplied.</p>
-          <p><strong>Release information:</strong> not supplied.</p>
-        </section>
-
-        <section id="media">
-          <h2>Screens</h2>
-          <p class="unavailable-note">
-            No cover artwork or screenshots have been supplied. Placeholder images would look
-            like real game art, so none are shown.
-          </p>
-        </section>
-
-        <section id="get-the-game">
-          <h2>Getting the game, and supporting it</h2>
-          <p>
-            The intended model is a free version on itch.io alongside a pay-what-you-want
-            contribution through this website. Neither is switched on yet:
-          </p>
-          <p class="unavailable-note">
-            itch.io page — the address has not been supplied, so this is not a link.
-          </p>
-          <p class="unavailable-note">
-            Support the studio — contribution amounts and currency are undecided, and the tutor
-            has not confirmed that this model satisfies the assignment's sales requirement.
-          </p>
-          <p class="unavailable-note">
-            Browser demo and downloadable build — no build has been supplied yet.
-          </p>
-        </section>
-
-        <p><a class="button secondary" href="/#games">Back to the games list</a></p>
+        <div data-static-content="game-details" data-game="placeholder-slug"></div>
+        <p><a class="button secondary" href="/games/">Back to the catalogue</a></p>
       </article>
     </main>
-
     <footer class="site-footer">
-      <p>Milestone 1 placeholder content. This page will be replaced once real project details arrive.</p>
+      <p>Game information comes from the same project record used by the room and catalogue. Placeholder fields identify information still awaiting the studio.</p>
     </footer>
   </body>
 </html>

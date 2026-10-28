@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Games catalogue — Saleshi</title>
+    <meta name="description" content="The conventional, accessible catalogue of Saleshi game projects and their current availability." />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/pages.css" />
+    <script type="module" src="/src/js/pages/cartBadge.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#catalogue">Skip to the catalogue</a>
+    <header class="site-header">
+      <a class="brand" href="/">Saleshi <span class="placeholder-flag">studio name not final</span></a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="/#room">The room</a></li>
+          <li><a href="/games/" aria-current="page">Games</a></li>
+          <li><a href="/store/">Store</a></li>
+          <li><a href="/cart/">Cart <span data-cart-count hidden></span></a></li>
+        </ul>
+      </nav>
+    </header>
+    <main class="page-shell" id="catalogue">
+      <header class="page-heading">
+        <p class="screen-cue">Conventional catalogue</p>
+        <h1>Games</h1>
+        <p>This is the same catalogue represented by the cassettes in the 3D room. It works without WebGL and its game information is present in the HTML without JavaScript.</p>
+      </header>
+      <div data-static-content="catalogue"></div>
+    </main>
+    <footer class="site-footer"><p>Only announced projects appear here. Empty shelf positions are not presented as games.</p></footer>
+  </body>
+</html>

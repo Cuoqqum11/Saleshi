@@ -19,13 +19,13 @@
       <a class="brand" href="/">
         Saleshi <span class="placeholder-flag">studio name not final</span>
       </a>
-      <!-- Nav only points at things that exist. Devlog, About and Store links are
-           added when those pages exist. -->
       <nav class="site-nav" aria-label="Main">
         <ul>
           <li><a href="#room">The room</a></li>
           <li><a href="#studio-letter">Studio letter</a></li>
-          <li><a href="#games">Games</a></li>
+          <li><a href="/games/">Games</a></li>
+          <li><a href="/store/">Store</a></li>
+          <li><a href="/cart/">Cart <span data-cart-count hidden></span></a></li>
         </ul>
       </nav>
     </header>
@@ -53,9 +53,11 @@
         </div>
 
         <div class="stage" id="stage" hidden>
-          <!-- Three.js inserts its canvas here. -->
-          <div id="room-proxy-layer"></div>
-          <div id="monitor-screen" hidden aria-label="The studio computer"></div>
+          <div class="room-viewport" id="room-viewport">
+            <!-- Three.js inserts its canvas here. -->
+            <div id="room-proxy-layer"></div>
+          </div>
+          <section id="monitor-screen" hidden aria-label="The studio computer"></section>
         </div>
 
         <div class="room-controls" id="room-controls" hidden>
@@ -75,6 +77,7 @@
         </div>
 
         <noscript>
+          <style>html[data-room] #room-launcher, html[data-room] #room-status { display: none; }</style>
           <p class="unavailable-note">
             JavaScript is switched off, so the 3D room is not running. Everything the room
             contains — the studio letter, the games and what is available for each one — is
@@ -118,34 +121,8 @@
           </p>
         </header>
 
-        <ul class="game-list">
-          <li class="game-card">
-            <h3>
-              <a href="/games/placeholder-slug/">[PLACEHOLDER] Untitled game</a>
-            </h3>
-            <p><span class="status-badge">In development</span></p>
-            <p>
-              PLACEHOLDER — a description of the game has not been supplied yet. Cover artwork,
-              screenshots and a playable build are also still to come.
-            </p>
-            <p class="unavailable-note">
-              Browser demo, download and itch.io links are not available yet, so they are not
-              offered as buttons here either.
-            </p>
-          </li>
-          <li class="game-card is-empty">
-            <h3>Shelf position 2</h3>
-            <p>Empty. Reserved for a future project; nothing has been announced.</p>
-          </li>
-          <li class="game-card is-empty">
-            <h3>Shelf position 3</h3>
-            <p>Empty. Reserved for a future project; nothing has been announced.</p>
-          </li>
-          <li class="game-card is-empty">
-            <h3>Shelf position 4</h3>
-            <p>Empty. Reserved for a future project; nothing has been announced.</p>
-          </li>
-        </ul>
+        <div data-static-content="home-games"></div>
+        <p><a href="/games/">Open the full catalogue</a> · <a href="/store/">View creator support</a></p>
       </section>
     </main>
 
@@ -181,8 +158,9 @@
 
     <footer class="site-footer">
       <p>
-        Grey-box prototype. Placeholder content throughout, no store and no back end yet.
-        See <code>docs/open-requirements.md</code> for what is still unresolved.
+        Grey-box room prototype with placeholder game information. Creator support uses a
+        simulated checkout: no payment is taken. Unresolved content and product decisions are
+        recorded in <code>docs/open-requirements.md</code>.
       </p>
     </footer>
   </body>

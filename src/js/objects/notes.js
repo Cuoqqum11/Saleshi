@@ -39,12 +39,13 @@ export function createWallNotes() {
     tilt: 0.03,
   })
 
-  // The short instruction note beside the computer, on the north wall.
+  // The short instruction note beside the computer, on the north wall. Its x position leaves
+  // it inside the desk station's narrower side-panel viewport instead of just off the left edge.
   const howto = pinnedPaper({
     id: 'how-to',
     width: 0.21,
     height: 0.297,
-    position: { x: 0.35, y: 1.45, z: -2.97 },
+    position: { x: 0.75, y: 1.45, z: -2.97 },
     rotationY: 0,
     tilt: -0.05,
   })

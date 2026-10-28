@@ -1,8 +1,8 @@
 # Test plan and results
 
 Living record of what was actually exercised, per milestone. Scope of each milestone is stated
-with it; store routes, the back end and any payment flow remain out of scope until separately
-approved.
+with it. M5 adds the store, back end and a simulated order workflow; real payment processing remains
+out of scope unless separately approved.
 
 Environment for every row: Chromium (headless where noted) against `npm run dev` on
 `http://localhost:5173`, Windows 10, `prefers-reduced-motion: reduce` active at the operating
@@ -150,29 +150,76 @@ that comes next:
 | --- | --- | --- | --- |
 | D11 | At the desk station the anchored panel covers the computer chip, so that one control cannot be reached with the mouse while standing at the desk | chip centre (640, 366) hit-tests to a `p` inside `#monitor-screen` with `docked=false`; `Tab` still reaches the chip and Enter still activates it, and any camera move uncovers it | Open — M5 reworks what the panel shows, so the collision between panel and chip is fixed there rather than with a second offset rule now |
 
+## Milestone 5 — discovery, catalogue, cart and simulated sales workflow
+
+Scope: separate game/offering records, richer computer states, static catalogue/details/store HTML,
+persistent cart, Express API, MySQL schema/repository, simulated orders, direct routes, responsive
+fallbacks and integrated evidence. Instruments: `tests/commerce.test.mjs`,
+`tests/e2e/commerce.mjs`, `tests/e2e/routes.mjs`, plus all earlier suites. The development server
+and production build were both exercised with **explicit `DB_DRIVER=memory`**. No MySQL result is
+claimed.
+
+| # | Test | Result |
+| --- | --- | --- |
+| Server unit tests | Quote recomputation, invalid/unknown/duplicate lines, amount bounds and decimal precision, fixed-price authority, customer validation, random references, one order + line | Pass — 6/6 |
+| C1–C2 | Shared catalogue and reusable details route | Pass — one real placeholder record, no invented games |
+| C3–C6 | Store add, cart navigation/reload recovery, amount update, remove and empty state | Pass — no quantity control for voluntary support |
+| C7–C8 | Customer validation and tampered amount/forged total rejection | Pass — client error shown; server returned 400 |
+| C9–C11 | Simulated order, safe confirmation, reload retrieval, customer-field omission and cart clearing | Pass — correct £12.50 total and one line |
+| C12 | Store without JavaScript | Pass — terms and price readable, nonfunctional form hidden |
+| C13 | Uncaught browser errors through the commerce flow | Pass — none |
+| Production commerce | C1–C13 against `npm start` serving `dist/` and the API | Pass — 13/13 with the memory adapter |
+| R1 | Direct `?game=` URL restores selection and computer state | Pass — primary link text/background also measured as different colours |
+| R2 | Synthetic test-only panel fixture | Pass — cover, two screenshots, demo/download/itch links render; fixture never enters site data |
+| R3 | Browser back/forward across catalogue and details | Pass |
+| R4 | Intermediate 768 px and 900 px room layouts | Pass — no overflow; panel separate from viewport |
+| R5 | 390 px touch layout with selected panel | Pass — drawer separate, 26.5% of stage height, no overflow |
+| R6 | No WebGL | Pass — useful catalogue remains and impossible launcher is disabled |
+| R7 | Reduced-data preference | Pass — text first with an optional working launcher |
+| R8 | Homepage without JavaScript | Pass — shared game content and store navigation remain; dead launcher/status hidden |
+| D11 regression | Panel/chip separation at desk, shelf and walking positions | Pass — G4, W2b and W7b; resolved by grid regions rather than offsets |
+| Earlier suites | Room entry/keyboard, papers including direct mesh raycast, movement/collision/reduced motion | Pass — gate 11/11, papers 8/8, movement 15 passed / 0 failed / 2 visual notes |
+| Build | All seven HTML routes and lazy room chunk | Pass — entry 5.16 kB (2.26 kB gzip); room 623.51 kB (167.95 kB gzip), size warning retained |
+
+Defects found and fixed during M5:
+
+| # | Defect | Fix |
+| --- | --- | --- |
+| D11 | Anchored computer panel could cover its chip | Replaced anchoring with separate viewport/panel grid regions and a bounded mobile drawer; tested at desk, shelf and arbitrary walking positions |
+| D12 | Store offering form did not render | The static marker had extra attributes and did not match the exact transform marker; wrapped an exact marker inside the offering container, then C3–C12 passed |
+| D13 | No-JS launcher still looked functional | Added a no-script rule with sufficient specificity to hide launcher and checking status; R8 passes |
+| D14 | Primary computer link text matched its background | Corrected the ID-selector override and added a computed-colour assertion to R1 |
+
 ## Still not verified — open limitations
 
-| # | Gap | Why it is still open |
+| # | Gap | Current status |
 | --- | --- | --- |
-| B2 | Frame rate in a visible tab on real hardware | Headless SwiftShader and backgrounded tabs give no honest fps figure. Needs one manual look on a real GPU. |
-| B4 | Drag-to-look with touch | E5 taps a chip; no touch *drag* to turn the camera has been exercised, on emulation or on a device. |
-| B5 | Cross-browser behaviour | One Chromium engine. The `<dialog>` focus return in particular is now done explicitly because Chromium and the spec differ, but Firefox and Safari have not been run. |
-| B6 | Layout at intermediate widths, and the room-first column by eye on a phone | 1280 px and 390 px tested structurally; 700–900 px and landscape mobile were not. `m4-03-phone-room.png` is a real 390 px render and has had one human look; a physical handset has not. |
-| B7 | The reduced-data entry path | `roomDecision()` withdraws the room when `navigator.connection.saveData` is set. No Chromium context in these runs reported `saveData`, so that branch has never executed. |
-| B8 | Screen-reader session | Live regions and labels are asserted in the DOM, but no actual assistive-technology session has been run. |
-| B9 | Selecting a paper by clicking the 3D sheet itself | P2 clicks the DOM chip. The mesh path shares `interactables` and the same `handleSelect` branch as the cassettes, which were tested in M1, but the paper meshes were not hit-tested by raycast. |
-| B10 | The phone room with the panel open | E4/E5 assert structure. In `m4-03-phone-room.png` the docked panel covers most of the 390 px stage — readable and scrollable, but whether that is the right balance on a real thumb-held device is a judgement for a device test. |
+| B2 | Frame rate in a visible tab on real hardware | Open — headless SwiftShader gives no honest hardware fps figure. |
+| B4 | Drag-to-look with touch | Open — E5 taps a chip, but no physical or emulated touch drag has turned the camera. |
+| B5 | Cross-browser behaviour | Open — Chromium only; Firefox and Safari have not run. |
+| B6 | Intermediate layouts and phone panel | Closed in Chromium — R4 covers 768/900 px; R5 and `m5-02-phone-panel.png` cover the bounded 390 px drawer. Physical handsets and landscape remain open. |
+| B7 | Reduced-data entry | Closed by R7 using an explicit `saveData` browser fixture. |
+| B8 | Screen-reader session | Open — semantic markup, labels and live regions are asserted, but no assistive-technology session has run. |
+| B9 | Direct 3D paper selection | Closed by P8 — a projected point on the actual sheet hit `CANVAS` and opened the instruction dialog through raycasting. |
+| B10 | Phone panel occlusion | Closed structurally by R5 — the drawer is below the viewport, not over it, and occupied 26.5% of the stage in the measured run. |
+| B11 | MySQL integration | Open — schema, shared-record seed and parameterised transactional repository exist, but `mysql` was not installed and no server was configured. All executed API/order tests explicitly used memory storage. |
+| B12 | Deployed operation | Open — production build/API passed locally; DNS, HTTPS, public hosting, backups and live MySQL remain unverified. |
 
 ## Re-running these tests
 
 ```
-npm run dev                 # then http://localhost:5173
-node tests/e2e/gate.mjs     # E1–E5 entry + G1–G3 keyboard gate, integrated screenshots
-node tests/e2e/papers.mjs   # P1–P7 pinned papers, readable view, state preservation
-node tests/e2e/movement.mjs # W1–W12, walk-mode screenshots
-npm run build               # T09/T10 chunk sizes are printed by the build
+DB_DRIVER=memory npm run dev # explicit test adapter; otherwise configure MySQL
+npm run test:commerce        # six server-side unit tests
+node tests/e2e/gate.mjs      # entry + keyboard + panel/chip separation
+node tests/e2e/papers.mjs    # chip, keyboard and direct raycast paper paths
+node tests/e2e/movement.mjs  # movement, collision, reduced motion and layout
+node tests/e2e/commerce.mjs  # catalogue → store → cart → checkout → confirmation
+node tests/e2e/routes.mjs    # direct URLs, history, responsive and fallback paths
+npm run build
+DB_DRIVER=memory npm start   # optionally repeat commerce against production
 ```
 
 Useful handles while developing: `?view=list` forces the text view, `?view=room` forces the room,
 `?game=<slug>` preselects a cassette, and in dev mode `window.__saleshiRoom` exposes
-`isRunning()`, `stats()`, `render()`, `snapshot()`, `start()` and `stop()`.
+`isRunning()`, `stats()`, `render()`, `snapshot()`, `start()`, `stop()`,
+`projectInteractable()` and the test-only `previewPanelGame()` fixture boundary.

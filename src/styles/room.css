@@ -52,16 +52,26 @@ html[data-room='on'] .room-controls {
 #room-status[data-state='busy']::before { content: '· '; color: var(--amber); }
 
 .stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 23rem);
   position: relative;
   height: clamp(22rem, 62vh, 40rem);
   background: var(--ink-2);
   border: 1px solid var(--ink-3);
   border-radius: var(--radius);
   overflow: hidden;
-  touch-action: none; /* drag-to-look owns touch; page scroll stays outside the stage */
+}
+.stage[hidden] { display: none; }
+
+.room-viewport {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none; /* drag-to-look owns touch; page scroll stays outside the room */
 }
 
-.stage canvas { display: block; width: 100%; height: 100%; }
+.room-viewport canvas { display: block; width: 100%; height: 100%; }
 
 /* --- DOM focus-proxy layer: real buttons riding on top of 3D objects. --- */
 #room-proxy-layer {
@@ -97,42 +107,23 @@ html[data-room='on'] .room-controls {
 .proxy.is-clamped { border-style: dashed; opacity: 0.92; }
 .proxy.is-clamped::after { content: attr(data-edge-hint); margin-left: 0.4em; color: var(--amber); }
 
-/* --- The computer screen: an HTML island framed by the 3D monitor. --- */
+/* --- The computer screen: a separate HTML panel, never laid over the room or its chips.
+   On wide screens it is the monitor's side panel; on narrow screens it becomes a bounded drawer
+   beneath the room. Both presentations keep every 3D interaction visible and clickable. --- */
 #monitor-screen {
-  position: absolute;
-  left: var(--screen-x, 50%);
-  top: var(--screen-y, 50%);
-  width: var(--screen-w, min(22rem, 60%));
-  /* At least as tall as the monitor's projected box, but never shorter than its own content:
-     a fixed height clipped the action list off the bottom of the screen. The proxy can still
-     end up taller than the stage, so cap it and scroll internally rather than hang off it. */
-  height: auto;
-  min-height: var(--screen-h, auto);
-  max-height: calc(100% - 1.25rem);
-  transform: translate(-50%, -50%);
-  padding: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  padding: 0.9rem;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   background: #10130f;
   color: #cfe6b8;
-  border: 1px solid #3d4a35;
-  border-radius: 3px;
+  border-left: 1px solid #3d4a35;
   font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
   font-size: 0.8rem;
   line-height: 1.45;
   box-shadow: inset 0 0 24px rgb(0 0 0 / 60%);
-}
-/* When the monitor is too far away or off view, the panel docks so text stays readable. */
-#monitor-screen.is-docked {
-  --screen-x: auto;
-  left: auto;
-  right: var(--space-2);
-  top: auto;
-  bottom: var(--space-2);
-  width: min(24rem, calc(100% - 2 * var(--space-2)));
-  height: auto;
-  max-height: calc(100% - 2 * var(--space-2));
-  transform: none;
-  overflow-y: auto;
 }
 .screen-inner { display: grid; gap: 0.6rem; }
 .screen-inner h2 { margin: 0; font-size: 1rem; color: #eaf6dc; letter-spacing: 0.03em; }
@@ -158,6 +149,35 @@ html[data-room='on'] .room-controls {
   font-size: 0.75rem;
 }
 .screen-unavailable strong { display: block; color: #a9bd97; font-weight: 600; }
+.screen-subheading { margin: 0.25rem 0 0; color: #eaf6dc; font-size: 0.86rem; }
+.screen-media { margin: 0; }
+.screen-media img,
+.screen-screenshots img { display: block; width: 100%; height: auto; }
+.screen-screenshots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
+.screen-media-placeholder {
+  padding: 0.6rem;
+  border: 1px dashed #4a5741;
+  color: #8ba07a !important;
+}
+.screen-offering { display: grid; gap: 0.45rem; padding-top: 0.35rem; border-top: 1px solid #3d4a35; }
+.screen-offering form { display: grid; gap: 0.35rem; }
+.screen-offering-row { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: end; }
+.screen-offering input {
+  min-width: 6rem;
+  width: 8rem;
+  padding: 0.4rem;
+  background: #eaf6dc;
+  color: #16200f;
+  border: 1px solid #8ba07a;
+  font: inherit;
+}
+button.screen-link { border: 0; font: inherit; cursor: pointer; }
+.screen-terms { font-size: 0.72rem; }
+.screen-cart-message { padding: 0.45rem; border-left: 2px solid var(--olive); }
+#monitor-screen a { color: #cfe6b8; }
+#monitor-screen a.screen-link { color: #16200f; }
+#monitor-screen a:hover { color: #fff; }
+#monitor-screen a.screen-link:hover { color: #16200f; }
 
 /* --- Control bar: the stable keyboard path, independent of the camera. --- */
 .room-controls {
@@ -226,6 +246,16 @@ noscript .paper { margin-top: var(--space-2); }
 .paper-dialog .station-button:hover { color: var(--text-on-paper); border-color: var(--text-on-paper); }
 
 @media (max-width: 700px) {
-  .stage { height: clamp(18rem, 52vh, 26rem); }
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(12rem, 1fr) auto;
+    height: clamp(18rem, 52vh, 26rem);
+  }
+  .room-viewport { min-height: 12rem; }
+  #monitor-screen {
+    max-height: 45%;
+    border-top: 1px solid #3d4a35;
+    border-left: 0;
+  }
   .proxy { font-size: 0.72rem; }
 }
