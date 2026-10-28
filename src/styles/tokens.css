@@ -1,0 +1,43 @@
+/* Colour and spacing tokens.
+ * Provisional art direction from PROJECT DECISIONS ADDENDUM v0.2 §2.1: dark muted
+ * materials, warm light, paper-like off-white. Final palette is still open.
+ * Pairs are chosen to clear WCAG AA contrast on the surfaces they are used on. */
+
+:root {
+  /* Surfaces */
+  --ink: #17130f;
+  --ink-2: #221c16;
+  --ink-3: #2f271e;
+  --paper: #f2e9d8;
+  --paper-2: #e0d2b6;
+
+  /* Text on dark */
+  --text-on-dark: #f2e9d8;
+  --text-on-dark-muted: #c3b49a;
+  --text-on-paper: #17130f;
+  --text-on-paper-muted: #5b5040;
+
+  /* Accents */
+  --amber: #e0a248;
+  --amber-deep: #b8761f;
+  --olive: #7f8462;
+  --rust: #b5583c;
+
+  /* Room materials (also mirrored in src/js/room/*, kept in sync manually for now) */
+  --floor: #3a2f24;
+  --wall: #4a3d2f;
+  --wood: #5c4630;
+  --plastic: #2b2b2e;
+
+  /* Focus is deliberately bright and thick: it is the only keyboard affordance. */
+  --focus: #ffd166;
+  --focus-ring: 0 0 0 3px var(--ink), 0 0 0 6px var(--focus);
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --measure: 62ch;
+  --radius: 4px;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}

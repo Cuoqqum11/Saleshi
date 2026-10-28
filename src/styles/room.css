@@ -1,0 +1,231 @@
+/* The immersive stage. Hidden unless the room actually starts, so the same page
+ * works with JavaScript off, without WebGL, or when the visitor chooses the list. */
+
+#room-stage { display: none; }
+html[data-room='on'] #room-stage { display: block; }
+html[data-room='on'] #room-launcher { display: none; }
+
+/* --- Room-first layout -----------------------------------------------------------
+ * When the room is running it *is* the page: the section becomes a full-viewport
+ * column — heading and status stay in the accessibility tree but leave the visual
+ * field — with the control bar as its bottom edge. The studio letter and the game
+ * list continue below the fold as the text fallback, exactly as they read with the
+ * room off. --header-h is measured in main.js; the fallback keeps the column sane
+ * before the first measurement. */
+html[data-room='on'] #room {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--header-h, 4rem));
+  padding-block: 0;
+  padding-inline: 0;
+}
+html[data-room='on'] #room > header,
+html[data-room='on'] #room-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html[data-room='on'] .stage {
+  flex: 1;
+  height: auto;
+  min-height: 12rem;
+  border: 0;
+  border-radius: 0;
+}
+html[data-room='on'] .room-controls {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--ink-3);
+  border-radius: 0;
+}
+
+#room-status {
+  margin: 0 0 var(--space-2);
+  color: var(--text-on-dark-muted);
+  font-size: 0.9rem;
+}
+#room-status[data-state='busy']::before { content: '· '; color: var(--amber); }
+
+.stage {
+  position: relative;
+  height: clamp(22rem, 62vh, 40rem);
+  background: var(--ink-2);
+  border: 1px solid var(--ink-3);
+  border-radius: var(--radius);
+  overflow: hidden;
+  touch-action: none; /* drag-to-look owns touch; page scroll stays outside the stage */
+}
+
+.stage canvas { display: block; width: 100%; height: 100%; }
+
+/* --- DOM focus-proxy layer: real buttons riding on top of 3D objects. --- */
+#room-proxy-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* only the proxy buttons themselves are interactive */
+}
+
+.proxy {
+  position: absolute;
+  left: 0; top: 0;
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  background: rgb(23 19 15 / 78%);
+  color: var(--text-on-dark);
+  border: 1px solid var(--amber-deep);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+.proxy:hover { border-color: var(--focus); }
+.proxy:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.proxy[aria-current='true'] { background: var(--amber); color: #201405; font-weight: 600; }
+
+/* The object exists but is outside the current view: kept in the tab order and
+ * pinned to the viewport edge so nothing becomes unreachable while the camera moves. */
+.proxy.is-clamped { border-style: dashed; opacity: 0.92; }
+.proxy.is-clamped::after { content: attr(data-edge-hint); margin-left: 0.4em; color: var(--amber); }
+
+/* --- The computer screen: an HTML island framed by the 3D monitor. --- */
+#monitor-screen {
+  position: absolute;
+  left: var(--screen-x, 50%);
+  top: var(--screen-y, 50%);
+  width: var(--screen-w, min(22rem, 60%));
+  /* At least as tall as the monitor's projected box, but never shorter than its own content:
+     a fixed height clipped the action list off the bottom of the screen. The proxy can still
+     end up taller than the stage, so cap it and scroll internally rather than hang off it. */
+  height: auto;
+  min-height: var(--screen-h, auto);
+  max-height: calc(100% - 1.25rem);
+  transform: translate(-50%, -50%);
+  padding: 0.75rem;
+  overflow-y: auto;
+  background: #10130f;
+  color: #cfe6b8;
+  border: 1px solid #3d4a35;
+  border-radius: 3px;
+  font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  box-shadow: inset 0 0 24px rgb(0 0 0 / 60%);
+}
+/* When the monitor is too far away or off view, the panel docks so text stays readable. */
+#monitor-screen.is-docked {
+  --screen-x: auto;
+  left: auto;
+  right: var(--space-2);
+  top: auto;
+  bottom: var(--space-2);
+  width: min(24rem, calc(100% - 2 * var(--space-2)));
+  height: auto;
+  max-height: calc(100% - 2 * var(--space-2));
+  transform: none;
+  overflow-y: auto;
+}
+.screen-inner { display: grid; gap: 0.6rem; }
+.screen-inner h2 { margin: 0; font-size: 1rem; color: #eaf6dc; letter-spacing: 0.03em; }
+.screen-inner p { margin: 0; color: #a9bd97; }
+.screen-cue { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--olive); }
+.screen-actions { display: grid; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
+
+.screen-link {
+  display: inline-block;
+  padding: 0.35rem 0.6rem;
+  background: #cfe6b8;
+  color: #16200f;
+  border-radius: 2px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.screen-link:hover { background: #fff; }
+.screen-unavailable {
+  padding: 0.35rem 0.6rem;
+  border: 1px dashed #4a5741;
+  border-radius: 2px;
+  color: #8ba07a;
+  font-size: 0.75rem;
+}
+.screen-unavailable strong { display: block; color: #a9bd97; font-weight: 600; }
+
+/* --- Control bar: the stable keyboard path, independent of the camera. --- */
+.room-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--ink-2);
+  border: 1px solid var(--ink-3);
+  border-radius: var(--radius);
+}
+.room-controls h2 { margin: 0 var(--space-2) 0 0; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-on-dark-muted); }
+.room-controls ul { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+
+.station-button {
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  color: var(--text-on-dark-muted);
+  border: 1px solid var(--ink-3);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.station-button:hover { color: var(--text-on-dark); border-color: var(--amber-deep); }
+.station-button[aria-current='true'] { background: var(--amber); color: #201405; border-color: var(--amber); font-weight: 600; }
+.station-button[aria-pressed='true'] { background: var(--olive); color: #14170e; border-color: var(--olive); font-weight: 600; }
+
+.room-hint { color: var(--text-on-dark-muted); font-size: 0.82rem; }
+.room-controls .room-hint { flex: 1 1 100%; margin: 0; }
+
+#room-launcher { display: grid; gap: var(--space-1); justify-items: start; }
+html[data-room='off'] #room-launcher { display: grid; }
+
+noscript .paper { margin-top: var(--space-2); }
+
+/* --- The readable paper view: a native dialog, so focus trap, Esc and focus restore
+   are the platform's, not ours. The content is the same .paper styling as the page. --- */
+.paper-dialog {
+  width: min(46rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  padding: clamp(var(--space-2), 4vw, var(--space-4));
+  margin: auto;
+  background: transparent;
+  border: 0;
+  color: var(--text-on-paper);
+}
+.paper-dialog::backdrop { background: rgb(10 8 5 / 78%); }
+.paper-dialog[open] { display: grid; gap: var(--space-2); }
+.paper-dialog-bar {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+.paper-dialog-bar h2 { margin: 0; font-size: 1.15rem; color: var(--text-on-dark); }
+.paper-dialog .paper { max-width: none; box-shadow: none; }
+.paper-dialog .station-button {
+  background: var(--paper);
+  color: var(--text-on-paper);
+  border-color: var(--paper-2);
+}
+.paper-dialog .station-button:hover { color: var(--text-on-paper); border-color: var(--text-on-paper); }
+
+@media (max-width: 700px) {
+  .stage { height: clamp(18rem, 52vh, 26rem); }
+  .proxy { font-size: 0.72rem; }
+}
