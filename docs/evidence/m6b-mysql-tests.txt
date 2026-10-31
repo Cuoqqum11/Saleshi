@@ -1,0 +1,28 @@
+# MySQL repository + commerce integration tests (restricted runtime account, constraint checks via admin connection)
+# Command: TEST_MYSQL_CONSTRAINTS=1 node --env-file=.env.mysql-admin.local --test tests/commerce.test.mjs
+# Run: 2026-10-28 06:25:42Z against portable MySQL 8.0.46 on 127.0.0.1:3307
+
+Repository under test: mysql
+✔ server quote recomputes the total from validated offering lines (41.7416ms)
+✔ server quote rejects tampered, malformed and unavailable offerings (19.3522ms)
+✔ fixed offering prices come from the server record, not the submitted amount (0.5825ms)
+✔ customer validation trims and normalises valid values and rejects invalid values (1.9136ms)
+✔ order references are unguessable and match the confirmation route format (0.9837ms)
+✔ checkout interaction identifiers are valid UUIDs and normalised for storage (1.4835ms)
+✔ order fingerprints are deterministic and change with validated order details (4.7528ms)
+✔ selected adapter creates and retrieves one order with its validated lines (21.6297ms)
+✔ repeating the same checkout interaction returns the original order (17.8251ms)
+✔ reusing a checkout interaction for different details is rejected (19.6162ms)
+✔ concurrent retries do not exhaust the connection pool or duplicate orders (75.5326ms)
+✔ MySQL rolls back the order and first line when the second line fails (11.3236ms)
+✔ MySQL enforces checks, preserves snapshots and restricts referenced deletion (30.7914ms)
+✔ MySQL order survives a verified application process restart (1352.0514ms)
+ℹ Persisted SAL-51EFBD3F7E827C27D541F49D723865BF; terminated PID 28900, retrieved via PID 26396
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1971.1681

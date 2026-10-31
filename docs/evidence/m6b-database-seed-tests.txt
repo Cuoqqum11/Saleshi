@@ -1,0 +1,19 @@
+# MySQL seed projection tests — node --test tests/database-seed.test.mjs
+# Run: 2026-10-28 08:35:47Z against portable MySQL 8.0.46 on 127.0.0.1:3307, administrator credentials from the ignored .env.mysql-admin.local
+
+
+> saleshi@0.0.0 test:database
+> node --test tests/database-seed.test.mjs
+
+✔ S1 seed projects the shared records into MySQL with no extra rows (373.8752ms)
+✔ S2 a superseded game row is pruned and re-running the seed changes nothing (1104.5564ms)
+✔ S3 an offering that leaves the records is retired, and its game survives while orders need it (880.625ms)
+✔ S4 historical orders are untouched by seeding and still retrieve (1009.5672ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3712.0309

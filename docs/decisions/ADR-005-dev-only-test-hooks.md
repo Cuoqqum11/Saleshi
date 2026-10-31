@@ -43,3 +43,10 @@ so the same numbers are read by hand in a visible tab.
 - Playwright is still the right tool for the next round of testing, specifically for keyboard
   activation with real key events (limitation B1), multi-engine checks and video evidence. It
   should be added when there are tests worth running repeatedly, not before.
+
+## Amendment (Milestone 6b)
+
+"Dev-only" became "dev-or-QA-only": the seams now key off `src/js/testHooks.js`, and
+`npm run build:qa` produces a production-shaped bundle in `dist-qa/` that keeps them so the room
+suites no longer need a development origin. The deployable `dist/` still ships none of them. See
+ADR-013.

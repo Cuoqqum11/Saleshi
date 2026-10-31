@@ -2,6 +2,7 @@
  * Entry point. Deliberately free of Three.js and Vue imports: nothing heavier than this file
  * is downloaded until a visitor actually chooses to enter the room.
  */
+import { TEST_HOOKS } from './testHooks.js'
 
 const els = {
   html: document.documentElement,
@@ -157,7 +158,7 @@ reducedMotionQuery.addEventListener('change', () => {
 
 decideInitialState()
 
-if (import.meta.env.DEV) {
+if (TEST_HOOKS) {
   window.__saleshiRoom = {
     isRunning: () => Boolean(room),
     stats: () => room?.getStats() ?? null,

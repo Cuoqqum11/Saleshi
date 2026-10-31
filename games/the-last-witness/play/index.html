@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Play The Last Witness in the browser — Saleshi</title>
+    <meta name="description" content="Run the exported browser build of The Last Witness, an archive-terminal deduction demo, without downloading or installing anything." />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/pages.css" />
+    <script type="module" src="/src/js/pages/cartBadge.js"></script>
+    <script type="module" src="/src/js/pages/gameDemo.js"></script>
+  </head>
+  <body data-game-id="the-last-witness">
+    <a class="skip-link" href="#demo">Skip to the demo</a>
+    <header class="site-header">
+      <a class="brand" href="/">Saleshi <span class="placeholder-flag">studio name not final</span></a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="/#room">The room</a></li>
+          <li><a href="/games/">Games</a></li>
+          <li><a href="/store/">Store</a></li>
+          <li><a href="/cart/">Cart <span data-cart-count hidden></span></a></li>
+        </ul>
+      </nav>
+    </header>
+    <main class="page-shell">
+      <header class="page-heading">
+        <p class="screen-cue">Browser demo · nothing is installed</p>
+        <h1>Play The Last Witness</h1>
+        <p>This is the studio's own WebAssembly export running inside the page. It is the same EV-044 case as the downloadable build, so progress made here stays on this device only.</p>
+      </header>
+
+      <section id="demo" aria-labelledby="demo-heading">
+        <h2 id="demo-heading">Before you load it</h2>
+        <ul>
+          <li>It downloads about {{DEMO_BYTES}} of engine and game data the first time, then caches it.</li>
+          <li>It needs JavaScript, WebAssembly, WebGL 2 and a secure page (https, or localhost while developing).</li>
+          <li>The interface is a dense text terminal designed around a 1280&times;800 window. On a phone in portrait, read the <a href="/games/the-last-witness/">game details</a> or use the <a href="{{DOWNLOAD_URL}}">desktop build ({{DOWNLOAD_BYTES}})</a> instead.</li>
+          <li>The build is a demo: it has not had a first-time player test, and it reports itself as a debug export.</li>
+        </ul>
+
+        <div class="demo-launch" id="demo-launch">
+          <p id="demo-status" role="status">Loading is off until you press the button, so this page never spends your bandwidth without asking.</p>
+          <button class="button" id="demo-start" type="button" hidden>Load the demo ({{DEMO_BYTES}})</button>
+          <button class="button secondary" id="demo-stop" type="button" hidden>Stop the demo and free its memory</button>
+          <noscript><p>JavaScript is disabled, so the demo cannot start here. The <a href="/game/web/index.html">exported build page</a> is available directly, and the <a href="{{DOWNLOAD_URL}}" download>desktop build</a> needs no browser at all.</p></noscript>
+        </div>
+
+        <div class="demo-frame" id="demo-frame" hidden></div>
+        <p class="unavailable-note" id="demo-note">The demo runs in its own frame. Use the browser's own reload if it stops responding, or stop it above and load it again.</p>
+      </section>
+
+      <p><a class="button secondary" href="/games/the-last-witness/">Back to the game details</a></p>
+    </main>
+    <footer class="site-footer"><p>The frame loads the unmodified export from /game/web/. Sizes and requirements on this page are measured from that export by npm run game:stage.</p></footer>
+  </body>
+</html>

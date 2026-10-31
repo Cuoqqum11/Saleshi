@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { TEST_HOOKS } from '../testHooks.js'
 import { buildRoomShell } from '../objects/roomShell.js'
 import { createShelf } from '../objects/shelf.js'
 import { createComputer } from '../objects/computer.js'
@@ -18,9 +19,9 @@ export function createScene({ stage, games, shelfCapacity }) {
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     powerPreference: 'high-performance',
-    // Dev only: keeps the drawing buffer readable so test evidence can be captured as a PNG
-    // without needing a visible browser surface. Costs a little memory; off in production.
-    preserveDrawingBuffer: Boolean(import.meta.env.DEV),
+    // Keeps the drawing buffer readable so test evidence can be captured as a PNG without needing a
+    // visible browser surface. Costs a little memory, so it is off in the deployed bundle.
+    preserveDrawingBuffer: TEST_HOOKS,
   })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO))
   renderer.shadowMap.enabled = false

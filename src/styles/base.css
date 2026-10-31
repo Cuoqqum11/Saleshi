@@ -4,6 +4,10 @@
 *::before,
 *::after { box-sizing: border-box; }
 
+/* Components set display on .button and similar classes, which silently beats the hidden
+   attribute. One rule keeps hidden meaning hidden everywhere. */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -23,6 +27,11 @@ h1, h2, h3 {
 }
 
 p { max-width: var(--measure); }
+
+/* Card markup carries the artwork's true pixel size so the page does not jump as it loads, which
+   means a page narrower than the artwork needs one standing constraint to stop the image widening
+   the document instead of scaling down. */
+img, video { max-width: 100%; height: auto; }
 
 a { color: var(--amber); text-underline-offset: 0.2em; }
 a:hover { color: var(--text-on-dark); }
@@ -158,6 +167,24 @@ section > header { margin-bottom: var(--space-2); }
 .game-card.is-empty {
   border-style: dashed;
   background: transparent;
+  color: var(--text-on-dark-muted);
+}
+
+/* The card markup is generated once and inserted on every page, including the room, which loads
+   base.css but not pages.css - so anything a card needs has to live here or it renders as bare text. */
+.media-badge {
+  margin-left: var(--space-1);
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--ink-3);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.game-cover { display: block; width: min(100%, 32rem); height: auto; }
+.media-placeholder,
+.empty-state {
+  padding: var(--space-2);
+  border: 1px dashed var(--ink-3);
   color: var(--text-on-dark-muted);
 }
 

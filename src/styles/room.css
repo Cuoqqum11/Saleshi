@@ -151,9 +151,8 @@ html[data-room='on'] .room-controls {
 .screen-unavailable strong { display: block; color: #a9bd97; font-weight: 600; }
 .screen-subheading { margin: 0.25rem 0 0; color: #eaf6dc; font-size: 0.86rem; }
 .screen-media { margin: 0; }
-.screen-media img,
-.screen-screenshots img { display: block; width: 100%; height: auto; }
-.screen-screenshots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
+.screen-media img { display: block; width: 100%; height: auto; }
+.screen-media-count { color: #8ba07a; font-size: 0.78rem; }
 .screen-media-placeholder {
   padding: 0.6rem;
   border: 1px dashed #4a5741;

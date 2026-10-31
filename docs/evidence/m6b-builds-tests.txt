@@ -1,0 +1,21 @@
+# staged game build tests — node --test tests/game-builds.test.mjs
+# Run: 2026-10-28 08:35:58Z against the staged public/ exports and the deployable dist served at http://127.0.0.1:5310
+
+
+> saleshi@0.0.0 test:builds
+> node --test tests/game-builds.test.mjs
+
+✔ the committed build record still matches what is staged in public/ (452.403ms)
+✔ the browser export is served with the exact bytes that were measured (224.2391ms)
+✔ the desktop archive unpacks to the recorded files, unchanged (1247.0955ms)
+✔ the archive carries the font licence text that the bundled fonts require (2.1835ms)
+✔ the site states build numbers taken from the measured record, not retyped ones (1.0658ms)
+✔ staged binaries still match the studio export folder when it is present (749.4689ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3018.1049

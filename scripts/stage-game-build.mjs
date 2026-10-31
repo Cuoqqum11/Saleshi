@@ -1,0 +1,281 @@
+/**
+ * Copies the studio's exported game builds into this site and records what was staged.
+ *
+ * The two build folders are ~140 MB of binaries, so they are never committed to Git. Instead this
+ * script copies them out of the Godot project into public/ (gitignored) and writes
+ * src/js/data/builds.js, which is committed. That module is the only source the site uses when it
+ * states a file size or hash, so every published claim about a build is machine-checkable against
+ * the real export rather than typed by hand.
+ *
+ * Usage:
+ *   node scripts/stage-game-build.mjs            copy, package and rewrite the record
+ *   node scripts/stage-game-build.mjs --check    verify what is already staged, copy nothing
+ *
+ * Source override: GAME_SOURCE_DIR=/path/to/godot/project (default below).
+ */
+
+import { createHash } from 'node:crypto'
+import { createReadStream, existsSync } from 'node:fs'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { spawnSync } from 'node:child_process'
+
+const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)))
+const SOURCE = path.resolve(process.env.GAME_SOURCE_DIR ?? 'D:/the_last_witness_godot/the_last_witness')
+const WEB_SOURCE_DIR = path.join(SOURCE, 'Web')
+const DESKTOP_SOURCE_DIR = path.join(SOURCE, 'Game')
+const FONT_LICENSE_DIR = path.join(SOURCE, 'assets/fonts')
+
+const WEB_TARGET_DIR = path.join(ROOT, 'public/game/web')
+const DOWNLOAD_TARGET_DIR = path.join(ROOT, 'public/downloads')
+const ARCHIVE_NAME = 'the-last-witness-windows-x64.zip'
+const ARCHIVE_PATH = path.join(DOWNLOAD_TARGET_DIR, ARCHIVE_NAME)
+const RECORD_PATH = path.join(ROOT, 'src/js/data/builds.js')
+
+// Godot writes .import sidecars for its editor; a web export does not need them at runtime.
+const WEB_EXCLUDES = ['.import']
+// The export names its entry file after the executable, so a copy also provides a directory index
+// without renaming or editing anything inside the studio's build.
+const WEB_ENTRY_SOURCE = 'The Last Witness.html'
+const WEB_ENTRY_COPY = 'index.html'
+
+// Bundling the fonts is permitted only while their licence text travels with the build, so the
+// archive carries them. See assets/fonts/LICENSES.md in the game project for the verdicts.
+const LICENSE_FILES = [
+  { source: 'upheaval.txt', target: 'LICENSE/upheaval.txt' },
+  { source: 'LICENSES.md', target: 'LICENSE/font-licenses.md' },
+]
+const README_NAME = 'README-WINDOWS.txt'
+
+// Git Bash puts GNU tar first on PATH and it has no zip support, so the Windows bsdtar build is
+// addressed directly instead of relying on PATH order.
+const BSD_TAR = path.join(process.env.SystemRoot ?? 'C:/Windows', 'System32', 'tar.exe')
+
+const WINDOWS_README = `The Last Witness - Windows desktop build
+=====================================
+
+Files in this archive
+  The Last Witness.exe   64-bit Windows executable (Godot 4.7, x86_64)
+  The Last Witness.pck   game data; it must stay in the same folder as the .exe
+  README-WINDOWS.txt     this file
+  LICENSE/               licence text for the fonts bundled inside the .pck
+
+How to run it
+  1. Extract the whole archive into one folder. Do not run the files from inside the zip.
+  2. Start "The Last Witness.exe". No installer, no administrator rights, no internet access.
+  3. The window opens at 1280x800 and is resizable. Mouse and keyboard.
+
+Before you start
+  The executable is not code-signed, so Windows SmartScreen may show a warning the first time you
+  run it. Choose "More info" and then "Run anyway" only if you trust where you got this archive.
+
+About this build
+  Exported from the Godot project "The Last Witness" with its "Windows Desktop" preset. It is a
+  demo of the EV-044 case, not a finished commercial release, and it has not been through a
+  storefront review or an automated scan by a distributor.
+`
+
+const sha256 = (filePath) => new Promise((resolve, reject) => {
+  const hash = createHash('sha256')
+  const stream = createReadStream(filePath)
+  stream.on('error', reject)
+  stream.on('data', (chunk) => hash.update(chunk))
+  stream.on('end', () => resolve(hash.digest('hex')))
+})
+
+const listFiles = async (dir) => {
+  const entries = await fs.readdir(dir, { withFileTypes: true })
+  const files = []
+  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    if (entry.isDirectory()) files.push(...await listFiles(path.join(dir, entry.name)))
+    else files.push(path.join(dir, entry.name))
+  }
+  return files
+}
+
+const describe = async (filePath, name) => ({
+  name: name ?? path.basename(filePath),
+  bytes: (await fs.stat(filePath)).size,
+  sha256: await sha256(filePath),
+})
+
+const readRecord = async () => {
+  if (!existsSync(RECORD_PATH)) return null
+  try {
+    const module = await import(`file://${RECORD_PATH.replaceAll(path.sep, '/')}`)
+    return module.gameBuilds ?? null
+  } catch {
+    return null
+  }
+}
+
+const writeRecord = async (record) => {
+  const banner = `/**
+ * Generated by scripts/stage-game-build.mjs — do not edit by hand.
+ *
+ * This is the site's only source of truth about the supplied game builds, so the sizes and hashes
+ * shown on the game page are the ones measured from the studio's export. Regenerate with
+ * \`npm run game:stage\`; \`npm run game:check\` re-verifies public/ against the values below.
+ * The build binaries themselves stay out of Git (see public/ in .gitignore).
+ */`
+  await fs.writeFile(
+    RECORD_PATH,
+    `${banner}\n\nexport const gameBuilds = ${JSON.stringify(record, null, 2)}\n`,
+    'utf8',
+  )
+}
+
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+const mib = (bytes) => (bytes / 1048576).toFixed(1)
+
+async function check() {
+  const record = await readRecord()
+  if (!record) throw new Error('No build record found. Run: npm run game:stage')
+  const problems = []
+
+  for (const file of record.web.files) {
+    const staged = path.join(WEB_TARGET_DIR, file.name)
+    if (!existsSync(staged)) { problems.push(`missing web file: ${file.name}`); continue }
+    const actual = await describe(staged)
+    if (actual.sha256 !== file.sha256) problems.push(`changed web file: ${file.name}`)
+    else if (actual.bytes !== file.bytes) problems.push(`size mismatch: ${file.name}`)
+  }
+  const [entryCopy, original] = [WEB_ENTRY_COPY, WEB_ENTRY_SOURCE]
+    .map((name) => path.join(WEB_TARGET_DIR, name))
+  if (existsSync(entryCopy) && existsSync(original)
+    && await sha256(entryCopy) !== await sha256(original)) {
+    problems.push(`${entryCopy} is no longer a copy of the exported entry file`)
+  }
+
+  if (!existsSync(ARCHIVE_PATH)) {
+    problems.push(`missing archive: ${path.relative(ROOT, ARCHIVE_PATH)}`)
+  } else {
+    const listed = spawnSync(BSD_TAR, ['-tf', ARCHIVE_PATH], { encoding: 'utf8' })
+    if (listed.status !== 0) problems.push(`archive cannot be read: ${listed.stderr.trim()}`)
+    else {
+      const names = new Set(listed.stdout.split(/\r?\n/).filter(Boolean).map((n) => n.replace(/^\.\//, '')))
+      for (const member of record.desktop.contents) {
+        if (!names.has(member.name)) problems.push(`archive is missing ${member.name}`)
+      }
+    }
+  }
+
+  if (problems.length) {
+    console.error(`Staged game builds do not match ${path.relative(ROOT, RECORD_PATH)}:\n- ${problems.join('\n- ')}`)
+    console.error('Fix with: npm run game:stage')
+    process.exitCode = 1
+    return
+  }
+  const runtimeFiles = record.web.files.filter((file) => file.name !== WEB_ENTRY_COPY)
+  console.log(`Game builds verified against the committed record: ${runtimeFiles.length} web files, ${record.desktop.contents.length} archive entries.`)
+}
+
+async function stage() {
+  for (const dir of [WEB_SOURCE_DIR, DESKTOP_SOURCE_DIR, FONT_LICENSE_DIR]) {
+    if (!existsSync(dir)) {
+      throw new Error(`Missing source directory: ${dir}\nSet GAME_SOURCE_DIR to the exported Godot project.`)
+    }
+  }
+
+  await fs.rm(WEB_TARGET_DIR, { recursive: true, force: true })
+  await fs.mkdir(WEB_TARGET_DIR, { recursive: true })
+  const webFiles = []
+  const exportFiles = (await listFiles(WEB_SOURCE_DIR))
+    .filter((file) => !WEB_EXCLUDES.some((suffix) => file.endsWith(suffix)))
+  for (const source of exportFiles) {
+    const target = path.join(WEB_TARGET_DIR, path.relative(WEB_SOURCE_DIR, source))
+    await fs.mkdir(path.dirname(target), { recursive: true })
+    await fs.copyFile(source, target)
+    webFiles.push(await describe(target))
+  }
+  const entryCopy = path.join(WEB_TARGET_DIR, WEB_ENTRY_COPY)
+  await fs.copyFile(path.join(WEB_TARGET_DIR, WEB_ENTRY_SOURCE), entryCopy)
+  const entryRecord = {
+    ...(await describe(entryCopy, WEB_ENTRY_COPY)),
+    note: `byte-identical copy of ${WEB_ENTRY_SOURCE}, so the folder has a directory index`,
+  }
+
+  const stagingDir = await fs.mkdtemp(path.join(ROOT, '.game-build-'))
+  try {
+    const members = []
+    for (const source of await listFiles(DESKTOP_SOURCE_DIR)) {
+      const name = path.basename(source)
+      await fs.copyFile(source, path.join(stagingDir, name))
+      members.push(name)
+    }
+    for (const license of LICENSE_FILES) {
+      const target = path.join(stagingDir, license.target)
+      await fs.mkdir(path.dirname(target), { recursive: true })
+      await fs.copyFile(path.join(FONT_LICENSE_DIR, license.source), target)
+      members.push(license.target)
+    }
+    await fs.writeFile(path.join(stagingDir, README_NAME), WINDOWS_README, 'utf8')
+    members.push(README_NAME)
+
+    await fs.mkdir(DOWNLOAD_TARGET_DIR, { recursive: true })
+    await fs.rm(ARCHIVE_PATH, { force: true })
+    const zip = spawnSync(BSD_TAR, [
+      '-a', '-cf', ARCHIVE_PATH,
+      '--options', 'zip:compression=deflate',
+      '-C', stagingDir, ...members,
+    ], { encoding: 'utf8' })
+    if (zip.status !== 0) throw new Error(`Could not build the archive: ${zip.stderr || zip.stdout}`)
+
+    const contents = []
+    for (const name of members) {
+      contents.push(await describe(path.join(stagingDir, name), name))
+    }
+    contents.sort((a, b) => a.name.localeCompare(b.name))
+
+    const archive = await describe(ARCHIVE_PATH)
+    const record = {
+      generatedBy: 'npm run game:stage',
+      sourceProject: 'The Last Witness (Godot)',
+      engine: {
+        name: 'Godot',
+        version: '4.7',
+        renderer: 'gl_compatibility',
+        webThreads: false,
+        windowSize: '1280x800',
+      },
+      web: {
+        servedAt: '/game/web/',
+        playPage: '/games/the-last-witness/play/',
+        requires: ['WebGL 2', 'JavaScript', 'a secure context (https or localhost)'],
+        bytes: webFiles.reduce((total, file) => total + file.bytes, 0),
+        files: [entryRecord, ...webFiles],
+      },
+      desktop: {
+        platform: 'Windows 10 or 11, 64-bit',
+        servedAt: `/downloads/${ARCHIVE_NAME}`,
+        archiveBytes: archive.bytes,
+        archiveStagedOn: new Date().toISOString().slice(0, 10),
+        compressedWith: 'deflate',
+        contents,
+      },
+    }
+    const previous = await readRecord()
+    await writeRecord(record)
+    const changed = !same(previous?.web?.files, record.web.files)
+      || !same(previous?.desktop?.contents, record.desktop.contents)
+    const buildBytes = contents
+      .filter((member) => member.name.startsWith('The Last Witness.'))
+      .reduce((total, member) => total + member.bytes, 0)
+    console.log(`Staged ${webFiles.length} web files (${mib(record.web.bytes)} MiB) and ${ARCHIVE_NAME}`)
+    console.log(`  archive ${(archive.bytes / 1048576).toFixed(1)} MiB from ${mib(buildBytes)} MiB of build files (${contents.length} entries).`)
+    console.log(changed
+      ? `${path.relative(ROOT, RECORD_PATH)} was rewritten: the build contents changed since the last staging.`
+      : `${path.relative(ROOT, RECORD_PATH)} is unchanged.`)
+  } finally {
+    await fs.rm(stagingDir, { recursive: true, force: true })
+  }
+}
+
+try {
+  if (process.argv.includes('--check')) await check()
+  else await stage()
+} catch (error) {
+  console.error(`Game build step failed: ${error.message}`)
+  process.exitCode = 1
+}

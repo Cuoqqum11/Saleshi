@@ -63,6 +63,10 @@ Provenance:
   not physical-device, screen-reader or real-GPU frame-rate evidence.
 - All customers/orders are synthetic and all contributions are simulated. No card details,
   passwords or administrator environment files are included here.
+- The suites write fixed filenames, so a later milestone's run overwrites these images. After the M6b
+  re-verification the current captures were copied to `m6b-05`…`m6b-10` and the `m6-*` files were
+  restored from Git, so this section still shows the placeholder-content site that M6 tested. Re-run
+  `routes.mjs` or `commerce.mjs` and they are overwritten again.
 
 ### Full-page captures
 
@@ -105,6 +109,92 @@ Provenance:
 | `m6-dependency-audit.json` | `npm audit --omit=dev --json` output at execution time; zero known production-dependency vulnerabilities is not a full security review. |
 
 Exact counts, defects, re-run commands and remaining gaps are in [the test plan](../../tests/test-plan.md).
-The database is a portable local instance in a temporary directory, not a backed-up service.
-Fresh-schema integration is verified; populated-schema migration, backup restoration, public
-hosting/DNS/HTTPS, other browsers, physical devices and assistive technology remain unverified.
+The database was then a portable local instance in a temporary directory, not a backed-up service;
+it was moved to `D:\saleshi-mysql` and a restore drill run afterwards, recorded in
+`m6b-database-relocation.txt` below.
+Fresh-schema integration is verified; populated-schema migration, scheduled/off-machine backups,
+public hosting/DNS/HTTPS, other browsers, physical devices and assistive technology remain
+unverified.
+
+## M6b — real game builds, catalogue projection and production-bundle re-verification, 28 October 2026
+
+The studio's Godot 4.7 exports replaced the placeholder game: a 38.8 MB browser demo that plays
+inside the site and a 35.1 MB Windows archive behind a download link. Every number quoted in these
+images comes from `src/js/data/builds.js`, which `npm run game:stage` generates by measuring the
+export folder; `npm run game:check` re-hashes it.
+
+Provenance:
+
+- The four `m6b-01`…`m6b-04` captures were written by the **last** `tests/e2e/game-builds.mjs` run, which
+  was against the **deployable** `dist/` build served with real MySQL at `http://127.0.0.1:5310`.
+  They therefore show exactly what a visitor receives, with no test hooks in the bundle.
+- `m6b-game-builds-tests.txt` (20/20), `m6b-routes-tests.txt` (29/29) and `m6b-room-tests.txt`
+  (gate/papers/movement) come from the **QA bundle** (`dist-qa/`, one chunk, room test hooks compiled
+  in) at `http://127.0.0.1:5314`, because those suites read renderer internals. The room and route
+  captures that run wrote under `m6-*` filenames were promoted to `m6b-05`…`m6b-07` and the `m6-*`
+  files restored from Git, so the M6 section above still shows the placeholder site it tested.
+- `m6b-05`…`m6b-10` are the same checks as their `m6-*` counterparts, re-captured against the real game:
+  the computer's catalogue state, the 390 px panel and the 844×390 landscape stage from the routes run
+  above, then the store page, the desktop order confirmation and the phone order from the commerce run
+  at `http://127.0.0.1:5310`. They exist because the suites reuse filenames.
+- The cover and three in-game frames the site publishes (`public/game/screenshots/`) were captured
+  from the browser build at 1280×800 while the demo was being integrated, by a throwaway Playwright
+  driver that is not in the repository. They are real frames of the real build — the evidence for that
+  is `B3` in the game-builds logs, which loads each one and asserts it decodes at 1280 px — but they
+  are not reproducible from a clone the way the binaries are, and the studio has not supplied its own
+  artwork. They are the one part of `public/` that belongs in Git, because the site cannot render
+  without them.
+- `m6b-game-builds-deployable-tests.txt` (19 passed, 0 failed, **1 skipped**),
+  `m6b-commerce-tests.txt`, `m6b-mysql-tests.txt`, `m6b-builds-tests.txt`,
+  `m6b-database-seed-tests.txt` and `m6b-build.txt` come from the deployable `dist/` build at
+  `http://127.0.0.1:5310` plus MySQL 8.0.46 on `127.0.0.1:3307` with the restricted runtime account.
+  The skip is the one hook-only room check, reported as a skip rather than a pass because
+  `npm run build` compiles those hooks away.
+- `m6b-memory-commerce-tests.txt` comes from the same deployable build served at
+  `http://127.0.0.1:5313` with `DB_DRIVER=memory` selected explicitly; `/api/health` on that origin
+  reports `databaseDriver: memory`. It is an adapter comparison, not database evidence.
+- `m6b-database-relocation.txt` is not a screenshot of the site. It records why the portable MySQL
+  instance was moved out of `%TEMP%` (Windows cleaned it mid-run and took `mysqld` with it), the
+  `mysqldump --single-transaction` → scratch-schema → compare → drop drill, and the two suites
+  re-run against the relocated server. The digests prove the restored rows match the live rows on
+  this machine only; it is one manual dump on one workstation, not a backup strategy.
+- Headless Chromium with SwiftShader; phone/tablet sizes and touch are emulated. All customers and
+  orders are synthetic and all contributions are simulated. No credentials or environment files are
+  included here.
+
+### Full-page captures
+
+| File | What it shows |
+| --- | --- |
+| `m6b-01-game-details.png` | The real game page: description, feature list, cover and three screenshots, then play/download actions with the measured sizes, the archive's file-by-file contents and font licence entries, and the itch.io route rendered as an unavailable statement rather than a dead link. |
+| `m6b-02-play-demo.png` | The play page **after** the visitor clicked load: the pre-load cost statement is still visible above, the status line reports the frame has loaded and how to give it keyboard focus, the Stop control is present, and the Godot canvas is rendering its opening text inside the site frame. |
+| `m6b-03-catalogue.png` | Conventional catalogue with the one real game, its playable/demo badges and both acquisition routes; the empty-shelf statement stays, because no additional titles were invented. |
+| `m6b-04-room-computer.png` | The room's computer panel for the same game — cover, media count, three live actions and the unavailable itch.io note — with the no-JavaScript fallback card below the room. This is the frame that exposed defects D24 and D25. |
+| `m6b-05-computer-catalogue.png` | R1 on the QA bundle: a direct game-selection URL restores the computer's catalogue state, viewport and readable HTML panel in separate regions, with the real record selected. |
+| `m6b-06-phone-panel.png` | R5 at 390 px: room viewport, then the selected-game panel below it rather than over it, then the conventional card — no overlay and no horizontal overflow. |
+| `m6b-07-phone-landscape.png` | R10 at 844×390 landscape: room viewport and selected-game panel side by side above the controls, the conventional content below, and the address-restored status line visible. |
+| `m6b-08-store.png` | The store page naming the real game as the offering's associated title, with the pay-what-you-want range, the no-exclusive-content statement and the simulated-order notice intact. |
+| `m6b-09-order-confirmation.png` | A simulated order written to MySQL on the real catalogue: high-entropy reference, £12.50 voluntary support line, and the statement that no payment was taken and no delivery promised. |
+| `m6b-10-phone-order.png` | The same confirmation at 390 px, inside the viewport with no horizontal overflow. |
+
+### Logs and measured data
+
+| File | Evidence and limitation |
+| --- | --- |
+| `m6b-builds-tests.txt` | 6 unit checks: staged web files hash-match the record, the served archive unpacks to the recorded members unchanged, the font licence files are present, and the page quotes the measured record rather than retyped numbers. |
+| `m6b-database-seed-tests.txt` | 4 checks against real MySQL: exact catalogue projection, stale-game pruning with an idempotent re-run, FK-safe retirement of an offering that history still references, and untouched order history. Uses the ignored administrator file; the runtime account is denied these statements by design. |
+| `m6b-mysql-tests.txt` | The M6 repository/integration suite re-run against the real catalogue: 14/14 including constraint enforcement, rollback, concurrent retries and a verified process restart (`SAL-51EFBD3F…`, terminated PID 28900, retrieved via PID 26396). |
+| `m6b-game-builds-tests.txt` | 20 browser checks on the QA origin: sizes and hashes as published, `HEAD` 200 and range 206 on the archive, **0** export requests before the click, the engine and data files fetched after it, a rendered 1150×718 canvas, stop and reload, the room panel's real actions, and no uncaught browser errors. |
+| `m6b-game-builds-deployable-tests.txt` | The same suite on the deployable bundle: 19 passed, 0 failed, 1 skipped. The skip is the hook-only room check and is reported as a skip rather than a pass. |
+| `m6b-routes-tests.txt` | 29 route, metadata, local-link, fallback, emulated-touch and landscape checks, including the R2 panel contract rewritten for the real media count and the R7 reduced-data path that never loads the room module. |
+| `m6b-room-tests.txt` | Entry/keyboard gate (11), papers and focus restoration (8) and movement/collision/reduced motion (15) re-run against a production-shaped bundle instead of a dev server. |
+| `m6b-commerce-tests.txt` | 30 production browser commerce checks on `dist` + MySQL with the restricted account, unchanged from M6 apart from running against the new build. |
+| `m6b-memory-commerce-tests.txt` | The same 30 checks on `dist` with the explicitly selected memory adapter (`/api/health` reports `databaseDriver: memory`). A storage-adapter comparison, not database evidence. |
+| `m6b-build.txt` | Build output with emitted sizes, the retained >500 kB room-chunk warning, and `dist/` totals: 78,324,197 bytes overall, 40,742,601 in `game/web`, 36,761,734 in `downloads`. |
+
+The game binaries behind these frames are **not** in Git (`public/game/web/`, `public/downloads/`),
+so `m6b-02-play-demo.png` cannot be reproduced from a bare clone until `npm run game:stage` has run
+against the studio's export folder. The demo reached its first rendered frame inside the site; nobody
+has played it through, the web export reports itself as a debug build, and the Windows `.exe` has
+never been launched from this site. Those limits, and the intermittent Windows loopback denials that
+shaped how these suites are run, are recorded in `../../tests/test-plan.md`.

@@ -2,7 +2,9 @@
 
 Living record of what was actually exercised, per milestone. Scope and environment are stated
 with each milestone. M5 adds the store, back end and a simulated order workflow; M6 verifies real
-MySQL persistence and expands quality assurance. Real payments remain out of scope unless
+MySQL persistence and expands quality assurance; M6b replaces the placeholder game with the studio's
+real Godot builds — a browser-playable demo and a Windows archive — and verifies that the MySQL
+catalogue is a projection of the shared records. Real payments remain out of scope unless
 separately approved. Earlier results are historical, not claims about the current test count.
 
 The early room tests used Chromium (headless where noted) against `npm run dev` on
@@ -310,6 +312,119 @@ No real-GPU fps, Lighthouse result, public-network speed or search ranking is cl
 notes are not passes. Remaining checks and assessment dependencies are listed below; neither the
 successful build nor the local MySQL tests establish production readiness.
 
+## Milestone 6b — real game builds, catalogue projection into MySQL, full-matrix re-verification
+
+Executed **28 October 2026** on top of M6 (`3e4c20d`). Scope: integrate the two build folders the
+studio supplied — a Godot 4.7 web export and a Godot 4.7 Windows desktop export — replace the
+placeholder game record with the real one, prove the MySQL catalogue is a projection of the shared
+records, and re-run every existing suite against **production bundles** rather than only a
+development server. No payment integration, no paid infrastructure and no invented content.
+
+### What was integrated, and how each published claim is checked
+
+| Item | Measured fact | How the site keeps it honest |
+| --- | --- | --- |
+| Browser demo | Godot 4.7, `gl_compatibility`, `thread_support=false`, 38.8 MB across 9 files, entry `The Last Witness.html` plus a byte-identical `index.html` copy so the folder has a directory index | `npm run game:stage` copies the export **unmodified** into `public/game/web/` and writes `src/js/data/builds.js`; `npm run game:check` and `tests/game-builds.test.mjs` re-hash every file |
+| Desktop build | 64-bit Windows executable 98.3 MB + 2.4 MB `.pck`, packaged as a 35.1 MB deflate archive of 5 entries | Same generated record; the test unpacks the served archive and compares each member's SHA-256 with the studio's export folder |
+| Font licences | Two licence files must travel with any build that bundles the fonts | Both are written into `LICENSE/` inside the archive and asserted by a test, so the archive fails if they are dropped |
+| Game content | Real title, description, feature list, cover and three screenshots from the project; `itch.io` still has no address | The unavailable route is rendered as explanatory text with its reason, never as a dead link (B11/B12) |
+| Honest limits | The demo is a **debug export**, has never had a first-time-player test, needs WebGL 2 + a secure context, and its UI is a dense 1280×800 text terminal | Stated on the play page before the 38.8 MB download is offered, and in `docs/open-requirements.md` |
+
+The ~75 MB of binaries are deliberately **not** in Git: `public/game/web/` and
+`public/downloads/` are ignored, while the committed `builds.js` carries the sizes and SHA-256
+digests the site publishes. A published number is therefore machine-checkable without a
+repository that cannot shrink.
+
+### Environments
+
+Windows x64, Node **v24.19.0**, Playwright **1.64.1** Chromium (headless, `--enable-unsafe-swiftshader`
+for room capture), MySQL **8.0.46** on `127.0.0.1:3307` — the same portable instance and restricted
+runtime account as M6.
+
+| Origin | What it served | Used for |
+| --- | --- | --- |
+| `http://127.0.0.1:5310` | deployable `dist/` + MySQL (restricted account) | commerce e2e, hook-free build verification |
+| `http://127.0.0.1:5313` | deployable `dist/` + explicit `DB_DRIVER=memory` | adapter comparison, never reported as MySQL evidence |
+| `http://127.0.0.1:5314` | **QA build** `dist-qa/` + MySQL | room/DOM suites that need `window.__saleshiRoom` |
+| `http://127.0.0.1:5174` | `npm run dev` (Vite) | development iteration only |
+
+`npm run build:qa` exists because the room suites read renderer internals that the deployable build
+compiles away. It is a single-chunk production build with `VITE_ROOM_HOOKS=1`; `dist-qa/` is ignored
+and is **not** what gets deployed. The deployable run therefore reports the one hook-only check as
+`SKIP` instead of pretending it passed.
+
+### Results
+
+| Instrument | Result | Retained evidence |
+| --- | --- | --- |
+| `tests/game-builds.test.mjs` — staged binaries, archive contents, hashes, licence files, published copy | **6 passed, 0 failed** | `m6b-builds-tests.txt` |
+| `tests/database-seed.test.mjs` — S1–S4 seed projection, pruning, retirement, order history | **4 passed, 0 failed** | `m6b-database-seed-tests.txt` |
+| `tests/commerce.test.mjs` — MySQL repository/integration with administrator constraint checks | **14 passed, 0 failed** | `m6b-mysql-tests.txt` (includes `SAL-51EFBD3F…`, terminated PID 28900, retrieved via PID 26396) |
+| `tests/e2e/game-builds.mjs` on `dist-qa` + MySQL | **20 passed, 0 failed, 0 skipped** | `m6b-game-builds-tests.txt` |
+| `tests/e2e/game-builds.mjs` on deployable `dist` + MySQL | **19 passed, 0 failed, 1 skipped** | `m6b-game-builds-deployable-tests.txt` — the skip is the hook-only room check |
+| `tests/e2e/routes.mjs` on `dist-qa` + MySQL | **29 passed, 0 failed** | `m6b-routes-tests.txt` |
+| `tests/e2e/commerce.mjs` on deployable `dist` + MySQL | **30 passed, 0 failed** | `m6b-commerce-tests.txt` |
+| `tests/e2e/commerce.mjs` on deployable `dist` + explicit `DB_DRIVER=memory` | **30 passed, 0 failed** | `m6b-memory-commerce-tests.txt` — adapter comparison only, never MySQL evidence |
+| `tests/e2e/{gate,papers,movement}.mjs` on `dist-qa` + MySQL | **11 / 8 / 15 passed, 0 failed**, 2 visual notes | `m6b-room-tests.txt` |
+| `npm run game:check`, `npm run build` | staged files match the record; 8 site HTML routes; room chunk 626.67 kB (169.34 kB estimated gzip); `dist/` 78,324,197 bytes | `m6b-build.txt` — the >500 kB warning is retained, not silenced |
+
+### New checks worth naming
+
+| # | Check | Measured result |
+| --- | --- | --- |
+| B4 | The download responds to `HEAD` and to a byte range | `status=200 bytes=36761734 range=206` — a 35 MB archive is resumable rather than all-or-nothing |
+| B6 | Nothing is downloaded before the visitor asks | **0** requests under `/game/web/` before the click on the play page |
+| B7 | The real Godot build starts inside the site frame | canvas 1150×718 with a matching rendered frame; 1.8–2.9 s to first frame on loopback |
+| B9 | Stopping releases the frame and a reload is offered | status confirms the data stays in the browser cache |
+| B12/B13 | The room computer panel offers the real demo and download actions and they resolve | 3 actions, download `HTTP 200` |
+| B17 | The hashes the site publishes are the measured ones | compared against the studio export folder, not against themselves |
+| S1 | `seed.js` projects the shared records exactly | one game, one offering, no orphan offerings |
+| S2 | A superseded game row is pruned and a re-run is a no-op | planted `m6b-superseded` removed; second run reports `removed 0` |
+| S3 | An offering that leaves the records is retired, not deleted | `available = 0`, its game survives because `order_lines` reference it `ON DELETE RESTRICT`, and the server-side repository reports it unavailable |
+| S4 | Seeding never touches order history | order/line counts unchanged across two seeds; the earliest order still retrieves as `simulated` |
+
+### Defects found while building M6b and fixed before sign-off
+
+| # | Defect | Symptom | Fix |
+| --- | --- | --- | --- |
+| D23 | The demo's "Load" button stayed on screen while the demo was running | `.button { display: inline-block }` outranks the `hidden` attribute, so stopping appeared impossible | global `[hidden] { display: none !important; }` in `base.css`; found by reviewing the evidence screenshot, not by an assertion |
+| D24 | Horizontal overflow at 768/900 px on the room page | the new `width="1280" height="800"` cover attributes gave the image a standing intrinsic size, and the room page loads `base.css` but not `pages.css`, so nothing capped it | `img, video { max-width: 100%; height: auto; }` in `base.css`; R4/R5/R10 and B16 measure `overflow=0px` at 390/768/844/900/1280 |
+| D25 | The room page's fallback game card rendered its badges as one run of words | same root cause as D24: `.media-badge`, `.game-cover`, `.media-placeholder` and `.empty-state` are part of the shared card markup but lived in `pages.css` | moved those four component rules into `base.css`, where anything every page needs belongs; re-captured `m6b-04-room-computer.png` |
+| D26 | The game page claimed a **21**-step guided investigation | the studio's `scripts/ev044_data.gd` holds 22 steps (`GUIDE_STEPS`: 4 + 5 + 5 + 4 + 4 across the five stages, each with exactly 3 hints), and the running build shows "STEP 1 OF 4" in stage 1 — the figure had been taken from the project's own notes rather than recounted | corrected to 22 in `src/js/data/games.js`, both bundles rebuilt and the page re-verified; found while re-checking every published number against the source, not by any assertion, because no test knew what the right number was |
+| Test method | A failing `B10` reported only `Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED`, which cannot be triaged | a console error names no file, so a machine fault and a missing asset look identical | the suite now records the failing request's URL alongside the message; the next occurrence identified `/assets/base-n2XXw_bE.css`, a file that loads on every other run |
+
+### Environment problem, stated rather than hidden
+
+This machine intermittently refuses loopback connections: Chromium reports
+`net::ERR_NETWORK_ACCESS_DENIED` and Node reports `connect EACCES 127.0.0.1`, because the
+operating system assigns a client port that another listener already holds. It affects any
+many-request origin and is not caused by the site. Two mitigations are in the repository, both
+narrow:
+
+- `tests/e2e/netRetry.mjs` retries **only** transport signatures (`ERR_NETWORK_ACCESS_DENIED`,
+  `EACCES`, `ERR_CONNECTION_REFUSED`, a navigation the browser aborts and reports as "interrupted by
+  another navigation") and never a 404, a 500 or a failed assertion. Assertions still run exactly once.
+- `npm run build:qa` removes the several-hundred-module dev origin from the room suites' critical
+  path, which is where the denials concentrated.
+
+One deployable-bundle run failed `B10` on the CSS file named in the defect table above; the retained
+`m6b-game-builds-deployable-tests.txt` is the passing re-run, and the failing line is quoted there in
+the defect table rather than kept as a second log. A green suite on this machine means "no
+application fault observed", not "the network layer was perfect".
+
+**M6b local result:** no outstanding test failures. The brief's outstanding item — MySQL persistence
+verified with the real adapter rather than the in-memory one — is closed by the 14/14 repository run,
+the 30/30 production-commerce run on `dist` + MySQL, the 4/4 seed-projection run and the retained
+restart evidence. After D26 the bundles were rebuilt and the seed, build-record, game-builds (both
+origins) and routes suites were re-run — 6, 4, 19/0/1-skip, 20 and 29 with no failures — and the
+retained logs are those re-runs; the commerce and room suites were not repeated, because the changed
+string appears in no assertion they make. The two database suites were run again after the database
+was relocated off the temporary directory (see B13): `npm run test:commerce` 13 pass + 1 privileged
+skip, that skip re-run separately under administrator credentials to make it 14/14, and
+`npm run test:database` 4/4 — against the same MySQL 8.0.46 on `127.0.0.1:3307`, with nothing but its
+base directory changed. What remains unverified is listed below; neither these
+results nor a successful build establishes production readiness.
+
 ## Still not verified — open limitations
 
 | # | Gap | Current status |
@@ -322,57 +437,85 @@ successful build nor the local MySQL tests establish production readiness.
 | B8 | Screen-reader session | Open — semantic markup, labels, focus and live regions are asserted, but no assistive-technology session has run. |
 | B9 | Direct 3D paper selection | Closed by P8 — a projected point on the actual sheet hit `CANVAS` and opened the instruction dialog through raycasting. |
 | B10 | Phone panel occlusion | Closed structurally by R5 — the drawer is below the viewport, not over it, and occupies 26.5% of the measured stage. |
-| B11 | MySQL integration | Closed locally in M6 with actual 8.0.46, direct rows, rollback, enforced constraints, restricted runtime account, restart and outage/recovery. Not a hosted-database claim. |
-| B12 | Deployed operation | Open — DNS, HTTPS, public hosting, compression/cache policy, backups/restore and operational security have not been configured or verified. |
-| B13 | Durable data location and schema upgrades | Open — portable data lives in a temporary directory; no backup-restore drill or populated-M5 upgrade migration was run. Do not reinitialise or drop existing data. |
-| B14 | Assessment acceptance and content | Tutor approval of category, voluntary support as a sale, simulated checkout and local demonstration remains open. Part 2, real game content and the student's final report are still required. |
+| B11 | MySQL integration | Closed locally in M6 with actual 8.0.46, direct rows, rollback, enforced constraints, restricted runtime account, restart and outage/recovery. Closed further in M6b: the catalogue tables are now a verified projection of the shared records (S1–S4). Not a hosted-database claim. |
+| B12 | Deployed operation | Open — DNS, HTTPS, public hosting, compression/cache policy and operational security have not been configured or verified. Backup **policy** (schedule, off-machine storage, retention, production-sized restore) is still open; one local manual dump-and-restore drill is closed in B13 and is not a hosted backup. |
+| B13 | Durable data location and schema upgrades | **Location and restoration closed in M6b.** The portable instance was moved from a temporary directory (which Windows had cleaned, causing the `1073807364` server exit) to `D:\saleshi-mysql`, and a `mysqldump --single-transaction` was restored into a scratch schema and compared row for row: identical counts, £845.50 totals on both tables, identical content digests, three foreign keys and ten index rows, then dropped. Transcript: `evidence/m6b-database-relocation.txt`. **Still open** — scheduled/off-machine backups, and a reviewed upgrade from an older M5 schema. Never reinitialise or drop existing data. |
+| B14 | Assessment acceptance and content | Open — tutor approval of the category, voluntary support as a sale, simulated checkout and local demonstration. The **game** content is now real; the studio's own name, biography and letter text are still marked PLACEHOLDER, and no itch.io address or release date has been supplied. The student's 1,500–2,000-word report is still required. |
+| B15 | Desktop build actually runs | Open — the archive is verified file by file against the studio's export and its HTTP behaviour is measured (HEAD, byte range), but the `.exe` has never been launched on a Windows machine from this site, and it is unsigned, so SmartScreen will warn. |
+| B16 | Demo is playable end to end | Open — B7 proves the export starts, renders and takes focus inside the site frame. Nobody has completed the demo, and the developer's own build record states no unassisted first-time player has finished it. |
+| B17 | Browser export licence obligations | Open — the desktop archive carries the two font licence files the licences require. The web export is served byte-for-byte unmodified and its `.pck` is not inspected file by file, so whether the same fonts travel inside it — and therefore whether it needs the same licence text — has not been confirmed with the studio. |
+| B18 | Debug versus release export | Open — the web export reports itself as a debug export. A release-mode export, with the smaller payload that implies, has not been produced or measured. |
+| B19 | Real-connection download cost | Open — 38.8 MB for the browser demo and 35.1 MB for the archive are measured sizes; transfer time on a throttled or mobile connection, and any CDN caching behaviour, are unmeasured. |
+| B20 | Loopback transport stability on this workstation | Open — see the M6b environment note. Retried only at the transport layer; the one failing `B10` line is quoted in the M6b defect table, and the retained log is the passing re-run that overwrote it. |
 
 ## Re-running these tests
 
-Configure MySQL using `../docs/commerce.md` first. Use separate terminals for long-running servers
-and tests. Run constraint tests only against an isolated test database: they need administrator
-rights, temporarily change catalogue rows inside a rolled-back transaction, and create synthetic
-orders. The process-restart test needs the production build.
+Configure MySQL using `../docs/commerce.md` first, and stage the game binaries with
+`npm run game:stage` (they are not in Git; `npm run game:check` verifies what is already staged).
+Use separate terminals for long-running servers and tests. Run constraint tests only against an
+isolated test database: they need administrator rights, temporarily change catalogue rows inside a
+rolled-back transaction, and create synthetic orders. The process-restart test needs the production
+build.
 
 ```bash
+npm run game:stage   # copy the studio export into public/ and rewrite src/js/data/builds.js
 npm run build
 DB_DRIVER=memory npm run test:commerce
+npm run test:builds
 TEST_MYSQL_CONSTRAINTS=1 node --env-file=.env.mysql-admin.local --test tests/commerce.test.mjs
-npm start  # configured restricted MySQL app; this workstation uses PORT=5196
+npm run test:database   # seed projection; needs the administrator file, prunes/retires rows only
+npm start  # configured restricted MySQL app; this workstation used PORT=5310
 ```
 
 In another terminal, while that application runs:
 
 ```bash
-BASE_URL=http://127.0.0.1:5196 node tests/e2e/commerce.mjs
+BASE_URL=http://127.0.0.1:5310 node tests/e2e/commerce.mjs
+BASE_URL=http://127.0.0.1:5310 node tests/e2e/game-builds.mjs   # reports the hook-only check as SKIP
 ```
+
+The room suites need `window.__saleshiRoom`, which `npm run build` compiles away. Serve the QA
+bundle instead — one chunk, hooks on, and **not** what gets deployed:
+
+```bash
+npm run build:qa
+DIST_DIR=dist-qa PORT=5314 npm start
+# In another terminal:
+BASE_URL=http://127.0.0.1:5314 node tests/e2e/gate.mjs
+BASE_URL=http://127.0.0.1:5314 node tests/e2e/papers.mjs
+BASE_URL=http://127.0.0.1:5314 node tests/e2e/movement.mjs
+BASE_URL=http://127.0.0.1:5314 node tests/e2e/routes.mjs
+BASE_URL=http://127.0.0.1:5314 node tests/e2e/game-builds.mjs
+npm audit --omit=dev --json
+```
+
+A development origin also works (`npm run dev:vite -- --host 127.0.0.1 --port 5174 --strictPort`)
+but asks the browser for several hundred module requests, which is where this workstation's loopback
+denials concentrate; `tests/e2e/netRetry.mjs` retries only the transport signatures.
+
+Screenshot filenames are fixed by the suites, so a re-run overwrites the previous milestone's images:
+`routes.mjs` writes `m6-01`, `m6-02` and `m6-08`, `commerce.mjs` writes `m6-03`…`m6-07`, `m6-09`,
+`m6-10`, and `game-builds.mjs` writes `m6b-01`…`m6b-04` on whichever origin ran last. After a re-run the
+current captures are copied to `m6b-05`…`m6b-10` and the `m6-*` files restored from Git, so each
+milestone's images still show what that milestone verified. The deployable game-builds run is issued
+last for the same reason — `m6b-01`…`m6b-04` are attributed to that origin in the evidence index.
 
 Run an explicit memory comparison on a different port, if needed:
 
 ```bash
-DB_DRIVER=memory PORT=5198 npm start
+DB_DRIVER=memory PORT=5313 npm start
 # In another terminal:
-BASE_URL=http://127.0.0.1:5198 node tests/e2e/commerce.mjs
-```
-
-Room instrumentation is development-only, so start a separate front-end-only server:
-
-```bash
-npm run dev:vite -- --host 127.0.0.1 --port 5190 --strictPort
-# In another terminal:
-BASE_URL=http://127.0.0.1:5190 node tests/e2e/gate.mjs
-BASE_URL=http://127.0.0.1:5190 node tests/e2e/papers.mjs
-BASE_URL=http://127.0.0.1:5190 node tests/e2e/movement.mjs
-BASE_URL=http://127.0.0.1:5190 ROUTES_BASE_URL=http://127.0.0.1:5196 node tests/e2e/routes.mjs
-npm audit --omit=dev --json
+BASE_URL=http://127.0.0.1:5313 node tests/e2e/commerce.mjs
 ```
 
 Always specify `BASE_URL`; some suites retain historical default ports. A bare repository-test
 command loads `.env`, so explicitly set `DB_DRIVER=memory` when that is the intended adapter.
-Screenshots use fixed M6 filenames: repeat MySQL commerce last to retain MySQL provenance, and
-retain driver-labelled logs. Earlier milestone images are not overwritten.
+Suites write fixed filenames into `docs/evidence/`, so note which origin and driver each run used
+and re-run the driver you want to keep evidence for last. Earlier milestone images are not
+overwritten.
 
 Useful handles while developing: `?view=list` forces the text view, `?view=room` requests the room,
-`?game=<slug>` preselects a cassette, and in dev mode `window.__saleshiRoom` exposes
-`isRunning()`, `stats()`, `render()`, `snapshot()`, `start()`, `stop()`,
-`projectInteractable()` and the test-only `previewPanelGame()` fixture boundary.
+`?game=<slug>` preselects a cassette, and `window.__saleshiRoom` exposes `isRunning()`, `stats()`,
+`render()`, `snapshot()`, `start()`, `stop()`, `projectInteractable()` and the test-only
+`previewPanelGame()` fixture boundary. Those hooks exist in a dev server and in `dist-qa/` only; the
+deployable `dist/` ships without them (`src/js/testHooks.js`).

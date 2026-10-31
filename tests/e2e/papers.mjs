@@ -5,9 +5,10 @@
  * The point of these checks is that opening a note is *only* a view change: the camera,
  * the walk mode and the game selection must survive it untouched.
  *
- * Run with: node tests/e2e/papers.mjs   (dev server must be running)
+ * Run with: node tests/e2e/papers.mjs   (needs a dev server or an `npm run build:qa` origin)
  */
 import { chromium } from 'playwright'
+import { goto } from './netRetry.mjs'
 import { fileURLToPath } from 'node:url'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
@@ -53,7 +54,7 @@ try {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } })
   const page = await context.newPage()
   page.on('pageerror', (error) => pageErrors.push(error.message))
-  await page.goto(`${BASE}/?view=room`)
+  await goto(page, `${BASE}/?view=room`)
   await page.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
   // isRunning() only says the loop was started; drawCalls proves a frame actually rendered, so
   // a throw inside step() shows up here instead of as an unexplained click timeout later.
@@ -125,7 +126,7 @@ try {
   // followed by a settle so that inertia, not the dialog, cannot be what moves the camera.
   await page.click('[data-station-id="shelf"]')
   await page.waitForTimeout(1300)
-  await page.click('.proxy[data-interact-id="placeholder-slug"]')
+  await page.click('.proxy[data-interact-id="the-last-witness"]')
   await page.waitForTimeout(400)
   await page.click('[data-station-id="shelf"]')
   await page.waitForTimeout(1300)
@@ -154,7 +155,7 @@ try {
   const resumed = poseDrift(beforeResume.pose, (await stats(page)).pose)
   const s5 = await stats(page)
   record('P5', 'a note opened mid-walk freezes movement and the selection survives',
-    noteLabel2 !== null && frozen && resumed > 0.1 && s5.mode === 'walk' && s5.selected === 'placeholder-slug',
+    noteLabel2 !== null && frozen && resumed > 0.1 && s5.mode === 'walk' && s5.selected === 'the-last-witness',
     `reached="${noteLabel2}" frozen=${frozen} resumedAfterClose=${resumed.toFixed(3)}m mode=${s5.mode} selected=${s5.selected}`)
 
   // --- P6: the notes are physical objects in the scene --------------------------------

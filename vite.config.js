@@ -17,7 +17,8 @@ export default defineConfig({
       input: {
         room: page('index.html'),
         catalogue: page('games/index.html'),
-        featuredGame: page('games/placeholder-slug/index.html'),
+        featuredGame: page('games/the-last-witness/index.html'),
+        browserDemo: page('games/the-last-witness/play/index.html'),
         store: page('store/index.html'),
         cart: page('cart/index.html'),
         checkout: page('checkout/index.html'),

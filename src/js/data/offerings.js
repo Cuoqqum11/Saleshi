@@ -17,7 +17,7 @@ export const commercial = {
 export const offerings = [
   {
     id: 'studio-support',
-    gameId: 'placeholder-slug',
+    gameId: 'the-last-witness',
     kind: 'pay-what-you-want-support',
     available: true,
     title: 'Voluntary studio support',
@@ -25,7 +25,7 @@ export const offerings = [
     description:
       'A voluntary contribution towards the studio making this game. This is creator support, not a separate game edition.',
     includes:
-      'No premium edition, exclusive content, download or other paid benefit is included. Free distribution routes are listed separately when they exist.',
+      'Nothing is unlocked by it. The browser demo and the Windows build are free to obtain from the game page, and no premium edition or exclusive content is offered.',
     terms:
       'This demonstration creates a simulated order only. No payment is taken and no automatic delivery is promised.',
     pricing: {

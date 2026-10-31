@@ -10,6 +10,12 @@ const esc = (value) => String(value)
 
 const money = (amount, currency) => `${currency} ${Number(amount).toFixed(2)}`
 
+const bytes = (value) => (value >= 1048576
+  ? `${(value / 1048576).toFixed(1)} MB`
+  : `${Math.max(1, Math.round(value / 1024))} KB`)
+
+const shortHash = (value) => `${value.slice(0, 16)}…`
+
 function availabilityNote(game) {
   const unavailable = []
   if (!game.availability.browserDemo.available) unavailable.push('no browser demo')
@@ -21,11 +27,15 @@ function availabilityNote(game) {
 }
 
 function gameCard(game) {
+  const badges = [
+    game.availability.browserDemo.available ? '<span class="media-badge">Play in browser</span>' : '',
+    game.availability.download.available ? '<span class="media-badge">Windows download</span>' : '',
+  ].join('')
   return `<li class="game-card">
     <h3><a href="${esc(game.page)}">${esc(game.title)}</a></h3>
-    <p><span class="status-badge">${esc(game.statusLabel)}</span></p>
+    <p><span class="status-badge">${esc(game.statusLabel)}</span>${badges}</p>
     <p>${esc(game.summary)}</p>
-    ${game.cover ? `<img class="game-cover" src="${esc(game.cover.url)}" alt="${esc(game.cover.alt)}" />` : '<p class="media-placeholder">Cover artwork not supplied.</p>'}
+    ${game.cover ? `<img class="game-cover" src="${esc(game.cover.url)}" alt="${esc(game.cover.alt)}" width="1280" height="800" loading="lazy" />` : '<p class="media-placeholder">Cover artwork not supplied.</p>'}
     ${availabilityNote(game)}
     <p><a href="${esc(game.page)}">Read the full game details</a></p>
   </li>`
@@ -53,22 +63,43 @@ function gameDetails(game) {
   </section>
   <section id="media" aria-labelledby="media-heading">
     <h2 id="media-heading">Cover and screenshots</h2>
-    ${game.cover ? `<img class="game-cover" src="${esc(game.cover.url)}" alt="${esc(game.cover.alt)}" />` : '<p class="unavailable-note">No cover artwork has been supplied. A placeholder image could be mistaken for real game art, so none is shown.</p>'}
+    ${game.cover ? `<img class="game-cover" src="${esc(game.cover.url)}" alt="${esc(game.cover.alt)}" width="1280" height="800" />` : '<p class="unavailable-note">No cover artwork has been supplied. A placeholder image could be mistaken for real game art, so none is shown.</p>'}
     ${game.screenshots.length
-      ? `<div class="screenshot-grid">${game.screenshots.map((shot) => `<figure><img src="${esc(shot.url)}" alt="${esc(shot.alt)}" /><figcaption>${esc(shot.caption ?? '')}</figcaption></figure>`).join('')}</div>`
+      ? `<div class="screenshot-grid">${game.screenshots.map((shot) => `<figure><img src="${esc(shot.url)}" alt="${esc(shot.alt)}" width="1280" height="800" loading="lazy" /><figcaption>${esc(shot.caption ?? '')}</figcaption></figure>`).join('')}</div>`
       : '<p>No screenshots have been supplied.</p>'}
   </section>
   <section id="get-the-game" aria-labelledby="get-heading">
     <h2 id="get-heading">Play, download and distribution</h2>
     ${game.availability.browserDemo.available
-      ? `<p><a class="button" href="${esc(game.availability.browserDemo.url)}">Play the browser demo</a></p>`
+      ? `<h3>In the browser</h3>
+      <p><a class="button" href="${esc(game.availability.browserDemo.url)}">Play the browser demo</a></p>
+      <p>${esc(game.availability.browserDemo.note)}</p>`
       : `<p class="unavailable-note">Browser demo: ${esc(game.availability.browserDemo.reason)}</p>`}
     ${game.availability.download.available
-      ? `<p><a class="button" href="${esc(game.availability.download.url)}">Download a build</a></p>`
+      ? `<h3>Desktop build</h3>
+      <p><a class="button" href="${esc(game.availability.download.url)}" download>Download for ${esc(game.availability.download.platform)} (${esc(bytes(game.availability.download.bytes))})</a></p>
+      <p>${esc(game.availability.download.note)}</p>
+      <details class="build-details">
+        <summary>What is inside the archive and how it was checked</summary>
+        <ul>
+          ${game.builds.desktop.contents.map((member) => `<li><code>${esc(member.name)}</code> — ${esc(bytes(member.bytes))}</li>`).join('')}
+        </ul>
+        <p>The two font licence files are included because the licences require them to travel with any build that bundles the fonts.</p>
+        <p>Measured from the exported files: <code>${esc(game.builds.desktop.contents.find((member) => member.name.endsWith('.exe'))?.name ?? 'executable')}</code> SHA-256 <code>${esc(shortHash(game.builds.desktop.contents.find((member) => member.name.endsWith('.exe'))?.sha256 ?? ''))}</code>, <code>The Last Witness.pck</code> SHA-256 <code>${esc(shortHash(game.builds.desktop.contents.find((member) => member.name.endsWith('.pck'))?.sha256 ?? ''))}</code>.</p>
+        <p class="unavailable-note">The archive is rebuilt on this machine from the studio's export folder, so its own hash changes between runs; the two files inside it are the ones measured above.</p>
+      </details>`
       : `<p class="unavailable-note">Download: ${esc(game.availability.download.reason)}</p>`}
     ${game.availability.itch.available
       ? `<p><a href="${esc(game.availability.itch.url)}">Get the free version on itch.io</a></p>`
       : `<p class="unavailable-note">Free itch.io route: ${esc(game.availability.itch.reason)}</p>`}
+    <h3>Build details</h3>
+    <dl class="build-facts">
+      <dt>Engine</dt><dd>${esc(game.builds.engine.name)} ${esc(game.builds.engine.version)}, ${esc(game.builds.engine.renderer)} renderer</dd>
+      <dt>Browser payload</dt><dd>${esc(bytes(game.builds.web.bytes))} across ${esc(game.builds.web.files.filter((file) => !file.note).length)} files</dd>
+      <dt>Browser requirements</dt><dd>${esc(game.builds.web.requires.join(', '))}</dd>
+      <dt>Desktop archive</dt><dd>${esc(bytes(game.builds.desktop.archiveBytes))} (deflate), staged ${esc(game.builds.desktop.archiveStagedOn)}</dd>
+      <dt>Window</dt><dd>${esc(game.builds.engine.windowSize)}, resizable</dd>
+    </dl>
   </section>
   <section id="support" aria-labelledby="support-heading">
     <h2 id="support-heading">Store and creator support</h2>
@@ -127,9 +158,13 @@ export function staticContentPlugin() {
         const pageGame = pageGameId ? gameById(pageGameId) : null
         let output = html
         if (pageGame) {
+          const { browserDemo, download } = pageGame.availability
           output = output
             .replaceAll('{{GAME_TITLE}}', esc(pageGame.title))
             .replaceAll('{{GAME_SUMMARY}}', esc(pageGame.summary))
+            .replaceAll('{{DEMO_BYTES}}', esc(browserDemo.sizeLabel ?? 'the browser build'))
+            .replaceAll('{{DOWNLOAD_URL}}', esc(download.url ?? '/games/'))
+            .replaceAll('{{DOWNLOAD_BYTES}}', esc(download.sizeLabel ?? 'its own size'))
         }
         return output.replace(
           /<div data-static-content="([a-z-]+)"(?: data-game="([^"]+)")?><\/div>/g,

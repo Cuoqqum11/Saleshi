@@ -73,7 +73,9 @@ app.get('/api/orders/:reference', async (request, response, next) => {
 app.use('/api', (request, response) => response.status(404).json({ error: 'API route not found.' }))
 
 if (isProduction) {
-  app.use(express.static(path.resolve('dist')))
+  // DIST_DIR lets the QA build (npm run build:qa, which keeps the room test hooks) be served from
+  // its own folder so the deployable dist/ is never mistaken for a test artefact.
+  app.use(express.static(path.resolve(process.env.DIST_DIR ?? 'dist')))
   app.use((request, response) => response.status(404).send('Page not found.'))
 } else {
   const { createServer } = await import('vite')

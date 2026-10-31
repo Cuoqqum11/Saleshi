@@ -5,9 +5,10 @@
  * G3 and the screenshots — full-page captures in which the HTML computer panel and the
  * object chips are visible.
  *
- * Run with: node tests/e2e/gate.mjs   (dev server must be running)
+ * Run with: node tests/e2e/gate.mjs   (needs a dev server or an `npm run build:qa` origin)
  */
 import { chromium } from 'playwright'
+import { goto } from './netRetry.mjs'
 import { fileURLToPath } from 'node:url'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
@@ -35,7 +36,7 @@ try {
   // --- E1: the room is the entry experience on a capable desktop ------------------
   // No click, no query string: a plain load must start the room and give it the whole
   // first viewport, with the text fallbacks continuing below the fold.
-  await page.goto(`${BASE}/`)
+  await goto(page, `${BASE}/`)
   await page.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
   const layout = await page.evaluate(() => {
     const rect = (id) => document.getElementById(id).getBoundingClientRect()
@@ -57,7 +58,7 @@ try {
     `stageTop=${layout.stageTop.toFixed(0)} controlsBottom=${layout.controlsBottom.toFixed(0)} letterTop=${layout.letterTop.toFixed(0)} vh=${layout.vh}`)
 
   // --- E2: ?view=list is still the text-first fallback ----------------------------
-  await page.goto(`${BASE}/?view=list`)
+  await goto(page, `${BASE}/?view=list`)
   await page.waitForTimeout(400)
   const listView = await page.evaluate(() => ({
     running: window.__saleshiRoom.isRunning(),
@@ -73,7 +74,7 @@ try {
 
   // --- E3: a narrow screen that explicitly enters still lays out ------------------
   const narrow = await browser.newPage({ viewport: { width: 390, height: 844 } })
-  await narrow.goto(`${BASE}/?view=room`)
+  await goto(narrow, `${BASE}/?view=room`)
   await narrow.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
   const narrowLayout = await narrow.evaluate(() => {
     const stage = document.getElementById('stage').getBoundingClientRect()
@@ -97,7 +98,7 @@ try {
     hasTouch: true,
     isMobile: true,
   })
-  await mobile.goto(`${BASE}/`)
+  await goto(mobile, `${BASE}/`)
   await mobile.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
   const mobileState = await mobile.evaluate(() => ({
     coarse: window.matchMedia('(pointer: coarse)').matches,
@@ -109,16 +110,16 @@ try {
     mobileState.coarse && !mobileState.walkToggle && mobileState.stations === 2
       && !mobileState.hint.includes('Walk freely'),
     `coarse=${mobileState.coarse} walkToggle=${mobileState.walkToggle} stations=${mobileState.stations}`)
-  await mobile.locator('.proxy[data-interact-id="placeholder-slug"]').tap()
+  await mobile.locator('.proxy[data-interact-id="the-last-witness"]').tap()
   await mobile.waitForTimeout(400)
   const mobileSelect = await mobile.evaluate(() => window.__saleshiRoom.stats().selectedGameId)
   record('E5', 'a touch tap on a cassette chip selects the game',
-    mobileSelect === 'placeholder-slug', `selected=${mobileSelect}`)
+    mobileSelect === 'the-last-witness', `selected=${mobileSelect}`)
   await mobile.screenshot({ path: OUT('m6-gate-phone-room.png'), fullPage: true })
   await mobile.close()
 
   // --- G1: Enter activates the focused cassette button -------------------------
-  await page.goto(`${BASE}/?view=room`)
+  await goto(page, `${BASE}/?view=room`)
   await page.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
   const reached = await tabToCassette(page)
   record('G1a', 'Tab reaches the cassette button with real key events', reached,
@@ -131,7 +132,7 @@ try {
     url: location.search,
     announce: document.getElementById('selection-status').textContent.trim(),
   }))
-  record('G1b', 'Enter selects the cassette', state.selected === 'placeholder-slug',
+  record('G1b', 'Enter selects the cassette', state.selected === 'the-last-witness',
     `selected=${state.selected} url=${state.url}`)
 
   // Integrated screenshot: the travel to the desk has finished by now.
@@ -158,7 +159,7 @@ try {
     computerHit.clickable, `hit=${computerHit.hit}`)
 
   // --- G2: Space activates the focused cassette button -------------------------
-  await page.goto(`${BASE}/?view=room`)
+  await goto(page, `${BASE}/?view=room`)
   await page.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
   const reached2 = await tabToCassette(page)
   await page.keyboard.press('Space')
@@ -167,11 +168,11 @@ try {
     selected: window.__saleshiRoom.stats().selectedGameId,
     url: location.search,
   }))
-  record('G2', 'Space selects the cassette', reached2 && state.selected === 'placeholder-slug',
+  record('G2', 'Space selects the cassette', reached2 && state.selected === 'the-last-witness',
     `selected=${state.selected} url=${state.url}`)
 
   // --- G3: integrated screenshot of the shelf station --------------------------
-  await page.goto(`${BASE}/?view=room`)
+  await goto(page, `${BASE}/?view=room`)
   await page.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
   await page.click('[data-station-id="shelf"]')
   await page.waitForTimeout(1300)

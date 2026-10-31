@@ -1,7 +1,9 @@
 import { chromium } from 'playwright'
+import { goto, request } from './netRetry.mjs'
 import { fileURLToPath } from 'node:url'
 
-// BASE_URL must serve dev: __saleshiRoom (including pose and previewPanelGame) is DEV-only.
+// BASE_URL must expose the room test hooks: pose and previewPanelGame come from window.__saleshiRoom.
+// A dev server or `npm run build:qa` both qualify; `npm run build` compiles the hooks away.
 // ROUTES_BASE_URL optionally audits the built site without Vite/HMR in the public-page checks.
 const BASE = process.env.BASE_URL ?? 'http://localhost:5174'
 const ROUTES_BASE = process.env.ROUTES_BASE_URL ?? BASE
@@ -9,7 +11,8 @@ const OUT = (name) => fileURLToPath(new URL(`../../docs/evidence/${name}`, impor
 const REAL_PAGES = [
   ['/', 'Saleshi — indie game studio [PLACEHOLDER]'],
   ['/games/', 'Games catalogue — Saleshi'],
-  ['/games/placeholder-slug/', '[PLACEHOLDER] Untitled game — Saleshi'],
+  ['/games/the-last-witness/', 'The Last Witness — Saleshi'],
+  ['/games/the-last-witness/play/', 'Play The Last Witness in the browser — Saleshi'],
   ['/store/', 'Store and creator support — Saleshi'],
   ['/cart/', 'Your cart — Saleshi'],
   ['/checkout/', 'Simulated checkout — Saleshi'],
@@ -30,7 +33,7 @@ async function auditRealPages(browser) {
     for (const [index, [path, title]] of REAL_PAGES.entries()) {
       const url = new URL(path, ROUTES_BASE).href
       try {
-        const response = await audit.goto(url)
+        const response = await goto(audit, url)
         const snapshot = await audit.evaluate((html) => {
           const raw = new DOMParser().parseFromString(html, 'text/html')
           return {
@@ -80,12 +83,18 @@ async function auditRealPages(browser) {
           const fragment = decodeURIComponent(target.hash.slice(1))
           target.hash = ''
           if (!documents.has(target.href)) {
-            const response = await context.request.get(target.href)
-            const targets = response.headers()['content-type']?.includes('text/html')
+            // Only HTML needs a body: the anchor check needs its id list, while a link that serves
+            // a file is proven by its headers. Downloading the 35 MB build on every audit would
+            // make the run about the network rather than the site.
+            let head = await request(context, target.href, { method: 'HEAD' })
+            if (head.status() === 405 || head.status() === 501) head = await request(context, target.href)
+            const isHtml = head.status() === 200 && head.headers()['content-type']?.includes('text/html')
+            const targets = isHtml
               ? await audit.evaluate((html) => [...new DOMParser().parseFromString(html, 'text/html')
-                .querySelectorAll('[id], a[name]')].map((element) => element.id || element.getAttribute('name')), await response.text())
+                .querySelectorAll('[id], a[name]')].map((element) => element.id || element.getAttribute('name')),
+              await (await request(context, target.href)).text())
               : []
-            documents.set(target.href, { status: response.status(), targets })
+            documents.set(target.href, { status: head.status(), targets })
           }
           const destination = documents.get(target.href)
           if (destination.status !== 200) problems.push(`${href}: HTTP ${destination.status}`)
@@ -109,20 +118,22 @@ const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader'] })
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } })
 
 try {
-  await page.goto(`${BASE}/?view=room&game=placeholder-slug`)
-  await page.waitForFunction(() => window.__saleshiRoom?.stats()?.selectedGameId === 'placeholder-slug' && window.__saleshiRoom.stats().drawCalls > 0)
+  await goto(page, `${BASE}/?view=room&game=the-last-witness`)
+  await page.waitForFunction(() => window.__saleshiRoom?.stats()?.selectedGameId === 'the-last-witness' && window.__saleshiRoom.stats().drawCalls > 0)
   await page.waitForTimeout(1000)
-  const detailsLinkStyle = await page.locator('.screen-actions a.screen-link').evaluate((element) => {
+  // Every action link is checked rather than the first, because the real game now offers three and
+  // an unreadable one is just as much a defect as an unreadable details link.
+  const actionStyles = await page.evaluate(() => [...document.querySelectorAll('.screen-actions a.screen-link')].map((element) => {
     const style = getComputedStyle(element)
     return { text: style.color, background: style.backgroundColor }
-  })
-  record('R1', 'direct room URL restores selection and readable computer state', (await page.locator('#monitor-screen h2').textContent()).includes('Untitled game')
+  }))
+  record('R1', 'direct room URL restores selection and readable computer state', (await page.locator('#monitor-screen h2').textContent()).includes('The Last Witness')
     && (await page.locator('#selection-status').textContent()).includes('Restored')
-    && detailsLinkStyle.text !== detailsLinkStyle.background, JSON.stringify(detailsLinkStyle))
+    && actionStyles.length > 0 && actionStyles.every((style) => style.text !== style.background), JSON.stringify(actionStyles))
   await page.screenshot({ path: OUT('m6-01-computer-catalogue.png'), fullPage: true })
 
   await page.evaluate(() => window.__saleshiRoom.previewPanelGame({
-    id: 'placeholder-slug', title: '[TEST FIXTURE] Panel states', statusLabel: 'Fixture only',
+    id: 'the-last-witness', title: '[TEST FIXTURE] Panel states', statusLabel: 'Fixture only',
     summary: 'Synthetic component fixture; not a real game or site content.',
     cover: { url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', alt: 'Synthetic one-pixel test cover' },
     screenshots: [
@@ -134,28 +145,32 @@ try {
       download: { available: true, url: '/fixture-download/' }, itch: { available: true, url: 'https://example.invalid/fixture' },
     },
   }))
-  await page.waitForSelector('.screen-screenshots img')
+  await page.waitForFunction(() => document.querySelector('#monitor-screen h2')?.textContent.includes('[TEST FIXTURE]'))
   const fixture = await page.evaluate(() => ({
     cover: Boolean(document.querySelector('.screen-media img')),
-    screenshots: document.querySelectorAll('.screen-screenshots img').length,
+    drawn: document.querySelectorAll('.screen-screenshots img').length,
+    count: document.querySelector('.screen-media-count')?.textContent.trim(),
     actions: [...document.querySelectorAll('.screen-actions a')].map((a) => a.getAttribute('href')),
   }))
-  record('R2', 'test-only fixture proves cover, screenshots and available action rendering', fixture.cover && fixture.screenshots === 2
+  // The panel deliberately stops drawing screenshots: at this size they are unreadable. It must
+  // still say how many exist, and every action that genuinely exists must be offered.
+  record('R2', 'test-only fixture proves cover, media count and available action rendering', fixture.cover
+    && fixture.drawn === 0 && fixture.count?.startsWith('2 screenshots')
     && fixture.actions.includes('/fixture-demo/') && fixture.actions.includes('/fixture-download/')
     && fixture.actions.includes('https://example.invalid/fixture'), JSON.stringify(fixture))
 
-  await page.goto(`${ROUTES_BASE}/games/`)
+  await goto(page, `${ROUTES_BASE}/games/`)
   await page.locator('.game-card h3 a').click()
-  await page.waitForURL('**/games/placeholder-slug/')
+  await page.waitForURL('**/games/the-last-witness/')
   await page.goBack()
   await page.waitForURL('**/games/')
   await page.goForward()
-  await page.waitForURL('**/games/placeholder-slug/')
-  record('R3', 'real routes support normal browser back and forward navigation', await page.locator('h1').textContent() === '[PLACEHOLDER] Untitled game')
+  await page.waitForURL('**/games/the-last-witness/')
+  record('R3', 'real routes support normal browser back and forward navigation', await page.locator('h1').textContent() === 'The Last Witness')
 
   for (const width of [768, 900]) {
     await page.setViewportSize({ width, height: 800 })
-    await page.goto(`${BASE}/?view=room&game=placeholder-slug`)
+    await goto(page, `${BASE}/?view=room&game=the-last-witness`)
     await page.waitForFunction(() => window.__saleshiRoom?.stats()?.drawCalls > 0)
     const layout = await page.evaluate(() => {
       const viewport = document.getElementById('room-viewport').getBoundingClientRect()
@@ -166,7 +181,7 @@ try {
   }
 
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
-  await phone.goto(`${BASE}/?view=room`)
+  await goto(phone, `${BASE}/?view=room`)
   await phone.waitForFunction(() => window.__saleshiRoom?.stats()?.drawCalls > 0)
 
   // CDP dispatches browser-trusted touch input, not synthetic DOM events or mouse movement.
@@ -239,7 +254,7 @@ try {
     && Math.hypot(afterDrag.pose.x - beforeDrag.pose.x, afterDrag.pose.y - beforeDrag.pose.y, afterDrag.pose.z - beforeDrag.pose.z) < 0.001,
     JSON.stringify({ selected: afterDrag.selectedGameId, station: afterDrag.station, url: afterDrag.url, paperOpen: afterDrag.paperOpen }))
 
-  await phone.locator('.proxy[data-interact-id="placeholder-slug"]').tap()
+  await phone.locator('.proxy[data-interact-id="the-last-witness"]').tap()
   await phone.waitForTimeout(1000)
   const mobile = await phone.evaluate(() => {
     const stage = document.getElementById('stage').getBoundingClientRect()
@@ -257,8 +272,8 @@ try {
   await phone.screenshot({ path: OUT('m6-02-phone-panel.png'), fullPage: true })
 
   await phone.setViewportSize({ width: 844, height: 390 })
-  await phone.goto(`${BASE}/?view=room&game=placeholder-slug`)
-  await phone.waitForFunction(() => window.__saleshiRoom?.stats()?.selectedGameId === 'placeholder-slug' && window.__saleshiRoom.stats().drawCalls > 0)
+  await goto(phone, `${BASE}/?view=room&game=the-last-witness`)
+  await phone.waitForFunction(() => window.__saleshiRoom?.stats()?.selectedGameId === 'the-last-witness' && window.__saleshiRoom.stats().drawCalls > 0)
   await phone.waitForTimeout(1000)
   const landscape = await phone.evaluate(() => {
     const stage = document.getElementById('stage').getBoundingClientRect()
@@ -294,7 +309,7 @@ try {
     }
   })
   const fallback = await noWebgl.newPage()
-  await fallback.goto(`${ROUTES_BASE}/`)
+  await goto(fallback, `${ROUTES_BASE}/`)
   record('R6', 'no-WebGL entry retains useful catalogue navigation and no fake room control', await fallback.locator('#stage').isHidden()
     && await fallback.locator('[data-action="enter-room"]').isDisabled()
     && await fallback.locator('.game-card h3 a').count() === 1)
@@ -303,15 +318,17 @@ try {
   const saveData = await browser.newContext()
   await saveData.addInitScript(() => Object.defineProperty(navigator, 'connection', { value: { saveData: true } }))
   const reduced = await saveData.newPage()
-  await reduced.goto(`${BASE}/`)
-  record('R7', 'reduced-data preference starts the text view with an optional room launcher', !(await reduced.evaluate(() => window.__saleshiRoom.isRunning()))
+  await goto(reduced, `${BASE}/`)
+  // Under a reduced-data preference the room module is never loaded at all, so absence of the hook
+  // counts as not running rather than throwing.
+  record('R7', 'reduced-data preference starts the text view with an optional room launcher', !(await reduced.evaluate(() => window.__saleshiRoom?.isRunning?.() ?? false))
     && (await reduced.locator('#room-status').textContent()).includes('reduced data')
     && await reduced.locator('[data-action="enter-room"]').isEnabled())
   await saveData.close()
 
   const noJs = await browser.newContext({ javaScriptEnabled: false })
   const staticPage = await noJs.newPage()
-  await staticPage.goto(`${ROUTES_BASE}/`)
+  await goto(staticPage, `${ROUTES_BASE}/`)
   const noJsState = {
     cards: await staticPage.locator('.game-card h3 a').count(),
     launcherHidden: await staticPage.locator('#room-launcher').isHidden(),

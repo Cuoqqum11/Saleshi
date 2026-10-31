@@ -8,9 +8,15 @@
     "dev": "node server/index.js",
     "dev:vite": "vite",
     "build": "vite build",
+    "build:qa": "node scripts/build-qa.mjs",
     "preview": "vite preview",
     "start": "node server/index.js --production",
-    "test:commerce": "node --test tests/commerce.test.mjs"
+    "game:stage": "node scripts/stage-game-build.mjs",
+    "game:check": "node scripts/stage-game-build.mjs --check",
+    "db:seed": "node server/seed.js",
+    "test:commerce": "node --test tests/commerce.test.mjs",
+    "test:builds": "node --test tests/game-builds.test.mjs",
+    "test:database": "node --test tests/database-seed.test.mjs"
   },
   "dependencies": {
     "express": "^5.3.0",

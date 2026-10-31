@@ -1,0 +1,195 @@
+# M6b — MySQL relocation and logical backup/restore drill
+# Portable MySQL 8.0.46, 127.0.0.1:3307, run with the administrator credentials in
+# .env.mysql-admin.local. No credential value appears in this file.
+# The live schema was never dropped, renamed or reinitialised. The scratch schema created
+# for the drill was dropped at the end (section 7).
+# UTC timestamps are quoted where the command produced one.
+
+
+## 1. Why this was done
+
+B13 in tests/test-plan.md recorded two open items: the portable database lived in a
+temporary directory, and no backup-restore drill had ever been run. A local Windows test
+instance is not evidence that data survives, and a directory the operating system is free
+to clean is not a place to keep records a report depends on.
+
+Incident that proved the point. During M6b test runs the background QA server exited with
+code 1073807364. The cause was not the site: the `bin`, `lib` and `share` folders of the
+portable distribution had been removed from `%TEMP%` while its `data` folder survived, which
+killed `mysqld` and every server that connects to it. Recovery used the original
+`mysql-8.0.46-winx64.zip`, which had not been cleaned, and started `mysqld` against the
+untouched data directory. `--initialize` was deliberately not run; against a populated
+directory it would have destroyed the existing orders. All 125 orders were still there.
+
+
+## 2. Relocation
+
+The distribution was copied to a durable, deliberately managed location and restarted
+against the same data directory.
+
+    before: C:/Users/jackc/AppData/Local/Temp/saleshi-mysql/mysql-8.0.46-winx64
+    after : D:/saleshi-mysql          (bin, lib, share, data, backups, source zip)
+
+    $ mysql -e "SELECT VERSION(), @@datadir, @@basedir, @@port;"
+    version   datadir                basedir            port
+    8.0.46    D:\\saleshi-mysql\\data\\   D:\\saleshi-mysql\\   3307
+
+Both `mysqld.exe` processes on the machine resolve to `D:\saleshi-mysql\bin\mysqld.exe`
+(Win32_Process.ExecutablePath), so nothing is still running from the temporary copy.
+
+The copy of the old tree was renamed rather than deleted, because a second plausible-looking
+`data` directory is exactly the hazard that caused the incident above:
+
+    C:/Users/jackc/AppData/Local/Temp/saleshi-mysql_STALE_moved-to-D-drive-2026-10-31
+
+It is stale by design and Windows is free to clean it. Nothing reads from it.
+
+
+## 3. Dump
+
+    $ mysqldump --single-transaction --databases saleshi \
+        > D:/saleshi-mysql/backups/saleshi-20261031T003401Z.sql
+
+    saleshi-20261031T003401Z.sql   43,312 bytes
+      sha256 dd588243f817bbb814dc0a2eb94d6a26eb474715b5c2367d23606756c5cacc8d
+    drill-20261031T004047Z.sql     43,312 bytes (dump taken for the drill below)
+      sha256 39df71ddef8d0d5afe390ddb38aa6109ea7b468d730cc2e50316d1497e55d0f5
+
+The two dumps are byte-for-byte identical apart from mysqldump's own
+"-- Dump completed on ..." comment line:
+
+    $ diff <(grep -v 'Dump completed' saleshi-20261031T003401Z.sql) \
+           <(grep -v 'Dump completed' drill-20261031T004047Z.sql)
+    IDENTICAL apart from the completion timestamp comment
+
+`--single-transaction` keeps InnoDB consistent without locking the tables, so the dump was
+taken while the site was running.
+
+
+## 4. Prepared for restore into a scratch schema
+
+`mysqldump --databases` emits `DROP DATABASE IF EXISTS` and `CREATE DATABASE` for the real
+schema name. Importing that file unedited would have deleted the live database, so those
+statements were removed and the `USE` target rewritten before anything was executed. The
+result was inspected, not trusted:
+
+    $ grep -cE '^(CREATE DATABASE|DROP DATABASE)' drill-scratch.sql
+    0
+    $ grep -n '^USE' drill-scratch.sql
+    23:USE `saleshi_restore_drill`;
+
+
+## 5. Restore
+
+    $ mysql -e "CREATE DATABASE saleshi_restore_drill CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
+    $ mysql < D:/saleshi-mysql/backups/drill-scratch.sql
+
+The import completed with no errors and no warnings.
+
+
+## 6. Compared live against restored
+
+Row counts. `information_schema.TABLES.TABLE_ROWS` was not used for this: it is an InnoDB
+estimate and reported 0 for tables holding 125 rows.
+
+    tbl            live    restored
+    games          1       1
+    offerings      1       1
+    orders         125     125
+    order_lines    125     125
+
+Money. `total` is on `orders`; `unit_amount` and `line_total` are on `order_lines`.
+
+    side                  rows_   amount
+    live.orders           125     845.50
+    drill.orders          125     845.50
+    live.order_lines      125     845.50
+    drill.order_lines     125     845.50
+
+Content digests, so the comparison is over values and not only counts:
+
+    digest             live                                 restored
+    order_reference    32e07b2a30219016c5b85ead8a34d57f     32e07b2a30219016c5b85ead8a34d57f
+    order_line_body    bdacb3ed0911b75e91e653905413c293     bdacb3ed0911b75e91e653905413c293
+    offering_body      e945603853bf9734e3705705acb5c404     e945603853bf9734e3705705acb5c404
+    game_body          ec00fb31bbd7870a03814d84ebf45fd6     ec00fb31bbd7870a03814d84ebf45fd6
+
+Constraints survived the text round trip:
+
+    foreign keys on the restored schema   3   (order_lines -> orders, order_lines -> offerings,
+                                                 offerings -> games)
+    index rows on the restored schema     10  (equal to the live schema)
+
+All four digests match, all amounts match, and the restored schema carries the same
+constraints and indexes.
+
+
+## 7. Cleanup
+
+    $ mysql -e "DROP DATABASE saleshi_restore_drill;"
+    $ mysql -e "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'saleshi%';"
+    SCHEMA_NAME
+    saleshi
+    $ mysql -e "SELECT COUNT(*) FROM saleshi.orders;"
+    live_orders_after_drop
+    125
+
+
+## 8. What this proves, and what it does not
+
+Proves: the relocated instance serves the site from `D:`, the dump restores into a fresh
+schema with identical rows, totals, content digests, foreign keys and indexes, and a
+mis-targeted `CREATE DATABASE`/`DROP DATABASE` in a dump file is a real hazard that has to
+be checked before import.
+
+Does not prove: this is a backup strategy. It is one logical dump on one workstation.
+Scheduled dumps, off-machine storage, retention, point-in-time recovery, restore drills
+against production-sized data, an upgrade path from the older M5 schema, and failover are
+still open, and none of it is a hosted deployment. See docs/deployment-options.md.
+
+Everything here was measured on a local portable instance with synthetic, simulated
+orders. No real payment and no production data are involved.
+
+
+## 9. Test suites re-run against the relocated instance
+
+Same MySQL 8.0.46 on 127.0.0.1:3307, same restricted runtime account in .env; only the base
+and data directory of the server changed.
+
+    $ npm run test:commerce
+    Repository under test: mysql
+    ✔ server quote recomputes the total from validated offering lines
+    ✔ server quote rejects tampered, malformed and unavailable offerings
+    ✔ fixed offering prices come from the server record, not the submitted amount
+    ✔ customer validation trims and normalises valid values and rejects invalid values
+    ✔ order references are unguessable and match the confirmation route format
+    ✔ checkout interaction identifiers are valid UUIDs and normalised for storage
+    ✔ order fingerprints are deterministic and change with validated order details
+    ✔ selected adapter creates and retrieves one order with its validated lines
+    ✔ repeating the same checkout interaction returns the original order
+    ✔ reusing a checkout interaction for different details is rejected
+    ✔ concurrent retries do not exhaust the connection pool or duplicate orders
+    ✔ MySQL rolls back the order and first line when the second line fails
+    - MySQL enforces checks, preserves snapshots and restricts referenced deletion   # SKIP
+    ✔ MySQL order survives a verified application process restart
+    ℹ Persisted SAL-1227BB4FAB507359C55DBD4BCA6E8F01; terminated PID 12088, retrieved via PID 26192
+    ℹ tests 14 / pass 13 / fail 0 / skipped 1
+
+    $ TEST_MYSQL_CONSTRAINTS=1 node --test --test-name-pattern="enforces checks" tests/commerce.test.mjs
+    Repository under test: mysql
+    ✔ MySQL enforces checks, preserves snapshots and restricts referenced deletion
+    ℹ tests 1 / pass 1 / fail 0 / skipped 0
+
+The skip is the one test that mutates catalogue rows and therefore needs administrator
+rights; the runtime account is granted no UPDATE or DELETE on offerings. It is reported as a
+skip in the normal run rather than hidden, and re-run on its own with the admin credentials so
+the 14 checks are all actually executed.
+
+    $ npm run test:database
+    ✔ S1 seed projects the shared records into MySQL with no extra rows
+    ✔ S2 a superseded game row is pruned and re-running the seed changes nothing
+    ✔ S3 an offering that leaves the records is retired, and its game survives while orders need it
+    ✔ S4 historical orders are untouched by seeding and still retrieve
+    ℹ tests 4 / pass 4 / fail 0 / skipped 0
+
+Total: 18 checks, 0 failures, against the relocated instance.

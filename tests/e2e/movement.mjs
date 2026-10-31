@@ -5,9 +5,10 @@
  * every assertion reads the live camera pose out of the dev hook. Anything this file cannot
  * prove is reported as UNVERIFIED rather than passed.
  *
- * Run with: node tests/e2e/movement.mjs   (dev server must be running)
+ * Run with: node tests/e2e/movement.mjs   (needs a dev server or an `npm run build:qa` origin)
  */
 import { chromium } from 'playwright'
+import { goto } from './netRetry.mjs'
 import { fileURLToPath } from 'node:url'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
@@ -73,7 +74,7 @@ async function face(page, targetYaw, tol = 0.07) {
 }
 
 async function openRoom(page, url = `${BASE}/?view=room`) {
-  await page.goto(url)
+  await goto(page, url)
   await page.waitForFunction(() => window.__saleshiRoom?.isRunning() === true, null, { timeout: 15000 })
 }
 
@@ -167,12 +168,12 @@ try {
   await page.click('#walk-toggle')
   await page.waitForTimeout(700)
   const walkPose = await pose(page)
-  await page.click('.proxy[data-interact-id="placeholder-slug"]')
+  await page.click('.proxy[data-interact-id="the-last-witness"]')
   await page.waitForTimeout(500)
   s = await stats(page)
   const stayed = Math.hypot(s.pose.x - walkPose.x, s.pose.z - walkPose.z) < 0.02
   record('W7', 'selecting a cassette while walking keeps the walker in place',
-    s.mode === 'walk' && s.selected === 'placeholder-slug' && stayed,
+    s.mode === 'walk' && s.selected === 'the-last-witness' && stayed,
     `mode=${s.mode} selected=${s.selected} drift=${Math.hypot(s.pose.x - walkPose.x, s.pose.z - walkPose.z).toFixed(3)}`)
 
   await page.waitForTimeout(400)

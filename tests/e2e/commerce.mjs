@@ -1,4 +1,5 @@
 import { chromium } from 'playwright'
+import { goto } from './netRetry.mjs'
 import { fileURLToPath } from 'node:url'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5174'
@@ -18,34 +19,34 @@ page.on('pageerror', (error) => errors.push(error.message))
 try {
   const health = await (await page.request.get(`${BASE}/api/health`)).json()
   console.log(`Commerce API adapter: ${health.databaseDriver}; ${BASE}`)
-  await page.goto(`${BASE}/?view=room`)
-  await page.locator('.proxy[data-interact-id="placeholder-slug"]').click()
-  await page.locator('#monitor-screen a[href="/games/placeholder-slug/"]').click()
-  await page.waitForURL('**/games/placeholder-slug/')
+  await goto(page, `${BASE}/?view=room`)
+  await page.locator('.proxy[data-interact-id="the-last-witness"]').click()
+  await page.locator('#monitor-screen a[href="/games/the-last-witness/"]').click()
+  await page.waitForURL('**/games/the-last-witness/')
   await page.locator('#support a[href^="/store/"]').click()
   record('C24', 'room cassette leads through real game details to its store offering', new URL(page.url()).pathname === '/store/'
     && await page.locator('[data-offering-form="studio-support"]').isVisible())
-  await page.goto(`${BASE}/games/`)
+  await goto(page, `${BASE}/games/`)
   const catalogue = await page.evaluate(() => ({
     title: document.querySelector('.game-card h3')?.textContent.trim(),
     cards: document.querySelectorAll('.game-card').length,
   }))
-  record('C1', 'catalogue renders from shared game data', catalogue.cards === 1 && catalogue.title.includes('Untitled game'), JSON.stringify(catalogue))
+  record('C1', 'catalogue renders from shared game data', catalogue.cards === 1 && catalogue.title.includes('The Last Witness'), JSON.stringify(catalogue))
   await page.screenshot({ path: OUT('m6-03-catalogue.png'), fullPage: true })
 
   await page.click('.game-card h3 a')
-  await page.waitForURL('**/games/placeholder-slug/')
-  record('C2', 'catalogue navigates to reusable game details', await page.locator('h1').textContent() === '[PLACEHOLDER] Untitled game'
+  await page.waitForURL('**/games/the-last-witness/')
+  record('C2', 'catalogue navigates to reusable game details', await page.locator('h1').textContent() === 'The Last Witness'
     && await page.locator('#support a[href^="/store/"]').count() === 1)
 
-  await page.goto(`${BASE}/store/`)
+  await goto(page, `${BASE}/store/`)
   const form = page.locator('[data-offering-form="studio-support"]')
   await form.locator('input').fill('7.25')
   await form.locator('button').click()
   record('C3', 'store adds a validated contribution', (await page.locator('[data-offering-feedback]').textContent()).includes('£7.25'))
   await page.screenshot({ path: OUT('m6-04-store.png'), fullPage: true })
 
-  await page.goto(`${BASE}/cart/`)
+  await goto(page, `${BASE}/cart/`)
   await page.waitForSelector('[data-offering-id="studio-support"]')
   await page.reload()
   await page.waitForSelector('[data-offering-id="studio-support"]')
@@ -62,10 +63,10 @@ try {
   await page.getByRole('button', { name: 'Remove Voluntary studio support' }).click()
   record('C6', 'cart removes a line and shows an honest empty state', await page.getByRole('heading', { name: 'Your cart is empty' }).isVisible())
 
-  await page.goto(`${BASE}/store/`)
+  await goto(page, `${BASE}/store/`)
   await form.locator('input').fill('12.50')
   await form.locator('button').click()
-  await page.goto(`${BASE}/checkout/`)
+  await goto(page, `${BASE}/checkout/`)
   await page.waitForFunction(() => document.getElementById('checkout-review').textContent.includes('£12.50'))
   await page.screenshot({ path: OUT('m6-06-checkout.png'), fullPage: true })
   await page.getByLabel('Name', { exact: true }).fill('X')
@@ -139,29 +140,29 @@ try {
     && (await malformed.json()).error === 'Request body must be valid JSON.' && oversized.status() === 413
     && (await oversized.json()).error === 'Request body must be 20 KB or smaller.')
 
-  await page.goto(`${BASE}/cart/`)
+  await goto(page, `${BASE}/cart/`)
   record('C15', 'successful checkout clears the browser cart', await page.getByRole('heading', { name: 'Your cart is empty' }).isVisible())
 
   const noJs = await browser.newContext({ javaScriptEnabled: false })
   const staticPage = await noJs.newPage()
-  await staticPage.goto(`${BASE}/store/`)
+  await goto(staticPage, `${BASE}/store/`)
   const staticText = await staticPage.locator('main').textContent()
   record('C16', 'no-JS store keeps offering content and hides nonfunctional controls', staticText.includes('GBP 1.00')
     && staticText.includes('No payment is taken') && await staticPage.locator('[data-offering-form]').isHidden())
-  await staticPage.goto(`${BASE}/checkout/`)
+  await goto(staticPage, `${BASE}/checkout/`)
   const noJsCheckout = await staticPage.locator('#checkout-form').isHidden()
     && await staticPage.getByRole('link', { name: 'store page', exact: true }).isVisible()
-  await staticPage.goto(`${BASE}/order/`)
+  await goto(staticPage, `${BASE}/order/`)
   record('C23', 'no-JS checkout hides dead controls and order retains a heading', noJsCheckout
     && await staticPage.getByRole('heading', { level: 1, name: 'Order confirmation' }).isVisible())
   await noJs.close()
 
   for (const width of [390, 768, 900, 1280]) {
     await page.setViewportSize({ width, height: 844 })
-    await page.goto(`${BASE}/store/`)
+    await goto(page, `${BASE}/store/`)
     await form.locator('input').fill('8')
     await form.locator('button').click()
-    await page.goto(`${BASE}/cart/`)
+    await goto(page, `${BASE}/cart/`)
     await page.waitForFunction(() => document.getElementById('cart-content').textContent.includes('Server-checked total: £8.00'))
     let fits = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
     await page.getByRole('link', { name: 'Continue to simulated checkout' }).click()
@@ -191,10 +192,10 @@ try {
     if (width === 390) await page.screenshot({ path: OUT('m6-09-phone-order.png'), fullPage: true })
   }
 
-  await page.goto(`${BASE}/store/`)
+  await goto(page, `${BASE}/store/`)
   await form.locator('input').fill('9')
   await form.locator('button').click()
-  await page.goto(`${BASE}/checkout/`)
+  await goto(page, `${BASE}/checkout/`)
   await page.waitForFunction(() => document.getElementById('checkout-review').textContent.includes('£9.00'))
   await page.getByLabel('Name', { exact: true }).fill('Network Retry')
   await page.getByLabel('Email address').fill('network@example.com')
@@ -229,10 +230,10 @@ try {
     { id: 'C25', body: '{"order":', error: 'unreadable response', name: 'truncated success JSON' },
     { id: 'C26', body: '{}', error: 'did not return an order reference', name: 'missing success reference' },
   ]) {
-    await page.goto(`${BASE}/store/`)
+    await goto(page, `${BASE}/store/`)
     await form.locator('input').fill('9')
     await form.locator('button').click()
-    await page.goto(`${BASE}/checkout/`)
+    await goto(page, `${BASE}/checkout/`)
     await page.waitForFunction(() => document.getElementById('checkout-review').textContent.includes('£9.00'))
     await page.getByLabel('Name', { exact: true }).fill('Response Retry')
     await page.getByLabel('Email address').fill('response@example.com')
@@ -261,13 +262,13 @@ try {
     await page.unroute('**/api/orders')
   }
 
-  await page.goto(`${BASE}/store/`)
+  await goto(page, `${BASE}/store/`)
   await form.locator('input').fill('5')
   await form.locator('button').click()
   await page.route('**/api/cart/quote', (route) => route.fulfill({
     status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'The server could not complete this request.' }),
   }))
-  await page.goto(`${BASE}/checkout/`)
+  await goto(page, `${BASE}/checkout/`)
   await page.getByRole('link', { name: 'Return to cart', exact: true }).waitFor()
   record('C20', 'failed quote hides checkout and offers a working cart return', await page.locator('#checkout-form').isHidden())
   await page.getByRole('link', { name: 'Return to cart', exact: true }).click()

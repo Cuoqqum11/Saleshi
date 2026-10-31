@@ -76,9 +76,9 @@ function addSupport(offering) {
       </figure>
       <p v-else class="screen-media-placeholder">Cover artwork has not been supplied.</p>
 
-      <div v-if="game.screenshots.length" class="screen-screenshots">
-        <img v-for="shot in game.screenshots" :key="shot.url" :src="shot.url" :alt="shot.alt" />
-      </div>
+      <p v-if="game.screenshots.length" class="screen-media-count">
+        {{ game.screenshots.length }} screenshots are on the game page; they are too small to read here.
+      </p>
 
       <h3 class="screen-subheading">Available actions</h3>
       <ul class="screen-actions">

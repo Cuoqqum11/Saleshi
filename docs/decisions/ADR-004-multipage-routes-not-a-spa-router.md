@@ -15,18 +15,21 @@ cannot run.
 Each route is a real `.html` file built by Vite through `rollupOptions.input`:
 
 ```
-index.html                       → the room + conventional fallback content
-games/index.html                 → catalogue
-games/placeholder-slug/index.html → the game page
-store/index.html                 → offerings
-cart/index.html                  → persistent cart
-checkout/index.html              → simulated checkout
-order/index.html                 → confirmation
+index.html                        → the room + conventional fallback content
+games/index.html                  → catalogue
+games/the-last-witness/index.html → the game page
+games/the-last-witness/play/index.html → the click-to-start browser demo
+store/index.html                  → offerings
+cart/index.html                   → persistent cart
+checkout/index.html               → simulated checkout
+order/index.html                  → confirmation
 ```
 
 No router library exists in the project. Links are ordinary `<a href>` elements. Vue mounts only
 inside the room page, and only after the room starts. M5 adds a Vite static-content transform so
 data-heavy cards and details are generated from shared records in both development and production.
+The game paths carry the real slug from M6b; the route count grew from seven to eight, not the
+pattern.
 
 ## Consequences
 
