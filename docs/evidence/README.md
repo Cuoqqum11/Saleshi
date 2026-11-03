@@ -65,8 +65,10 @@ Provenance:
   passwords or administrator environment files are included here.
 - The suites write fixed filenames, so a later milestone's run overwrites these images. After the M6b
   re-verification the current captures were copied to `m6b-05`…`m6b-10` and the `m6-*` files were
-  restored from Git, so this section still shows the placeholder-content site that M6 tested. Re-run
-  `routes.mjs` or `commerce.mjs` and they are overwritten again.
+  restored from Git, so this section still shows the placeholder-content site that M6 tested. M7
+  changed this structurally: the suites now stamp their captures with `EVIDENCE_PREFIX` (default `m6`),
+  so the M7 run wrote `m7-*` and these files were left as M6 reported them. Re-running a suite
+  without that variable still overwrites them.
 
 ### Full-page captures
 
@@ -198,3 +200,79 @@ against the studio's export folder. The demo reached its first rendered frame in
 has played it through, the web export reports itself as a debug build, and the Windows `.exe` has
 never been launched from this site. Those limits, and the intermittent Windows loopback denials that
 shaped how these suites are run, are recorded in `../../tests/test-plan.md`.
+
+## M7 — visual art direction, 3D environment and asset refinement, 31 October 2026
+
+The grey-box room became a deliberately designed one: real wall/floor/wood/plaster surfaces instead
+of flat colours, a reworked light rig (5 lights → 7) with static shadows and ACES exposure, a shelf
+carcass holding physical game cases in place of floating boxes, a rebuilt chair, desk props and
+cables, and papers that read as pinned documents. No route, collision boundary, camera contract or
+DOM interface was redesigned, and the readable interface content stayed in HTML.
+[docs/art-direction.md](../art-direction.md) holds the decisions, the measured table and the
+departures; this section indexes the images that back it.
+
+Provenance:
+
+- `m7-before-*` and `m7-after-*` are written by `tests/e2e/visual.mjs`, run twice against the **QA
+  bundle** (`dist-qa/`) at `http://127.0.0.1:5314` with `PREFIX=m7-before` and `PREFIX=m7-after`.
+  Same browser (headless Chromium + SwiftShader), same 1280×800 viewport, same database, same ten
+  fixed viewpoints: the station viewpoints drive the real control bar, and the close-ups park the eye
+  with `__saleshiRoom.aim()` so a frame is repeatable rather than walked to.
+- `before` is the room as M6b left it (commit `3e4c20d`); `after` is the final M7 build. The two
+  `*-room-stats.json` files record draw calls, triangles, meshes, textures, programs, lights, shadow
+  state, tone mapping and the exact pose per viewpoint, plus boot time and a two-second frame count —
+  the pairs are comparable because the recorded poses match to the decimal place.
+- These are **canvas-only** captures taken from the WebGL buffer, except the two `-page` variants,
+  which are full-page screenshots of the shelf and desk states including the DOM controls and panel.
+  SwiftShader is a software rasteriser: every number here is a relative comparison in one
+  environment, **not** a GPU frame rate, and no real-device or other-browser measurement was taken.
+- `m7-01`…`m7-10`, `m7-gate-*`, `m7-papers-*` and `m7-movement-*` are the Stage G regression run
+  re-captured on the final build with `EVIDENCE_PREFIX=m7`. They are the same assertions the M6 and
+  M6b tables describe, photographed after the visual work — they exist so the M6 milestone evidence
+  stayed exactly as that milestone reported it instead of being overwritten.
+- The case artwork uses the screenshot the studio supplied with the build. Nothing in these frames is
+  invented imagery: no fabricated gameplay screenshots, no additional game names on the shelf. The
+  shelf holds the one real title; the empty slots are deliberately empty.
+
+### Room viewpoints, before and after
+
+| Files | What to compare |
+| --- | --- |
+| `m7-before-01-entry.png` / `m7-after-01-entry.png` | The pose the room opens on with no input. Before: unshaded grey boxes. After: plaster and floor texture, warm key light and the shelf readable on the left. **This is the same pose as `02-shelf`** — the room opens facing the shelf, so the entry viewpoint *is* the shelf station; both are recorded because the suite does. |
+| `m7-before-02-shelf.png` / `m7-after-02-shelf.png` | Cassette shelf station. Before: boxes standing on a plank. After: shelf carcass with back board, and cases with front cover, spine, 26 mm thickness and a cut-out window. |
+| `m7-before-03-desk.png` / `m7-after-03-desk.png` | Desk station with *The Last Witness* selected. The monitor bezel, keyboard, props and screen lighting changed; the readable interface itself is DOM, not texture. |
+| `m7-before-02-shelf-page.png` / `m7-after-02-shelf-page.png` | Full-page versions of the shelf state — room viewport, control chips and the panel outside it, so chip containment and layout can be checked in the same frame as the art. |
+| `m7-before-03-desk-page.png` / `m7-after-03-desk-page.png` | Full-page versions of the desk state, including the D11 re-check: the computer stays clickable at the desk with the panel open. |
+| `m7-before-04-door.png` / `m7-after-04-door.png` | From the door, the whole composition at once — the widest view and the most expensive one (96 draw calls, 12,752 triangles after). |
+| `m7-before-05-walk-central.png` / `m7-after-05-walk-central.png` | Standing at eye height in the middle of the floor, facing the shelf — the view most visitors walk through. |
+| `m7-before-06-case-close-up.png` / `m7-after-06-case-close-up.png` | The real game case at arm's length: cover artwork, legible title, spine, seam and packaging material, judged as packaging rather than as a coloured block. |
+| `m7-before-07-monitor-close-up.png` / `m7-after-07-monitor-close-up.png` | The monitor from the chair position — screen as a lit object, with the DOM panel still rendered separately above it. |
+| `m7-before-08-letter-close-up.png` / `m7-after-08-letter-close-up.png` | The studio letter pinned to the west wall. It reads as a document; the type is intentionally **not** legible at this size, because the readable version is the HTML dialog, not a baked texture. |
+| `m7-before-09-desk-corner.png` / `m7-after-09-desk-corner.png` | Low raking angle across the desk, specifically to judge contact points — where objects meet the surface and where shadows land. |
+| `m7-before-10-shelf-wall-joint.png` / `m7-after-10-shelf-wall-joint.png` | Raking view of the shelf carcass, back board and wall junction — the frame that shows whether the furniture is attached to the room or floating in it. |
+| `m7-after-11-production-bundle-smoke.png` | The same desk view rendered by the shipped `dist/` build served at `http://127.0.0.1:5315 --production`. That bundle has no test hooks (`grep -c __saleshiRoom dist/assets/*.js` = 0), so this is a screenshot, not an assertion: it proves what a visitor actually receives renders. |
+
+### Regression re-captures on the final build
+
+| Files | Suite and what it re-proves |
+| --- | --- |
+| `m7-gate-desk-integrated.png`, `m7-gate-phone-room.png`, `m7-gate-shelf-integrated.png` | `gate.mjs` 12/12 — entry, keyboard activation, chip containment, the new shared-token check between the 3D screen and the panel CSS, and the D11 re-test. |
+| `m7-papers-paper-open.png`, `m7-papers-wall-notes.png` | `papers.mjs` 8/8 — the letter and instruction note open as readable HTML, focus returns to the chip, and a direct raycast click on the 3D sheet works (P8, which regressed and was fixed during M7). |
+| `m7-movement-walk-desk-anchored.png`, `m7-movement-walk-midroom.png`, `m7-movement-walk-shelf-selected.png` | `movement.mjs` 15 passed, 0 failed, 2 noted — every collision boundary is the M6 one; the two "noted" frames are human-review captures, not assertions. |
+| `m7-01-computer-catalogue.png`, `m7-02-phone-panel.png`, `m7-08-phone-landscape.png` | `routes.mjs` (29/0) — URL-restored computer state, the 390 px panel as its own region, and the 844×390 landscape stage on the new geometry. |
+| `m7-03-catalogue.png`, `m7-04-store.png`, `m7-05-cart.png`, `m7-06-checkout.png`, `m7-07-order-confirmation.png`, `m7-09-phone-order.png`, `m7-10-checkout-retry.png` | `commerce.mjs` (30/0) against real MySQL — the sales journey is unchanged by the visual work, and no commercial feature was added during M7. |
+| `m7-01-game-details.png`, `m7-02-play-demo.png`, `m7-03-catalogue.png`, `m7-04-room-computer.png` | `game-builds.mjs` (20/0) — the real build's page, the running demo, and the room computer with its live actions. `m7-03-catalogue.png` is written by both suites under the same name and shows the same page. |
+
+### Logs and measured data
+
+| File | Evidence and limitation |
+| --- | --- |
+| `m7-before-room-stats.json` | Per-viewpoint renderer internals and exact camera poses for the pre-M7 room, plus environment boot time (1,793 ms) and a two-second frame count (25). Boot time is one sample, so it is not comparable as a trend. |
+| `m7-after-room-stats.json` | The same block on the final build, plus `walkMetresInTwoSeconds` (3.35), `reportedFpsDuringWalk` (18) and `walkModeConfirmed`. The walk figure is identical at 18 and 19 fps because movement now runs on a fixed 1/60 s step — the measurement that exposed the earlier bug, not a performance claim. |
+| `m7-regression.txt` | The Stage G matrix in one file: the QA origin and UTC timestamp, the Node suites run on the same build and database (`test:commerce` 13/1 skip, `test:database` 4/4 on real MySQL, `test:builds` 6/6, `game:check` OK, `npm run build` OK with hooks absent from `dist/`), then every browser assertion with its measured values — gate 12/12, papers 8/8, movement 15/0 + 2 noted, routes 29/0, game-builds 20/0, commerce 30/0. |
+
+These images cannot prove anything about performance on a real GPU, on another browser, on a physical
+phone, or with a screen reader; those remain unverified and are listed as limitations in
+`../art-direction.md` §11 and in [the test plan](../../tests/test-plan.md). Accepted visual compromises
+are recorded there too: the shelf interior is dim, the ceiling strip is still the brightest pixel in
+the wide shots, and the dark ceiling is deliberate but unlit by any measured source.

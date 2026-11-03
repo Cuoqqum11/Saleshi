@@ -9,10 +9,9 @@
  */
 import { chromium } from 'playwright'
 import { goto } from './netRetry.mjs'
-import { fileURLToPath } from 'node:url'
+import { OUT } from './evidence.mjs'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
-const OUT = (name) => fileURLToPath(new URL(`../../docs/evidence/${name}`, import.meta.url))
 
 const results = []
 const record = (id, name, pass, detail = '') => {

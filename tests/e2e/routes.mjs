@@ -1,13 +1,12 @@
 import { chromium } from 'playwright'
 import { goto, request } from './netRetry.mjs'
-import { fileURLToPath } from 'node:url'
+import { OUT } from './evidence.mjs'
 
 // BASE_URL must expose the room test hooks: pose and previewPanelGame come from window.__saleshiRoom.
 // A dev server or `npm run build:qa` both qualify; `npm run build` compiles the hooks away.
 // ROUTES_BASE_URL optionally audits the built site without Vite/HMR in the public-page checks.
 const BASE = process.env.BASE_URL ?? 'http://localhost:5174'
 const ROUTES_BASE = process.env.ROUTES_BASE_URL ?? BASE
-const OUT = (name) => fileURLToPath(new URL(`../../docs/evidence/${name}`, import.meta.url))
 const REAL_PAGES = [
   ['/', 'Saleshi — indie game studio [PLACEHOLDER]'],
   ['/games/', 'Games catalogue — Saleshi'],
@@ -194,6 +193,16 @@ try {
       scrollX, scrollY,
     }
   })
+  // Station travel is eased, so the pose on the first rendered frame is still in flight — reading it
+  // there would make the 4 px-per-step drag look like a 2.6 m camera move. Wait for two consecutive
+  // samples to agree before taking the before-state.
+  await phone.waitForFunction(() => {
+    const { pose } = window.__saleshiRoom.stats()
+    const previous = window.__m6SettlePose
+    window.__m6SettlePose = { x: pose.x, y: pose.y, z: pose.z }
+    return Boolean(previous)
+      && Math.hypot(pose.x - previous.x, pose.y - previous.y, pose.z - previous.z) < 0.0005
+  }, null, { timeout: 20000 })
   const beforeDrag = await touchState()
   const start = await phone.evaluate(() => {
     const canvas = document.querySelector('#room-viewport canvas')
@@ -246,13 +255,23 @@ try {
   const pitchDelta = afterDrag.pose.pitch - beforeDrag.pose.pitch
   record('R9b', 'touch drag changes actual camera yaw and pitch', yawDelta > 0.02 && pitchDelta < -0.02,
     JSON.stringify({ before: beforeDrag.pose, after: afterDrag.pose, yawDelta, pitchDelta }))
+  const dragDiff = {}
+  for (const key of ['selectedGameId', 'station', 'mode', 'url', 'status', 'paperOpen', 'scrollX', 'scrollY']) {
+    if (beforeDrag[key] !== afterDrag[key]) dragDiff[key] = `${beforeDrag[key]} -> ${afterDrag[key]}`
+  }
+  const dragDrift = Math.hypot(
+    afterDrag.pose.x - beforeDrag.pose.x,
+    afterDrag.pose.y - beforeDrag.pose.y,
+    afterDrag.pose.z - beforeDrag.pose.z,
+  )
+  if (dragDrift >= 0.001) dragDiff.pose = `${dragDrift.toFixed(4)} m`
   record('R9c', 'touch drag does not accidentally select, travel, open a note or scroll the page',
     beforeDrag.selectedGameId === null && afterDrag.selectedGameId === null
     && afterDrag.station === beforeDrag.station && afterDrag.mode === beforeDrag.mode
     && afterDrag.url === beforeDrag.url && afterDrag.status === beforeDrag.status
     && !afterDrag.paperOpen && afterDrag.scrollX === beforeDrag.scrollX && afterDrag.scrollY === beforeDrag.scrollY
-    && Math.hypot(afterDrag.pose.x - beforeDrag.pose.x, afterDrag.pose.y - beforeDrag.pose.y, afterDrag.pose.z - beforeDrag.pose.z) < 0.001,
-    JSON.stringify({ selected: afterDrag.selectedGameId, station: afterDrag.station, url: afterDrag.url, paperOpen: afterDrag.paperOpen }))
+    && dragDrift < 0.001,
+    JSON.stringify(dragDiff))
 
   await phone.locator('.proxy[data-interact-id="the-last-witness"]').tap()
   await phone.waitForTimeout(1000)

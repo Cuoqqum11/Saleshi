@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'
 import { goto, request } from './netRetry.mjs'
-import { fileURLToPath } from 'node:url'
+import { OUT } from './evidence.mjs'
 
 import { games } from '../../src/js/data/games.js'
 import { gameBuilds } from '../../src/js/data/builds.js'
@@ -9,7 +9,6 @@ import { gameBuilds } from '../../src/js/data/builds.js'
 // own DOM readiness signal rather than the dev-only __saleshiRoom hooks, so the only difference
 // between origins is that a production run reports the hook checks as SKIP instead of failing them.
 const BASE = process.env.BASE_URL ?? 'http://localhost:5174'
-const OUT = (name) => fileURLToPath(new URL(`../../docs/evidence/${name}`, import.meta.url))
 const game = games.find((entry) => entry.id === 'the-last-witness')
 const mib = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`
 const results = []

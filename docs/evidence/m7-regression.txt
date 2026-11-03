@@ -1,0 +1,148 @@
+# M7 Stage G — full regression matrix on the final build
+# Origin: dist-qa (npm run build:qa, room test hooks on) served with real MySQL at http://127.0.0.1:5314
+# Run: 2026-10-31T02:46:55Z  headless Chromium + SwiftShader, Windows 10, viewport 1280x800
+# EVIDENCE_PREFIX=m7 so this run's screenshots do not overwrite the M6 evidence set.
+# Node suites (same build, same database):
+#   npm run test:commerce  -> 13 pass, 0 fail, 1 skipped
+#   npm run test:database  -> 4 pass, 0 fail (real MySQL: seed, prune, retire, historical orders)
+#   npm run test:builds    -> 6 pass, 0 fail
+#   npm run game:check     -> 9 web files, 5 archive entries match the committed record
+#   npm run build          -> dist/ built; grep -c __saleshiRoom dist/assets/*.js = 0 (hooks compiled away)
+
+# M7 Stage G regression — room suites on the QA build (dist-qa) served with real MySQL at http://127.0.0.1:5314
+# Run: 2026-10-31T02:42:37Z  headless Chromium + SwiftShader, Windows 10, 1280x800
+# Evidence captures written with EVIDENCE_PREFIX=m7 so the M6 files stay as M6 reported them.
+
+## tests/e2e/gate.mjs
+PASS  E1 a plain load starts the room and gives it the first viewport — stageTop=62 controlsBottom=800 letterTop=800 vh=800
+PASS  E1b the 3D screen colour and the panel CSS agree (shared room tokens) — bg=rgb(16, 19, 15) ink=rgb(207, 230, 184) expected=rgb(16, 19, 15)/rgb(207, 230, 184)
+PASS  E2 ?view=list keeps the room off and the text view first — running=false launcher=true letterTop=405
+PASS  E3 a narrow screen that explicitly enters the room lays out without overflow — scrollWidth=390 stageHeight=425 controlsBottom=844 vh=844
+PASS  E4 a capable phone enters the room by default and hides the keyboard-only walk control — coarse=true walkToggle=false stations=2
+PASS  E5 a touch tap on a cassette chip selects the game — selected=the-last-witness
+PASS  G1a Tab reaches the cassette button with real key events
+PASS  G1b Enter selects the cassette — selected=the-last-witness url=?view=room&game=the-last-witness
+PASS  G1c computer side panel is visible with live and unavailable actions — links=["View full game details","Play the browser demo","Download a game build","Review cart and simulated checkout"] chips=["Tape 1","Computer","Letter","Note"] layout=side
+PASS  G4 the computer chip remains clickable at the desk with the panel open (D11) — hit=BUTTON.proxy
+PASS  G2 Space selects the cassette — selected=the-last-witness url=?view=room&game=the-last-witness
+PASS  G3 shelf station renders with every chip inside the room viewport — [{"label":"Tape 1","inside":true},{"label":"Computer","inside":true},{"label":"Letter","inside":true},{"label":"Note","inside":true}]
+12/12 gate checks passed
+
+## tests/e2e/papers.mjs
+PASS  P1 both pinned papers render as focus-proxy chips — chips=["Tape 1","Computer","Letter","Note"]
+PASS  P2 clicking the letter chip opens a readable HTML view — open=true title="A note from the studio" body starts "A note from the studio placeholder PLACE…"
+PASS  P3 closing returns focus to the chip and preserves camera and selection — focus="The studio letter pinned to the wall. Opens the studio introduction at readable size." station=shelf drift=0.0000
+PASS  P4 Tab+Enter opens the instruction note and Escape closes it — reached="The instruction note pinned to the wall. Opens a short note on how to explore the room." opened=true closed=true
+PASS  P8 clicking the visible 3D instruction sheet opens it through raycast picking — point=128,220 hit=CANVAS. open=true title="How to explore this room"
+PASS  P5 a note opened mid-walk freezes movement and the selection survives — reached="The instruction note pinned to the wall. Opens a short note on how to explore the room." frozen=true resumedAfterClose=0.814m mode=walk selected=the-last-witness
+PASS  P6 the scene still renders with the papers added — chips=4 drawCalls=30
+PASS  P7 no uncaught error from the render loop
+8/8 paper checks passed
+
+## tests/e2e/movement.mjs
+PASS  W1 toggle enters walk mode at standing eye height — mode=walk y=1.50 station=null
+PASS  W1b toggle reports its state — aria-pressed=true label=Stop walking
+PASS  W2 walking forward stops at the desk instead of passing through it — z=-1.85 (desk front limit -1.85, started -1.62)
+PASS  W2b the side panel stays inside the stage and outside the room while walking at the desk — inside=true separate=true layout=side
+SKIP  W2c walk-mode view at the desk captured for human review — docs/evidence/m7-movement-walk-desk-anchored.png — judged by eye
+PASS  W3 strafing west is stopped by the chair instead of passing through it — x=1.028 (chair face 1.025, started x=1.60)
+PASS  W3b backing off the chair then strafing west reaches the west wall — z after backing up=0.20 (chair clears at -1.00) x=-3.25 (wall limit -3.25)
+PASS  W4 walking the clear corridor stops at the north wall — corridor x=-0.81 z=-2.75 (wall limit -2.75)
+PASS  W5 turning 180 degrees and walking reaches the south wall — yaw=3.09 z=2.75 (wall limit 2.75)
+PASS  W6 walking east stops at the east wall — x=3.25 (wall limit 3.25)
+PASS  W7 selecting a cassette while walking keeps the walker in place — mode=walk selected=the-last-witness drift=0.000
+PASS  W7b the side panel stays inside the stage and outside the room with the monitor out of view — inside=true separate=true layout=side
+PASS  W8 a station button leaves walk mode and travels — mode=station station=desk
+PASS  W9 stopping walk returns to the nearest station — station=desk
+SKIP  W10 mid-room walking screenshot captured for human review — docs/evidence/m7-movement-walk-midroom.png — judged by eye, not asserted
+PASS  W11 reduced motion: walking moves but stops on release with no coasting — reduced=true moved=0.93 coasted=0.000
+PASS  W12 reduced motion: station travel is an instant cut — pose=-2.20,-0.75 read in the same tick as the click
+15 passed, 0 failed, 2 noted
+
+## tests/e2e/routes.mjs
+PASS  R1 direct room URL restores selection and readable computer state — [{"text":"rgb(22, 32, 15)","background":"rgb(207, 230, 184)"},{"text":"rgb(22, 32, 15)","background":"rgb(207, 230, 184)"},{"text":"rgb(22, 32, 15)","background":"rgb(207, 230, 184)"}]
+PASS  R2 test-only fixture proves cover, media count and available action rendering — {"cover":true,"drawn":0,"count":"2 screenshots are on the game page; they are too small to read here.","actions":[null,"/fixture-demo/","/fixture-download/","https://example.invalid/fixture"]}
+PASS  R3 real routes support normal browser back and forward navigation
+PASS  R4-768 room and panel remain usable at 768px — {"overflow":false,"separate":true}
+PASS  R4-900 room and panel remain usable at 900px — {"overflow":false,"separate":true}
+PASS  R9a emulated touch drag delivers trusted touch pointer events to the canvas — [{"type":"pointerdown","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointerup","trusted":true,"pointerType":"touch","target":"CANVAS"}]
+PASS  R9b touch drag changes actual camera yaw and pitch — {"before":{"x":-2.2,"y":1.28,"z":-0.75,"yaw":0.12622882121057954,"pitch":-0.09538896968421828},"after":{"x":-2.2,"y":1.28,"z":-0.75,"yaw":0.3782288212105795,"pitch":-0.24658896968421828},"yawDelta":0.25199999999999995,"pitchDelta":-0.1512}
+PASS  R9c touch drag does not accidentally select, travel, open a note or scroll the page — {}
+PASS  R5 phone selection uses a bounded drawer instead of covering the room — {"layout":"drawer","separate":true,"panelRatio":0.26505016722408026,"overflow":false}
+PASS  R10 landscape phone room, panel and controls fit 844x390 without overflow — {"width":844,"height":390,"layout":"side","roomWidth":476,"roomHeight":192.5625,"stageTop":62.4375,"stageBottom":255,"controlsBottom":390.4375,"separate":true,"contained":true,"firstViewport":true,"overflow":false,"panelOverflow":false}
+PASS  R6 no-WebGL entry retains useful catalogue navigation and no fake room control
+PASS  R7 reduced-data preference starts the text view with an optional room launcher
+PASS  R8 no-JS homepage has real shared content and no dead room launcher — {"cards":1,"launcherHidden":true,"statusHidden":true,"storeVisible":true}
+PASS  R11-1 / has page-specific title, metadata, lang and h1 — title=Saleshi — indie game studio [PLACEHOLDER]; h1=Enter the studio
+PASS  R11-2 /games/ has page-specific title, metadata, lang and h1 — title=Games catalogue — Saleshi; h1=Games
+PASS  R11-3 /games/the-last-witness/ has page-specific title, metadata, lang and h1 — title=The Last Witness — Saleshi; h1=The Last Witness
+PASS  R11-4 /games/the-last-witness/play/ has page-specific title, metadata, lang and h1 — title=Play The Last Witness in the browser — Saleshi; h1=Play The Last Witness
+PASS  R11-5 /store/ has page-specific title, metadata, lang and h1 — title=Store and creator support — Saleshi; h1=Creator support
+PASS  R11-6 /cart/ has page-specific title, metadata, lang and h1 — title=Your cart — Saleshi; h1=Your cart
+PASS  R11-7 /checkout/ has page-specific title, metadata, lang and h1 — title=Simulated checkout — Saleshi; h1=Simulated checkout
+PASS  R11-8 /order/ has page-specific title, metadata, lang and h1 — title=Order confirmation — Saleshi; h1=Order confirmation
+PASS  R12-1 / and every local link resolve to HTTP routes and anchor targets — HTTP 200; 8 local links, 3 fragments
+PASS  R12-2 /games/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 7 local links, 2 fragments
+PASS  R12-3 /games/the-last-witness/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 9 local links, 3 fragments
+PASS  R12-4 /games/the-last-witness/play/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 9 local links, 2 fragments
+PASS  R12-5 /store/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 7 local links, 2 fragments
+PASS  R12-6 /cart/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+PASS  R12-7 /checkout/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+PASS  R12-8 /order/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+29 passed, 0 failed
+
+## tests/e2e/game-builds.mjs
+PASS  B1 game page states the measured browser and archive sizes — 38.8 MB, 35.1 MB, 35.1 MB, 98.3 MB, 2.4 MB, 38.8 MB, 35.1 MB
+PASS  B2 archive contents are published file by file — LICENSE/font-licenses.md — 5 KB | LICENSE/upheaval.txt — 3 KB | README-WINDOWS.txt — 1 KB | The Last Witness.exe — 98.3 MB | The Last Witness.pck — 2.4 MB
+PASS  B3 cover and screenshots load as real images — ["the-last-witness-evidence-register.png=1280","the-last-witness-briefing.png=1280","the-last-witness-case-stage-1.png=1280","the-last-witness-evidence-register.png=1280"]
+PASS  B4 download responds to HEAD and to a byte range — status=200 bytes=36761734 range=206
+PASS  B5 the unmodified export is reachable with its engine files — entry=200 wasm=200 application/wasm
+PASS  B6 play page offers an explicit load action — 0 export requests before the click
+PASS  B7 the Godot build starts inside the site frame — 1788 ms, canvas {"width":1150,"height":718}, frame 1150x718
+PASS  B8 loading the frame fetched the engine and data files — The Last Witness.js, The Last Witness.wasm, The Last Witness.pck
+PASS  B9 stopping releases the frame and allows a reload — Stopped. The downloaded data stays in the browser cache, so loading again is faster.
+PASS  B10 the demo journey produced no uncaught browser errors
+PASS  B11 catalogue card shows the real game and its routes — {"title":"The Last Witness","summary":"A small experimental deduction game about contradictions, evidence, and the limits of certainty.","badges":["Play in browser","Windows download"],"cover":"/game/screenshots/the-last-witness-evidence-register.png"}
+PASS  B12 room computer offers the real demo and download actions — {"title":"The Last Witness","actions":[{"text":"View full game details","href":"/games/the-last-witness/"},{"text":"Play the browser demo","href":"/games/the-last-witness/play/"},{"text":"Download a game build","href":"/downloads/the-last-witness-windows-x64.zip"}],"media":1,"gallery":0}
+PASS  B12h the room scene reports the URL-selected cassette and is drawing — selected=the-last-witness, drawCalls=24
+PASS  B13 the panel download action points at a serving file — HTTP 200
+PASS  B14 no-JS play page keeps requirements and working alternatives — 
+PASS  B15 no-JS game page still lists play, download and build facts — 
+PASS  B16-390 game page stays inside 390px and scales its media — overflow=0px drawn=358
+PASS  B16-768 game page stays inside 768px and scales its media — overflow=0px drawn=512
+PASS  B16-1280 game page stays inside 1280px and scales its media — overflow=0px drawn=512
+PASS  B17 the published hashes are the measured ones
+20 passed, 0 failed, 0 skipped
+
+## tests/e2e/commerce.mjs
+PASS  C24 room cassette leads through real game details to its store offering
+PASS  C1 catalogue renders from shared game data — {"title":"The Last Witness","cards":1}
+PASS  C2 catalogue navigates to reusable game details
+PASS  C3 store adds a validated contribution
+PASS  C4 cart line survives navigation and reload
+PASS  C5 cart updates a contribution without adding a quantity
+PASS  C6 cart removes a line and shows an honest empty state
+PASS  C7 checkout associates validation with the invalid field
+PASS  C8 server rejects a tampered contribution even with a forged total
+PASS  C9 checkout creates and displays a simulated order — SAL-F8A0E927057444859D4A8E5FD31B9468
+PASS  C10 safe reference retrieves one persistent order without exposing customer data
+PASS  C11 an identical checkout retry returns the original order
+PASS  C12 a checkout identifier cannot be reused for different details
+PASS  C13 order creation requires a valid checkout interaction identifier
+PASS  C14 malformed and oversized JSON receive safe client errors
+PASS  C15 successful checkout clears the browser cart
+PASS  C16 no-JS store keeps offering content and hides nonfunctional controls
+PASS  C23 no-JS checkout hides dead controls and order retains a heading
+PASS  C18-390 keyboard cart-to-order journey and error focus at 390px
+PASS  C18-768 keyboard cart-to-order journey and error focus at 768px
+PASS  C18-900 keyboard cart-to-order journey and error focus at 900px
+PASS  C18-1280 keyboard cart-to-order journey and error focus at 1280px
+PASS  C19 lost-response retry retains cart and identifier without duplicating the committed order
+PASS  C25 truncated success JSON preserves the cart and safely retries the committed order
+PASS  C26 missing success reference preserves the cart and safely retries the committed order
+PASS  C20 failed quote hides checkout and offers a working cart return
+PASS  C21 server ignores forged currency and totals for a valid amount
+PASS  C22 unknown offerings and malformed references are rejected
+PASS  C27 duplicate offering aliases cannot create an order
+PASS  C17 commerce pages produce no uncaught browser errors
+30 passed, 0 failed

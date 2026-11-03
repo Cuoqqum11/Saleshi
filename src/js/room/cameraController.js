@@ -184,6 +184,26 @@ export function createCameraController(camera, { reducedMotion = false } = {}) {
       motionReduced = Boolean(value)
     },
 
+    /**
+     * Parks the eye at an arbitrary look-at pose, instantly and with no travel tween. Only the
+     * QA bundle reaches it, through `window.__saleshiRoom.aim()`: the art review needs the same
+     * viewpoint twice, before and after a change, and walking there by hand would not repeat.
+     */
+    previewAim(spec) {
+      const pose = poseFor(spec)
+      mode = 'station'
+      velocity = { x: 0, z: 0 }
+      look = { yaw: 0, pitch: 0 }
+      lookFrom = { yaw: 0, pitch: 0 }
+      from = { ...pose }
+      to = { ...pose }
+      current = { ...pose }
+      elapsed = 0
+      duration = 0
+      apply()
+      return true
+    },
+
     getPose() {
       return {
         x: camera.position.x,

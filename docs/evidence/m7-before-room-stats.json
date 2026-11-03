@@ -1,0 +1,284 @@
+{
+  "environment": {
+    "base": "http://127.0.0.1:5314",
+    "bundle": "dist-qa (room test hooks on, preserveDrawingBuffer on)",
+    "browser": "headless Chromium + SwiftShader",
+    "viewport": "1280x800",
+    "bootToFirstRenderedFrameMs": 1793,
+    "framesInTwoSeconds": 25,
+    "drawingBuffer": [
+      912,
+      608
+    ]
+  },
+  "01-entry": {
+    "note": "the pose the room opens on, with no input at all",
+    "file": "m7-before-01-entry.png",
+    "drawCalls": 14,
+    "triangles": 132,
+    "geometries": 14,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.292,
+      "worstMs": 1.4
+    },
+    "pose": {
+      "x": -2.2,
+      "y": 1.28,
+      "z": -0.75,
+      "yaw": 0.12622882121057954,
+      "pitch": -0.09538896968421828
+    }
+  },
+  "02-shelf": {
+    "note": "cassette shelf station",
+    "file": "m7-before-02-shelf.png",
+    "drawCalls": 14,
+    "triangles": 132,
+    "geometries": 14,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.467,
+      "worstMs": 6.5
+    },
+    "pose": {
+      "x": -2.2,
+      "y": 1.28,
+      "z": -0.75,
+      "yaw": 0.12622882121057954,
+      "pitch": -0.09538896968421828
+    }
+  },
+  "03-desk": {
+    "note": "desk station with a game selected",
+    "file": "m7-before-03-desk.png",
+    "drawCalls": 18,
+    "triangles": 178,
+    "geometries": 30,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.463,
+      "worstMs": 6.5
+    },
+    "pose": {
+      "x": 1.5943602115478204,
+      "y": 1.1801484154855837,
+      "z": -1.618708785275422,
+      "yaw": 0.00018734311794623044,
+      "pitch": -0.1338516745258697
+    }
+  },
+  "04-door": {
+    "note": "from the door, the whole composition at once",
+    "file": "m7-before-04-door.png",
+    "drawCalls": 35,
+    "triangles": 356,
+    "geometries": 35,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.348,
+      "worstMs": 1.6
+    },
+    "pose": {
+      "x": -0.35,
+      "y": 1.55,
+      "z": 2.5,
+      "yaw": -0.10150183100595321,
+      "pitch": -0.10098296570679066
+    }
+  },
+  "05-walk-central": {
+    "note": "standing in the middle of the floor, eye height, facing the shelf",
+    "file": "m7-before-05-walk-central.png",
+    "drawCalls": 17,
+    "triangles": 148,
+    "geometries": 37,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.327,
+      "worstMs": 1.6
+    },
+    "pose": {
+      "x": -0.9,
+      "y": 1.5,
+      "z": -0.6,
+      "yaw": 0.6313158779481787,
+      "pitch": -0.16600098869644989
+    }
+  },
+  "06-case-close-up": {
+    "note": "the real game case on the shelf, at arm length",
+    "file": "m7-before-06-case-close-up.png",
+    "drawCalls": 11,
+    "triangles": 96,
+    "geometries": 37,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.312,
+      "worstMs": 1.6
+    },
+    "pose": {
+      "x": -3,
+      "y": 1.12,
+      "z": -2.3,
+      "yaw": 0,
+      "pitch": -0.09495170634275632
+    }
+  },
+  "07-monitor-close-up": {
+    "note": "the monitor from the chair position",
+    "file": "m7-before-07-monitor-close-up.png",
+    "drawCalls": 15,
+    "triangles": 142,
+    "geometries": 37,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.302,
+      "worstMs": 1.6
+    },
+    "pose": {
+      "x": 1.6,
+      "y": 1.1,
+      "z": -1.9,
+      "yaw": 0,
+      "pitch": -0.06053201978210717
+    }
+  },
+  "08-letter-close-up": {
+    "note": "the studio letter pinned to the west wall",
+    "file": "m7-before-08-letter-close-up.png",
+    "drawCalls": 5,
+    "triangles": 20,
+    "geometries": 37,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.303,
+      "worstMs": 1.6
+    },
+    "pose": {
+      "x": -3.05,
+      "y": 1.32,
+      "z": -1.5,
+      "yaw": 1.5707963267948966,
+      "pitch": -0.0475831032769834
+    }
+  },
+  "09-desk-corner": {
+    "note": "low raking angle across the desk, to judge contact points",
+    "file": "m7-before-09-desk-corner.png",
+    "drawCalls": 29,
+    "triangles": 290,
+    "geometries": 37,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.295,
+      "worstMs": 1.6
+    },
+    "pose": {
+      "x": 2.7,
+      "y": 1.15,
+      "z": 0.4,
+      "yaw": 0.36254423726450763,
+      "pitch": -0.1282572436830825
+    }
+  },
+  "10-shelf-wall-joint": {
+    "note": "raking view of the shelf, back board and wall junction",
+    "file": "m7-before-10-shelf-wall-joint.png",
+    "drawCalls": 17,
+    "triangles": 148,
+    "geometries": 37,
+    "textures": 2,
+    "programs": 2,
+    "nodes": 54,
+    "meshes": 37,
+    "lights": 5,
+    "shadowMaps": false,
+    "toneMapping": 0,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.285,
+      "worstMs": 2.1
+    },
+    "pose": {
+      "x": -1.2,
+      "y": 1.35,
+      "z": -0.9,
+      "yaw": 0.7853981633974483,
+      "pitch": -0.08815924263434795
+    }
+  }
+}

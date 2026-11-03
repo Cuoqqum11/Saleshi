@@ -9,10 +9,10 @@
  */
 import { chromium } from 'playwright'
 import { goto } from './netRetry.mjs'
-import { fileURLToPath } from 'node:url'
+import { OUT } from './evidence.mjs'
+import { sharedWithCss } from '../../src/js/room/palette.js'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
-const OUT = (name) => fileURLToPath(new URL(`../../docs/evidence/${name}`, import.meta.url))
 
 const results = []
 const record = (id, name, pass, detail) => {
@@ -56,6 +56,23 @@ try {
     layout.running && layout.stageTop < 90 && layout.controlsBottom <= layout.vh + 2
       && layout.letterTop >= layout.vh - 2 && layout.orientation.length > 0,
     `stageTop=${layout.stageTop.toFixed(0)} controlsBottom=${layout.controlsBottom.toFixed(0)} letterTop=${layout.letterTop.toFixed(0)} vh=${layout.vh}`)
+
+  // --- E1b: the glass and the HTML panel are one device -----------------------------
+  // The room's screen material and `#monitor-screen` are written in two different files, so the
+  // agreement is checked instead of trusted: the rendered CSS colour is compared with the value the
+  // renderer is handed. V14 was exactly this kind of claim going stale with nothing enforcing it.
+  const screenCss = await page.evaluate(() => {
+    const cs = getComputedStyle(document.getElementById('monitor-screen'))
+    return { background: cs.backgroundColor, ink: cs.color }
+  })
+  const toRgb = (hex) => {
+    const n = Number(`0x${hex.slice(1)}`)
+    return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`
+  }
+  const expectedScreen = `${toRgb(sharedWithCss.screenBase)}/${toRgb(sharedWithCss.screenText)}`
+  record('E1b', 'the 3D screen colour and the panel CSS agree (shared room tokens)',
+    screenCss.background === toRgb(sharedWithCss.screenBase) && screenCss.ink === toRgb(sharedWithCss.screenText),
+    `bg=${screenCss.background} ink=${screenCss.ink} expected=${expectedScreen}`)
 
   // --- E2: ?view=list is still the text-first fallback ----------------------------
   await goto(page, `${BASE}/?view=list`)

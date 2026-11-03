@@ -9,10 +9,9 @@
  */
 import { chromium } from 'playwright'
 import { goto } from './netRetry.mjs'
-import { fileURLToPath } from 'node:url'
+import { OUT, evidenceName } from './evidence.mjs'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
-const OUT = (name) => fileURLToPath(new URL(`../../docs/evidence/${name}`, import.meta.url))
 
 // Room is x [-3.5, 3.5], z [-3, 3]; walker radius 0.25 (see src/js/room/collision.js).
 const LIMIT_X = 3.25
@@ -113,7 +112,7 @@ try {
   record('W2b', 'the side panel stays inside the stage and outside the room while walking at the desk',
     panel.inside && panel.separate, `inside=${panel.inside} separate=${panel.separate} layout=${panel.layout}`)
   note('W2c', 'walk-mode view at the desk captured for human review',
-    'docs/evidence/m6-movement-walk-desk-anchored.png — judged by eye')
+    `docs/evidence/${evidenceName('m6-movement-walk-desk-anchored.png')} — judged by eye`)
 
   // --- W3: the chair beside the desk is solid too ------------------------------------
   // At desk-front depth the chair (x 0.325..0.775) sits between the desk station and the
@@ -208,7 +207,7 @@ try {
   await hold(page, 'w', 500)
   await page.screenshot({ path: OUT('m6-movement-walk-midroom.png'), fullPage: true })
   note('W10', 'mid-room walking screenshot captured for human review',
-    'docs/evidence/m6-movement-walk-midroom.png — judged by eye, not asserted')
+    `docs/evidence/${evidenceName('m6-movement-walk-midroom.png')} — judged by eye, not asserted`)
 
   await context.close()
 

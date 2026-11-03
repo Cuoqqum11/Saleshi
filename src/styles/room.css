@@ -117,8 +117,8 @@ html[data-room='on'] .room-controls {
   padding: 0.9rem;
   overflow-y: auto;
   scrollbar-gutter: stable;
-  background: #10130f;
-  color: #cfe6b8;
+  background: var(--screen-base);
+  color: var(--screen-text);
   border-left: 1px solid #3d4a35;
   font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
   font-size: 0.8rem;
@@ -134,7 +134,7 @@ html[data-room='on'] .room-controls {
 .screen-link {
   display: inline-block;
   padding: 0.35rem 0.6rem;
-  background: #cfe6b8;
+  background: var(--screen-text);
   color: #16200f;
   border-radius: 2px;
   font-weight: 600;
@@ -173,7 +173,7 @@ html[data-room='on'] .room-controls {
 button.screen-link { border: 0; font: inherit; cursor: pointer; }
 .screen-terms { font-size: 0.72rem; }
 .screen-cart-message { padding: 0.45rem; border-left: 2px solid var(--olive); }
-#monitor-screen a { color: #cfe6b8; }
+#monitor-screen a { color: var(--screen-text); }
 #monitor-screen a.screen-link { color: #16200f; }
 #monitor-screen a:hover { color: #fff; }
 #monitor-screen a.screen-link:hover { color: #16200f; }

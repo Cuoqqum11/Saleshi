@@ -173,6 +173,7 @@ if (TEST_HOOKS) {
     start: startRoomInstance,
     stop: stopRoom,
     previewPanelGame: (game) => room?.previewPanelGame(game),
+    aim: (spec) => room?.previewAim(spec) ?? false,
     projectInteractable: (id, offset) => room?.projectInteractable(id, offset) ?? null,
   }
 }

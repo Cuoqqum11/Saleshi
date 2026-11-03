@@ -11,6 +11,7 @@ import { createScene } from './scene.js'
 import { createCameraController } from './cameraController.js'
 import { createPicking } from './picking.js'
 import { createFocusProxy } from './focusProxy.js'
+import { screenTone } from './palette.js'
 import { cassetteAnchor } from '../objects/shelf.js'
 import { games, shelf } from '../data/games.js'
 import { getSelectedGame, restoreFromUrl, selectGame, subscribe } from '../ui/selection.js'
@@ -311,11 +312,37 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
       cassette.position.z = cassette.userData.home.z + progress * 0.055
       cassette.rotation.y = progress * 0.22
     }
-    screenMesh.material.emissiveIntensity = getSelectedGame() ? 1.15 : 0.7
+    screenMesh.material.emissiveIntensity = getSelectedGame()
+      ? screenTone.emissiveIntensityOn
+      : screenTone.emissiveIntensityIdle
   }
 
-  function step(dt, now) {
-    controller.update(dt)
+  /**
+   * Simulation runs on a fixed 1/60 s step with a bounded catch-up, not on the frame's own duration.
+   *
+   * The loop used to advance the walk by `min(frame, 1/20)` seconds. On a renderer that cannot reach
+   * 20 fps the discarded remainder is real time the visitor was holding the key for, so the same room
+   * walked at different speeds on different hardware — `tests/e2e/movement.mjs` W4 and W6 caught it
+   * once M7's geometry pushed the headless frame rate down. Fixed steps make distance a function of
+   * wall-clock time; the 8-step ceiling means a stalled or backgrounded tab drops time instead of
+   * teleporting the visitor through a wall to catch up.
+   */
+  const SIM_STEP = 1 / 60
+  const MAX_STEPS_PER_FRAME = 8
+  let simAccumulator = 0
+
+  function simulate(elapsed) {
+    simAccumulator += elapsed
+    let steps = 0
+    while (simAccumulator >= SIM_STEP && steps < MAX_STEPS_PER_FRAME) {
+      controller.update(SIM_STEP)
+      simAccumulator -= SIM_STEP
+      steps += 1
+    }
+    if (steps === MAX_STEPS_PER_FRAME) simAccumulator = 0
+  }
+
+  function draw(now) {
     renderer.render(scene, camera)
     animateCassettes()
     picking.refreshHover()
@@ -328,12 +355,20 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
     }
   }
 
+  function step(dt, now) {
+    controller.update(dt)
+    draw(now)
+  }
+
   function tick(now) {
     if (!running) return
-    const dt = Math.min(0.05, (now - lastTime) / 1000)
+    const elapsed = Math.min(0.25, (now - lastTime) / 1000)
     lastTime = now
 
-    if (onScreen && document.visibilityState !== 'hidden') step(dt, now)
+    if (onScreen && document.visibilityState !== 'hidden') {
+      simulate(elapsed)
+      draw(now)
+    }
     rafId = requestAnimationFrame(tick)
   }
   rafId = requestAnimationFrame(tick)
@@ -392,6 +427,11 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
       selected.value = game
     },
 
+    /** QA only: park the eye at a fixed look-at pose so before/after art captures repeat exactly. */
+    previewAim(spec) {
+      return controller.previewAim(spec)
+    },
+
     /** A viewport point on an actual mesh, so tests can exercise raycasting rather than chips. */
     projectInteractable(id, offset = { x: 0, y: 0, z: 0 }) {
       const entry = proxyEntries.find((candidate) => candidate.id === id)
@@ -408,6 +448,22 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
     },
 
     getStats() {
+      let nodes = 0
+      let meshes = 0
+      let lights = 0
+      let shadowCasters = 0
+      let shadowMapPixels = 0
+      scene.traverse((object) => {
+        nodes += 1
+        if (object.isMesh) meshes += 1
+        if (object.isLight) {
+          lights += 1
+          if (object.castShadow) {
+            shadowCasters += 1
+            shadowMapPixels += object.shadow.mapSize.x * object.shadow.mapSize.y
+          }
+        }
+      })
       return {
         mode: controller.getMode(),
         station: controller.currentStationId(),
@@ -418,6 +474,14 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
         geometries: renderer.info.memory.geometries,
         textures: renderer.info.memory.textures,
         programs: renderer.info.programs?.length ?? null,
+        nodes,
+        meshes,
+        lights,
+        shadowMaps: renderer.shadowMap.enabled,
+        shadowCasters,
+        shadowMapPixels,
+        shadowStatic: renderer.shadowMap.autoUpdate === false,
+        toneMapping: renderer.toneMapping,
         fps: lastFps,
         pixelRatio: renderer.getPixelRatio(),
         proxyMetrics: focusProxy.getMetrics(),

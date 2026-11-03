@@ -1,8 +1,10 @@
 # Open requirements and unresolved questions
 
-Status: current after M6b real-content integration (2026-10-28). The game now on the site is the
-studio's actual title with its actual builds, and MySQL persistence, seeding and the full local test
-matrix are evidenced. Assessment sign-off and public deployment remain subject to the items below.
+Status: current after M7 visual refinement (2026-10-31). The game now on the site is the studio's
+actual title with its actual builds, the room is a designed environment rather than a grey box, and
+MySQL persistence, seeding and the full local test matrix are evidenced. Assessment sign-off and
+public deployment remain subject to the items below. The sequence these milestones follow is
+[the roadmap](roadmap.md).
 
 ## Questions for the tutor
 
@@ -48,4 +50,7 @@ No additional games, reviews, release dates, artwork or commercial claims should
 - The browser demo loads only on an explicit click inside an iframe, so no visitor pays 38.8 MB by accident (ADR-012).
 - Room test hooks ship in a dev server and in a dedicated QA bundle, never in the deployable build (ADR-005, amended by ADR-013).
 - Checkout is deliberately simulated and server-validated (ADR-010). Real payments remain disabled unless separately approved.
-- Detailed models, textures and a visual lighting pass remain postponed until the interaction and sales workflow are accepted.
+- Detailed models, textures and a visual lighting pass were postponed until the interaction and sales
+  workflow were accepted; they were delivered in M7 and are documented in [art-direction.md](art-direction.md).
+- The room now carries one visual limitation that is a content gap, not a technical one: nothing in it
+  is branded, because the studio name has still not been supplied.

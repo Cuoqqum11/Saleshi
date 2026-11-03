@@ -1,0 +1,317 @@
+{
+  "environment": {
+    "base": "http://127.0.0.1:5314",
+    "bundle": "dist-qa (room test hooks on, preserveDrawingBuffer on)",
+    "browser": "headless Chromium + SwiftShader",
+    "viewport": "1280x800",
+    "bootToFirstRenderedFrameMs": 1557,
+    "framesInTwoSeconds": 27,
+    "drawingBuffer": [
+      912,
+      608
+    ],
+    "walkMetresInTwoSeconds": 3.35,
+    "reportedFpsDuringWalk": 18,
+    "walkModeConfirmed": true
+  },
+  "01-entry": {
+    "note": "the pose the room opens on, with no input at all",
+    "file": "m7-after-01-entry.png",
+    "drawCalls": 31,
+    "triangles": 2054,
+    "geometries": 59,
+    "textures": 22,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 32,
+      "averageMs": 0.125,
+      "worstMs": 1.3
+    },
+    "pose": {
+      "x": -2.2,
+      "y": 1.28,
+      "z": -0.75,
+      "yaw": 0.12622882121057954,
+      "pitch": -0.09538896968421828
+    }
+  },
+  "02-shelf": {
+    "note": "cassette shelf station",
+    "file": "m7-after-02-shelf.png",
+    "drawCalls": 31,
+    "triangles": 2054,
+    "geometries": 59,
+    "textures": 22,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.072,
+      "worstMs": 0.2
+    },
+    "pose": {
+      "x": -2.2,
+      "y": 1.28,
+      "z": -0.75,
+      "yaw": 0.12622882121057954,
+      "pitch": -0.09538896968421828
+    }
+  },
+  "03-desk": {
+    "note": "desk station with a game selected",
+    "file": "m7-after-03-desk.png",
+    "drawCalls": 41,
+    "triangles": 9028,
+    "geometries": 60,
+    "textures": 22,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.088,
+      "worstMs": 0.3
+    },
+    "pose": {
+      "x": 1.6,
+      "y": 1.18,
+      "z": -1.62,
+      "yaw": 0,
+      "pitch": -0.13390884398435848
+    }
+  },
+  "04-door": {
+    "note": "from the door, the whole composition at once",
+    "file": "m7-after-04-door.png",
+    "drawCalls": 96,
+    "triangles": 12752,
+    "geometries": 72,
+    "textures": 26,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.11,
+      "worstMs": 0.6
+    },
+    "pose": {
+      "x": -0.35,
+      "y": 1.55,
+      "z": 2.5,
+      "yaw": -0.10150183100595321,
+      "pitch": -0.10098296570679066
+    }
+  },
+  "05-walk-central": {
+    "note": "standing in the middle of the floor, eye height, facing the shelf",
+    "file": "m7-after-05-walk-central.png",
+    "drawCalls": 35,
+    "triangles": 2284,
+    "geometries": 74,
+    "textures": 27,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.115,
+      "worstMs": 0.6
+    },
+    "pose": {
+      "x": -0.9,
+      "y": 1.5,
+      "z": -0.6,
+      "yaw": 0.6313158779481787,
+      "pitch": -0.16600098869644989
+    }
+  },
+  "06-case-close-up": {
+    "note": "the real game case on the shelf, at arm length",
+    "file": "m7-after-06-case-close-up.png",
+    "drawCalls": 22,
+    "triangles": 1178,
+    "geometries": 74,
+    "textures": 27,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.115,
+      "worstMs": 0.6
+    },
+    "pose": {
+      "x": -3,
+      "y": 1.12,
+      "z": -2.3,
+      "yaw": 0,
+      "pitch": -0.09495170634275632
+    }
+  },
+  "07-monitor-close-up": {
+    "note": "the monitor from the chair position",
+    "file": "m7-after-07-monitor-close-up.png",
+    "drawCalls": 37,
+    "triangles": 8596,
+    "geometries": 74,
+    "textures": 27,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.11,
+      "worstMs": 0.6
+    },
+    "pose": {
+      "x": 1.6,
+      "y": 1.1,
+      "z": -1.9,
+      "yaw": 0,
+      "pitch": -0.06053201978210717
+    }
+  },
+  "08-letter-close-up": {
+    "note": "the studio letter pinned to the west wall",
+    "file": "m7-after-08-letter-close-up.png",
+    "drawCalls": 10,
+    "triangles": 474,
+    "geometries": 74,
+    "textures": 27,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.105,
+      "worstMs": 0.6
+    },
+    "pose": {
+      "x": -3.05,
+      "y": 1.32,
+      "z": -1.5,
+      "yaw": 1.5707963267948966,
+      "pitch": -0.0475831032769834
+    }
+  },
+  "09-desk-corner": {
+    "note": "low raking angle across the desk, to judge contact points",
+    "file": "m7-after-09-desk-corner.png",
+    "drawCalls": 80,
+    "triangles": 11818,
+    "geometries": 74,
+    "textures": 27,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.107,
+      "worstMs": 0.6
+    },
+    "pose": {
+      "x": 2.7,
+      "y": 1.15,
+      "z": 0.4,
+      "yaw": 0.36254423726450763,
+      "pitch": -0.1282572436830825
+    }
+  },
+  "10-shelf-wall-joint": {
+    "note": "raking view of the shelf, back board and wall junction",
+    "file": "m7-after-10-shelf-wall-joint.png",
+    "drawCalls": 35,
+    "triangles": 2284,
+    "geometries": 74,
+    "textures": 27,
+    "programs": 8,
+    "nodes": 135,
+    "meshes": 110,
+    "lights": 7,
+    "shadowMaps": true,
+    "shadowCasters": 3,
+    "shadowMapPixels": 1572864,
+    "shadowStatic": true,
+    "toneMapping": 4,
+    "pixelRatio": 1,
+    "proxyMetrics": {
+      "samples": 60,
+      "averageMs": 0.102,
+      "worstMs": 0.6
+    },
+    "pose": {
+      "x": -1.2,
+      "y": 1.35,
+      "z": -0.9,
+      "yaw": 0.7853981633974483,
+      "pitch": -0.08815924263434795
+    }
+  }
+}

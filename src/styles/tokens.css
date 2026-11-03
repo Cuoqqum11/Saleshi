@@ -23,11 +23,13 @@
   --olive: #7f8462;
   --rust: #b5583c;
 
-  /* Room materials (also mirrored in src/js/room/*, kept in sync manually for now) */
-  --floor: #3a2f24;
-  --wall: #4a3d2f;
-  --wood: #5c4630;
-  --plastic: #2b2b2e;
+  /* The monitor's screen — the one surface the HTML and the 3D room must agree on, because the
+     panel in `#monitor-screen` is presented as the content of the physical glass. Room *surface*
+     colours (walls, floor, wood, plastic) are not mirrored here: they exist only in
+     `src/js/room/palette.js`, which is where the renderer reads them. V14 deleted four room tokens
+     that no CSS rule ever used. */
+  --screen-base: #10130f;
+  --screen-text: #cfe6b8;
 
   /* Focus is deliberately bright and thick: it is the only keyboard affordance. */
   --focus: #ffd166;
