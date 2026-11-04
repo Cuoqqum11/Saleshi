@@ -1,0 +1,21 @@
+M8 asset-pipeline unit suite — npm run test:assets
+
+> saleshi@0.0.0 test:assets
+> node --test tests/asset-pipeline.test.mjs
+
+✔ every frame this site publishes is eligible for the lossless palette pass (536.8086ms)
+✔ a rewritten frame is the same picture, pixel for pixel (1348.3269ms)
+✔ the encoder refuses what it cannot do losslessly (1.8643ms)
+✔ a frame inside the palette limit is accepted and is left alone the second time (4.2979ms)
+✔ a rewrite that would not actually save anything is refused (1.0524ms)
+✔ npm run assets:check passes on the committed frames (511.9283ms)
+✔ every chunk the encoder writes carries the CRC a reader expects (488.8009ms)
+✔ the bundle carries the optimised frames and the studio export untouched (363.8401ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3372.444

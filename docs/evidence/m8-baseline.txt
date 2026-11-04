@@ -1,0 +1,107 @@
+M8 baseline — recorded before any file was changed, per the M8 specification §0.2.
+Commit under test: d9b62e0 "Complete M7 visual art direction and adopt the milestone roadmap"
+Working tree at the time of these measurements: clean (M7 was uncommitted; it is committed now, so
+M8's diff is separable from M7's).
+Machine: Windows 10, Node v24.18.0, headless Chromium + SwiftShader for all browser work.
+Database: portable MySQL 8.0.46, D:\saleshi-mysql, 127.0.0.1:3307, started with the command documented
+in docs/commerce.md §"Running the server". It was NOT running when this milestone began, which is why
+the first `npm run test:commerce` run reported 4 pass / 9 fail: every MySQL-dependent check failed on a
+connection, not on a defect. Those 9 were re-run against the started server and are the numbers below.
+
+BUILD OUTPUT (npm run build, vite build, 845 ms)
+  dist/assets/startRoom-liCMbpOg.js   667.10 kB | gzip 181.45 kB   <- the lazy room chunk
+  dist/assets/room-BbwbtcJP.js          5.19 kB | gzip   2.27 kB
+  dist/assets/base-BrfuZHwq.js          0.67 kB | gzip   0.38 kB   <- the main entry chunk
+  dist/assets/builds-Cp8Jc6kT.js        2.43 kB | gzip   1.22 kB
+  dist/assets/cart-Cf6rckdR.js          2.74 kB | gzip   1.19 kB
+  dist/assets/checkout-DXM1NXLP.js      2.44 kB | gzip   1.12 kB
+  dist/assets/order-BrO5BEtV.js         1.61 kB | gzip   0.75 kB
+  dist/assets/store-BrN_JbLt.js         0.54 kB | gzip   0.36 kB
+  dist/assets/api-DV7cCjh9.js           0.27 kB | gzip   0.20 kB
+  dist/assets/cartBadge-B75gsEhh.js     0.12 kB | gzip   0.13 kB
+  dist/assets/browserDemo-CF4nv5NG.js   1.90 kB | gzip   0.97 kB
+  dist/assets/room-B3FzPxpS.css         6.29 kB | gzip   1.92 kB
+  dist/assets/base-CeIK7JIj.css         5.17 kB | gzip   1.77 kB
+  dist/assets/cartBadge-BI2OB36o.css    2.27 kB | gzip   0.85 kB
+  dist/ total                        78,364,656 bytes
+  public/ total                      77,628,881 bytes (game binaries, excluded from Git)
+  The >500 kB chunk warning is still emitted for the room chunk and is still expected.
+
+NODE SUITES (same build, live MySQL, restricted application account)
+  npm run test:commerce   13 pass, 0 fail, 1 skipped   (the skip is the hook-only room check)
+  npm run test:database    4 pass, 0 fail
+  npm run test:builds      6 pass, 0 fail
+  npm run game:check       9 web files, 5 archive entries match the committed record
+
+VISUAL BASELINE
+  Not re-captured. M7 committed its own before/after set from the exact commit under test, so
+  docs/evidence/m7-after-*.png and m7-after-room-stats.json ARE the M8 "before" for the room:
+  ten viewpoints, draw calls 10-96, triangles 474-12,752, 110 meshes, 22-27 textures, 8 programs,
+  7 lights, 3 static shadow casters, ACES tone mapping at exposure 1.12, boot 1,557 ms,
+  27 frames per 2 s and 3.35 m walked per 2 s under SwiftShader. Re-photographing the same commit
+  would add files, not evidence.
+
+IMAGE ASSETS CURRENTLY PUBLISHED (the entire photographic inventory of the site)
+  the-last-witness-briefing.png          1280x800 PNG   26.0 KB   gallery
+  the-last-witness-case-stage-1.png      1280x800 PNG   45.0 KB   gallery
+  the-last-witness-evidence-register.png 1280x800 PNG   50.7 KB   cover + gallery + case front
+  total                                                  121.6 KB
+  There is no dedicated cover artwork, no studio logo, no wordmark asset and no favicon. The image
+  used as the game's cover is a real in-game frame, and nothing on the site currently says so.
+
+DOCUMENTATION-vs-CODE AUDIT (M8 spec §0.1: compare the docs with the code before deciding)
+Findings, each verified against the file named. These are corrected during M8, not left as rumours.
+  1 README.md:5,10 — "Status: M6b" and "Three.js for the grey-box room". The room was rebuilt in M7
+    (src/js/room/lights.js, scene.js, objects/materials.js). STALE.
+  2 README.md:74 and docs/unit13-mapping.md:24 — "gate 11/11" / "11 / 8 / 15". docs/evidence/
+    m7-regression.txt records 12 gate checks including E1b. STALE.
+  3 docs/deployment-options.md:8 — "Measured total: 78,324,197 bytes". Actual: 78,364,656. STALE.
+  4 docs/deployment-options.md:30 — "room chunk is 626.67 kB (169.34 kB gzip)". Actual: 667.10 kB
+    (181.45 kB gzip). STALE.
+  5 docs/deployment-options.md:34 — "the M6 numbers are still the current page-performance picture".
+    m6-performance.json measured a pre-M7 chunk. WRONG.
+  6 ADR-007:19 — "sheets are grey rectangles with no words on them". notes.js now uses
+    printedPageMaterial, which draws a heading block and ruled lines (still no readable words, so the
+    rule holds). STALE wording.
+  7 ADR-007:45 — P5 "0.578 m of travel restored". m7-regression.txt: 0.814 m. STALE.
+  8 ADR-003:16-17 — "buttons are the only way the pointer can reach the objects". picking.js raycasts
+    clicks into onSelect and P8 opens a note from a canvas hit. WRONG, and it matters: any M8 claim
+    about pointer paths must describe both.
+  9 ADR-003:41 — proxy cost "0.09 ms average, 0.5 ms worst over 60 samples for three chips". Four
+    chips; art-direction.md measures 0.072-0.125 ms average, 1.3 ms worst, 32 samples. STALE.
+ 10 ADR-002:26 — attributes the future freeWalk module shape note to stations.js; it is in
+    cameraController.js. STALE.
+ 11 ADR-006:44 — "Open risk, logged as B6 … 700-900 px remains untested". test-plan.md closes B6 at
+    390/768/900/1280. STALE.
+ 12 ADR-008:48-49 — "the saveData branch has never executed (B7)". routes.mjs R7 injects that fixture
+    and B7 is closed. STALE.
+ 13 tests/test-plan.md:518-520 — the QA hook list omits aim(), added in M7 (src/js/main.js:176, used
+    by tests/e2e/visual.mjs). STALE.
+ 14 tests/test-plan.md — no M7 section exists at all, although M7 is the milestone whose measurements
+    the file is supposed to record. STALE.
+ 15 src/js/data/games.js:49 — the feature bullet opens "Five-stage audit:" and then names SIX stages.
+    games.js:45 and the studio's own record say five stages, 22 guided steps. WRONG: a live published
+    content error of the same class as D26.
+ 16 docs/roadmap.md and docs/art-direction.md §11 — both say the header shows "STUDIO NAME NOT FINAL".
+    The actual marker text is "studio name not final" (index.html:20) and "[PLACEHOLDER]" in the page
+    title. The claim is directionally right, worded wrong. WRONG.
+ 17 src/js/data/games.js exports `studio` (lines 19-23) and no module imports it — the studio identity
+    is duplicated as literal strings in index.html, the page titles and the Vue panel instead of coming
+    from one source. WRONG against README.md:80's "games.js contains creative game records only", and
+    it is exactly what M8 §2.5 and §9.2 forbid.
+ 18 scripts/static-content.mjs hard-codes "The Last Witness.pck" (line 88) and the two availability
+    badges (lines 31-32) inside the renderer, so a second game record could not be published without
+    editing display logic — M8 §6.4 and §13 forbid this.
+ 19 Index collision: unit13-mapping.md cites B14/B15 as e2e no-JS checks while test-plan.md uses
+    B14/B15 and B10 for open gaps. UNVERIFIABLE as a stable citation scheme; needs one namespace.
+
+CONSTRAINTS FOUND IN THE DOCS THAT BIND THIS MILESTONE (not suggestions)
+  open-requirements.md:30 — no invented games, reviews, release dates, artwork or commercial claims.
+  commerce.md:11 / roadmap.md — the browser never decides a price; real payments stay disabled without
+    separate approval.
+  commerce.md:45 — schema.sql is fresh-install only; do not drop populated tables.
+  deployment-options.md:26,51 — no hosting or domain spend is authorised; loopback only; MySQL is never
+    public.
+  unit13-mapping.md:38 — screen-reader, cross-browser, physical-device, played-through-demo and
+    ran-the-.exe evidence is absent and must not be implied.
+  ADR-003 / ADR-007 — readable words stay in the DOM; no game or studio text baked into geometry.

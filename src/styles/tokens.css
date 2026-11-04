@@ -22,6 +22,10 @@
   --amber-deep: #b8761f;
   --olive: #7f8462;
   --rust: #b5583c;
+  /* The accent above is only ever used as a marker or a border, where WCAG 2.2 SC 1.4.11's 3:1 is
+     enough. Any rust that carries words has to clear SC 1.4.3's 4.5:1, which #b5583c does not do on
+     cream — it measures 3.97. `--rust-deep` measures 5.00 on `--paper` and is checked by R20. */
+  --rust-deep: #a04a30;
 
   /* The monitor's screen — the one surface the HTML and the 3D room must agree on, because the
      panel in `#monitor-screen` is presented as the content of the physical glass. Room *surface*
@@ -42,4 +46,31 @@
   --measure: 62ch;
   --radius: 4px;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* --- Type ---------------------------------------------------------------------------
+   * M8 §2.2 asked for a typography system with six levels of hierarchy. Three things make it
+   * defensible rather than decorative:
+   *
+   * - No font file is downloaded. Display is Georgia and body is system-ui, both already used by
+   *   the site, both present on Windows, macOS and Android without a request. Adding a webfont
+   *   would have cost a render-blocking fetch and a licence note for one aesthetic preference.
+   * - The scale is ratios with a floor and a ceiling (`clamp`), not pixels, so the two largest
+   *   levels step down instead of overflowing a phone — the failure mode behind defect D24.
+   * - Every level is attached to an element that already exists. A token nobody renders is not a
+   *   type system, it is a list of numbers.
+   *
+   * The three smallest levels are the ones a reader uses most and notices least: body, then
+   * supporting text, then labels. They stay within 0.1rem of the sizes M7 shipped, so this is a
+   * naming pass over measured values rather than a re-typesetting of every page.
+   */
+  --font-display: Georgia, 'Times New Roman', serif;
+  --font-body: system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  --type-1: clamp(1.75rem, 1.35rem + 1.6vw, 2.35rem); /* the page's own title */
+  --type-2: clamp(1.35rem, 1.18rem + 0.7vw, 1.75rem); /* section heading */
+  --type-3: 1.16rem;                                  /* sub-section, card title */
+  --type-4: 1.02rem;                                  /* lead and emphasised body */
+  --type-5: 1rem;                                     /* body */
+  --type-6: 0.82rem;                                  /* label, meta, badge */
 }

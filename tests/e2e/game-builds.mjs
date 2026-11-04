@@ -1,9 +1,14 @@
 import { chromium } from 'playwright'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { goto, request } from './netRetry.mjs'
 import { OUT } from './evidence.mjs'
 
 import { games } from '../../src/js/data/games.js'
 import { gameBuilds } from '../../src/js/data/builds.js'
+
+const ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)))
 
 // BASE_URL may point at a development or a production origin. The room checks wait on the room's
 // own DOM readiness signal rather than the dev-only __saleshiRoom hooks, so the only difference
@@ -37,8 +42,8 @@ try {
   console.log(`Game build suite: ${BASE}`)
 
   await goto(page, `${BASE}/games/the-last-witness/`)
-  const details = await page.locator('#get-the-game').textContent()
-  const downloadHref = await page.locator('#get-the-game a[download]').getAttribute('href')
+  const details = await page.locator('#availability').textContent()
+  const downloadHref = await page.locator('#availability a[download]').getAttribute('href')
   record('B1', 'game page states the measured browser and archive sizes', details.includes(mib(gameBuilds.web.bytes))
     && details.includes(mib(gameBuilds.desktop.archiveBytes))
     && downloadHref === gameBuilds.desktop.servedAt, `${details.match(/\d+\.\d MB/g)?.join(', ')}`)
@@ -54,6 +59,39 @@ try {
   })))
   record('B3', 'cover and screenshots load as real images', media.length >= 4 && media.every((entry) => entry.decoded && entry.width > 0),
     JSON.stringify(media.map((entry) => `${entry.src.split('/').pop()}=${entry.width}`)))
+
+  // B3b asks the question the build-time palette pass actually raises: the bundle ships a different
+  // encoding of each frame than public/ holds, so the check compares what Chromium decodes from the
+  // origin against what it decodes from the captured file. The comparison uses the browser's own PNG
+  // decoder rather than the pipeline's, so a mistake in the encoder cannot verify itself.
+  const served = [...new Set(media.map((entry) => entry.src))]
+  const originals = served.map((url) => path.join(ROOT, 'public', decodeURI(new URL(url).pathname).replace(/^\//, '').split('/').join(path.sep)))
+  const digest = (urls) => page.evaluate(async (list) => {
+    const hashes = []
+    for (const url of list) {
+      const image = new Image()
+      image.src = url
+      await image.decode()
+      const canvas = document.createElement('canvas')
+      canvas.width = image.naturalWidth
+      canvas.height = image.naturalHeight
+      const context = canvas.getContext('2d')
+      context.drawImage(image, 0, 0)
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+      let hash = 0x811c9dc5
+      for (let i = 0; i < pixels.length; i++) hash = Math.imul(hash ^ pixels[i], 0x01935de3) >>> 0
+      hashes.push(`${canvas.width}x${canvas.height}:${hash.toString(16)}`)
+    }
+    return hashes
+  }, urls)
+  const [servedDigests, originalDigests] = [
+    await digest(served),
+    await digest(originals.map((file) => `data:image/png;base64,${readFileSync(file).toString('base64')}`)),
+  ]
+  record('B3b', 'the frames the origin serves decode to the same pixels as the captured files',
+    servedDigests.length === originalDigests.length
+      && servedDigests.every((value, index) => value === originalDigests[index]),
+    served.map((url, index) => `${url.split('/').pop()} ${servedDigests[index] === originalDigests[index] ? '=' : '≠'} ${originalDigests[index]}`).join(' '))
 
   const archive = await request(page.request, `${BASE}${gameBuilds.desktop.servedAt}`, { method: 'HEAD' })
   const ranged = await request(page.request, `${BASE}${gameBuilds.desktop.servedAt}`, { headers: { Range: 'bytes=0-1023' } })
@@ -179,7 +217,7 @@ try {
     && await staticPage.locator('a[href="/game/web/index.html"]').isVisible()
     && !staticMain.includes('{{'), staticMain.slice(0, 60))
   await goto(staticPage, `${BASE}/games/the-last-witness/`)
-  const staticDetails = await staticPage.locator('#get-the-game').textContent()
+  const staticDetails = await staticPage.locator('#availability').textContent()
   record('B15', 'no-JS game page still lists play, download and build facts', staticDetails.includes('Play the browser demo')
     && staticDetails.includes('Windows') && staticDetails.includes('Godot'), staticDetails.slice(0, 60))
   await noJs.close()

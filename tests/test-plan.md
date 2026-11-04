@@ -425,6 +425,149 @@ skip, that skip re-run separately under administrator credentials to make it 14/
 base directory changed. What remains unverified is listed below; neither these
 results nor a successful build establishes production readiness.
 
+## Milestone 8 — game content, studio identity and metadata
+
+M8 replaced invented-or-placeholder content with what the project actually knows: a studio identity held
+in one token module with its omissions labelled, the game record split so the game page can answer
+"which section is this sentence in", the three captured frames labelled as captures, machine-readable
+metadata derived from those records, and a re-examination of the four visual compromises M7 accepted.
+Nothing was added that the studio has not supplied, and every published number is measured from a file
+or a running build rather than typed.
+
+The milestone brief's §16 acceptance list is not reproduced here verbatim: the text of that list was
+quoted in the incoming brief and is not recoverable from this repository or from any retained session
+state. Rather than reconstruct it from memory — which would be inventing an acceptance criterion — the
+substance of each lettered group is verified through the named checks below, and the check ids are the
+citation. Where a check does not exist for something the brief asked for, that is stated in
+`docs/open-requirements.md` rather than claimed.
+
+### What was integrated, and how each published claim is checked
+
+| Claim the site now makes | Where the fact lives | Check |
+| --- | --- | --- |
+| "studio name not final" is a state, not a hand-written string | `studio.nameIsFinal` + `nameMarker`, `src/js/data/studio.js:28` | **R25** (all 8 served pages carry the name with exactly one derived marker), `npm run test:metadata`, R11 titles |
+| The one-line description is what the page contains, not a keyword list | `studio.summary`, `metadata.js` | `test:metadata`, R11 per-route descriptions |
+| A blank is labelled, never left looking like finished prose or bracketed scaffolding | `studioLetter.paragraphs[].gap`, `content.js:37`/`:44` | R25 (both labels render; no `\bPLACEHOLDER\b` copy on any route) |
+| The cover is a captured frame, not supplied artwork | `games.js:95` `cover.provisional`/`provenance`, `mediaProvenance` | R14a, R14b, R1c, `test:assets` |
+| Image sizes are the file's own | `cover.width/height`, `screenshots[].width/height` | `test:metadata` reads each PNG header |
+| The game page's sections appear in the brief's order | `games.js` `prose{overview, gameplay, experience}` | R16a |
+| Splitting the prose moved no sentence | same | R16b (`3 sentences; absent=0; duplicated=0; status stated 1×`) |
+| Title, status, summary and both size figures agree on every surface | the record, rendered by four pages and the panel | R17, R17b |
+| Structured data states only what is confirmed | `metadata.js`, ADR-015 | R18, R19 (28 distinct properties, no origin) |
+| Every local link and fragment resolves | the eight routes | R12-1…R12-8, R15 |
+| New text is WCAG 2.2 AA legible and tappable | `base.css`, `room.css`, `tokens.css` | R20, R21, R22 |
+| A cassette's shelf chip names the game, not the packaging | `startRoom.js:112` | gate G-series, R9a–R9c, R24 |
+| The room's first frame is already the room | `startRoom.js` initial-state block | R24 (new, see D27) |
+
+### Environments
+
+Windows x64, Node **v24.19.0**, Playwright Chromium (headless, `--enable-unsafe-swiftshader`), MySQL
+**8.0.46** on `127.0.0.1:3307` — the portable instance and restricted runtime account established in
+M6b. UTC stamp of the retained capture: `2026-11-03T23:01:45Z` (`docs/evidence/m8-build.txt`).
+
+| Origin | What it served | Used for |
+| --- | --- | --- |
+| `http://127.0.0.1:5310` | deployable `dist/` + MySQL (restricted account) | commerce e2e, game-builds e2e, hook-free verification |
+| `http://127.0.0.1:5313` | deployable `dist/` + explicit `DB_DRIVER=memory` | adapter comparison only — none of its results are MySQL evidence |
+| `http://127.0.0.1:5314` | **QA build** `dist-qa/` + MySQL | routes, game-builds and the room suites that read `window.__saleshiRoom` |
+| `http://127.0.0.1:5173` | `npm run dev` (Vite) | development iteration only, never cited |
+
+### Results
+
+| Instrument | Result | Retained evidence |
+| --- | --- | --- |
+| `npm run build`, `npm run build:qa`, `npm run game:check`, `npm run assets:check`, `npm audit --omit=dev` | 8 site HTML routes; room chunk 668.81 kB (182.02 kB gzip); 9 web files and 5 archive entries match the record; 3 PNGs 121.6 → 81.7 KiB (−32.8%); **0 vulnerabilities** | `m8-build.txt` — the >500 kB warning is retained, not silenced |
+| `tests/metadata.test.mjs` | **12 passed, 0 failed** | `m8-metadata-tests.txt` |
+| `tests/asset-pipeline.test.mjs` | **8 passed, 0 failed** | `m8-assets-tests.txt` |
+| `tests/game-builds.test.mjs` | **6 passed, 0 failed** | `m8-builds-tests.txt` |
+| `tests/commerce.test.mjs` — MySQL repository/integration, administrator constraint run | **14 passed, 0 failed** | `m8-mysql-tests.txt` |
+| `tests/database-seed.test.mjs` — S1–S4 seed projection, pruning, retirement, order history | **4 passed, 0 failed** | `m8-database-seed-tests.txt` |
+| `DB_DRIVER=memory npm run test:commerce` | 11 passed, 0 failed, **3 skipped** | `m8-memory-tests.txt` — the skips are the MySQL-only cases |
+| `tests/e2e/{gate,papers,movement}.mjs` on `dist-qa` + MySQL | **12 / 8 / 15 passed, 0 failed**, 2 visual notes | `m8-room-tests.txt` |
+| `tests/e2e/routes.mjs` on `dist-qa` + MySQL | **47 passed, 0 failed** (29 → 47 checks, 18 additions, nothing removed) | `m8-routes-tests.txt` — re-run after R25 was added, on the same `dist-qa` build the rest of the matrix measured |
+| `tests/e2e/game-builds.mjs` on `dist-qa` + MySQL | **21 passed, 0 failed, 0 skipped** | `m8-game-builds-tests.txt` |
+| `tests/e2e/game-builds.mjs` on deployable `dist` + MySQL | **20 passed, 0 failed, 1 skipped** | `m8-game-builds-deployable-tests.txt` — the skip is the hook-only room check |
+| `tests/e2e/commerce.mjs` on deployable `dist` + MySQL | **30 passed, 0 failed** | `m8-commerce-tests.txt` |
+| `tests/e2e/commerce.mjs` on deployable `dist` + explicit `DB_DRIVER=memory` | **30 passed, 0 failed** | `m8-memory-commerce-tests.txt` — adapter comparison, never MySQL evidence |
+
+### New checks worth naming
+
+| # | Check | Measured result |
+| --- | --- | --- |
+| R1c | The computer panel labels the provisional cover with the record's own sentence | the exact `cover.provenance` string, read off the panel, not a paraphrase |
+| R2b | A record with no artwork and nothing available says both instead of offering controls | `{"images":0,"links":[]}` |
+| R2c | Switching selection leaves no stale text, link or artwork | cover swapped to the fixture's own file |
+| R2d | An address naming an absent record leaves the screen on standby and names the parameter | `param=not-a-real-record`, standby heading present |
+| R14a/R14b | The catalogue and the game page label the provisional cover and the captured frames, and present no unfilled shelf slot as a product | labels present, `no unfilled slot` |
+| R15 | No page links to an origin this suite cannot verify | **0** off-origin `http(s)` links across 8 pages |
+| R16a | The game page's sections appear in the §8 order | Overview > Gameplay > Experience > Features > Availability > Status > Not supplied yet > Store and creator support |
+| R16b | Every prose sentence from the record appears on the page exactly once | 3 sentences, absent 0, duplicated 0, status stated 1× |
+| R17 / R17b | Title, status, summary and both measured sizes agree across four pages, the download, the demo, the archive and the room panel | 4 pages plus three figures |
+| R18 | Each route emits exactly the structured data and sharing tags its records support | 8 pages: JSON-LD parses and matches the modules, `og:` tags are read back out of each page's own head, no canonical link |
+| R19 | The built site states no origin and no unconfirmed property | 28 distinct properties, none withheld-by-accident |
+| R20 | Every published route **and the room's DOM panel** pass WCAG 2.2 AA text contrast | 9 surfaces × 2 widths, 38 text nodes each; smallest text 9.9 px; tightest sample 4.76:1 (the 11.5 px "Playable demo" badge) |
+| R21 | Every non-inline interactive target is at least 24×24 CSS px | 11 sub-24 px controls, all mid-sentence and exempted by SC 2.5.8's Inline exception (6 distinct links named in the detail); nothing else under size |
+| R22 | No audited surface overflows horizontally | 9 surfaces × 390/1280 px, none wider than the viewport |
+| R24 | The room's first reported frame already holds the entry pose | first frame sits 2.653 m from the origin at station `shelf`; the camera moved **0.0000 m** between that frame and rest |
+| R25 | The published identity is one record-driven name plus a provisional marker — never scaffolding | 8 pages carry `Saleshi` with exactly one `studio name not final` flag each, the letter's 2 labelled blanks (`biography not supplied`, `name not final`) render, and no route contains unedited placeholder copy. The expectations are read from `studio.js`/`content.js`, so setting `nameIsFinal: true` flips the check rather than leaving it asserting a stale sentence. |
+| C1 (changed, not new) | Catalogue cards equal the records **and** the empty shelf positions are counted as empty | `cards === games.length && empty === shelf.capacity - games.length`; unfilled positions render as cards without a link, so they were no longer excludable by an `h3 a` selector alone |
+
+### Performance against the M7 baseline (§17)
+
+M7's own note said its boot figure was one sample and not a trend, so M8 measured six samples per
+milestone instead of comparing two numbers. The M7 build was produced by checking `d9b62e0` out into a
+temporary git worktree, copying the same untracked game assets in, building the same `dist-qa` target
+and serving it with the same MySQL account on a second port — so both origins were idle-machine
+samples of the same measurement, taken back to back. Full log: `docs/evidence/m8-performance.txt`.
+
+| Measure | M7 (`d9b62e0`) | M8 (this build) | Reading |
+| --- | --- | --- | --- |
+| Boot to first rendered frame, 6 samples | 214, 215, 219, 224, 1201, 2317 ms | 216, 225, 228, 1013, 1016, 1199 ms | bimodal on **both** builds; the fast floors differ by 2 ms. No boot regression is demonstrated — and M7's largest slow sample (2,317 ms) exceeded M8's. The single-sample pair (1,557 vs 2,183) that first looked like a 40% regression is retracted as a comparison. |
+| Frames drawn per fixed 2 s | 25, 26, 26, 27, 27, 29 | 29, 30, 30, 30, 30, 30 | M8 never drew fewer frames, with 6.9% fewer pixels to fill (912×566 vs 912×608 — the identity header takes stage height at this viewport) |
+| Walk distance per 2 s | 3.35 m | 3.35 m | identical by design: the 1/60 s fixed step M7 introduced makes distance independent of frame rate |
+| Draw calls / triangles, worst viewpoint | 96 / 12,752 (door) | 100 / 12,982 (door) | +4 calls, +1.8% triangles at the busiest angle; 6 of 10 viewpoints unchanged |
+| Meshes, nodes, programs | 110 / 135 / 8 | 110 / 135 / 8 | M8 changed materials, textures and the printed J-card, and added no geometry |
+| Room route HTML | 8,351 B | 12,319 B | +47.5% — the deliberate cost of §11.5: the words are in the document instead of only in the canvas (4.37 kB gzip as served) |
+| Room chunk | 667,108 B | 668,812 B | +0.26% |
+| Published PNGs | 121.6 KiB repo | 81.7 KiB bundle | −32.8%, measured by `npm run assets:check` on every build |
+
+Headless SwiftShader, loopback, cold HTTP cache per sample, no real GPU and no second browser — these
+are comparisons between two builds on one machine, not performance claims about deployed behaviour.
+
+### Defects found while building M8 and fixed before sign-off
+
+| # | Defect | Symptom | Fix |
+| --- | --- | --- | --- |
+| D27 | The room could paint its very first frame from the camera origin instead of the entry station | `controller.update()` is only reached through the fixed 1/60 s accumulator, so a first tick arriving inside one step drew without ever positioning the camera. Headless frame timing made it intermittent: seven routes runs reported 45/45, one reported **44 passed, 1 failed**, and the failing id — captured only because the matrix this time teed the full log to `docs/evidence/` instead of reading `tail` — was R9c, "touch drag does not accidentally select, travel, open a note", `pose 2.6535 m`. That figure is exactly `hypot(2.2, 1.28, 0.75)`: the drag itself was innocent, the before-state had been read from an un-positioned camera. R9b was passing for the wrong reason too — its "yaw delta" was mostly the boot move. | `controller.update(0)` once in `startRoom.js`'s initial-state block, so the camera is placed before the loop can draw; and R24 added as a permanent check that the first reported frame is the resting frame, which now passes deterministically (0.0000 m). The intermittent failure is not recorded as a flake: it had a cause, and it is closed. |
+| D28 | Rust text on cream failed WCAG 2.2 SC 1.4.3 | `.paper .placeholder-flag` measured **3.97:1** at 9.93 px against the 4.5:1 floor — found by the new R20, on the very first run | a measured text variant `--rust-deep: #a04a30` (**5.00:1** on `--paper`) added to `tokens.css` for anything that carries words; `--rust` stays for markers and borders, where SC 1.4.11's 3:1 is the requirement. R20 now passes with the tightest sample anywhere at 4.76:1. |
+| D29 | Bare text links were below the SC 2.5.8 target floor | header, card, paper and panel links measured 15–21 px tall at both widths | `padding-block: 0.35rem` on `.site-nav a`, `.game-card a`, `.paper a`, `.link-pair a` and the panel's non-chip link — vertical padding grows the link's own box without moving the words. Arithmetic cross-check in `docs/evidence/m8-accessibility.txt`. |
+| D30 | A two-link paragraph claimed the Inline exemption it does not deserve | the first probe's heuristic ("a sibling node exists") would have waved through the homepage's *Open the full catalogue · View creator support* pair at 21 px | the exemption is now computed — ≥20 non-link characters in the nearest block plus `display: inline` — and the pair got a real fix (`.link-pair`) instead of an exemption |
+| D31 | The shelf's focus chip labelled a cassette "Tape 1" | describes the packaging, not the work inside it, and was the last place the room invented a label | the chip carries the record's title (`startRoom.js:112`); the J-card on the physical case carries title + status only, per ADR-014 |
+| Test method | `tests/e2e/game-builds.mjs` timed out at B0 after the §8 restructure | three selectors still pointed at `#get-the-game`, which the section rename removed | retargeted to `#availability`; the suite then reported 21/21 on `dist-qa` and 20/21 + 1 skip on `dist` |
+| Test method | Running `node tests/e2e/visual.mjs` with no prefix **overwrote thirteen committed M7 baseline screenshots** — the same class of accident as the earlier `EVIDENCE_PREFIX` incident, and this time it destroyed the "before" the milestone comparison depends on | the suite's default filename stem was a previous milestone's, and it wrote unconditionally | all thirteen restored with `git restore`, then the suite hardened: the prefix now follows `EVIDENCE_PREFIX`, and every write goes through `target()`, which refuses an existing file unless `OVERWRITE=1` is passed. A regression run can no longer damage an earlier milestone's evidence by omission. |
+| Test method | R20/R21/R22 counts drifted between runs (10 vs 11 exempt links) | the accessibility probe sampled before the Vue island and the room selection hook had finished | explicit settle waits added (150 ms for islands, 200 ms after the selection hook); the audit is now reproducible run to run |
+| Documentation | `docs/branding.md` §5 and this plan claimed the provisional-identity marker was "enforced by tests" (citing R8, R11, R1c) | none of those checks reads the marker: R8 counts catalogue cards on a no-JS page, R11 compares a title against a string typed into the suite, R1c reads the cover label. The claim was directionally true of the *code* and false of the *evidence*, which is the failure mode a doc-only audit does not catch | **R25** added so the guardrail is real rather than asserted — it reads `studio.nameIsFinal`, `studio.nameMarker` and `studioLetter`'s gap labels out of the records and checks all eight served pages plus the letter. The routes suite re-ran on the unchanged `dist-qa` build: 47/47. |
+| Documentation | Nineteen places where the docs contradicted the code, found by auditing before changing (full list in `docs/evidence/m8-baseline.txt`) | e.g. README "Status: M6b" and "grey-box room"; `deployment-options.md` quoting a 626.67 kB room chunk and a 78,324,197-byte bundle; a feature bullet that opened "Five-stage audit:" and then named six stages; a `studio` object exported from `games.js` that no module imported while the identity was duplicated as literals in eight files | corrected against the files named, then the identity moved to `src/js/data/studio.js` and the renderer's hard-coded filename/badges removed so a second record could be published without editing display logic |
+
+### Environment problem, stated rather than hidden
+
+The loopback fault recorded under M6b is still this machine's behaviour: Chromium reports
+`net::ERR_NETWORK_ACCESS_DENIED` and Node reports `connect EACCES 127.0.0.1` when the OS hands a client
+port an existing listener holds. The `tests/e2e/netRetry.mjs` and `dist-qa` mitigations are unchanged
+and this milestone's retained matrix ran without encountering it. One caveat specific to M8: an earlier
+routes run in this milestone reported 44/45 and was reported here as an unreproduced transient. It was
+not a transient — it was D27, and the only reason it took eight runs to name is that the failing line
+had been discarded by reading `tail -5`. That is now a method change rather than a lesson: every suite
+in the matrix is retained in full to `docs/evidence/`, and the failing id is read from the file.
+
+**M8 local result:** no outstanding test failures. 47 routes + 21/20 game-builds + 30/30 commerce +
+12/8/15 room + 12/8/6/14/4 unit and database checks pass on the build described above, and the
+memory-driver runs are labelled as adapter comparisons rather than as MySQL evidence. What M8 does not
+establish is unchanged by these numbers: no screen reader has run, no second browser has run, no
+physical handset has been touched, no real GPU frame rate has been measured, the desktop build has not
+been executed, nobody has finished the demo, and nothing is deployed — see the open limitations below
+and the pending decisions in `docs/branding.md` §6.
+
 ## Still not verified — open limitations
 
 | # | Gap | Current status |
@@ -440,7 +583,7 @@ results nor a successful build establishes production readiness.
 | B11 | MySQL integration | Closed locally in M6 with actual 8.0.46, direct rows, rollback, enforced constraints, restricted runtime account, restart and outage/recovery. Closed further in M6b: the catalogue tables are now a verified projection of the shared records (S1–S4). Not a hosted-database claim. |
 | B12 | Deployed operation | Open — DNS, HTTPS, public hosting, compression/cache policy and operational security have not been configured or verified. Backup **policy** (schedule, off-machine storage, retention, production-sized restore) is still open; one local manual dump-and-restore drill is closed in B13 and is not a hosted backup. |
 | B13 | Durable data location and schema upgrades | **Location and restoration closed in M6b.** The portable instance was moved from a temporary directory (which Windows had cleaned, causing the `1073807364` server exit) to `D:\saleshi-mysql`, and a `mysqldump --single-transaction` was restored into a scratch schema and compared row for row: identical counts, £845.50 totals on both tables, identical content digests, three foreign keys and ten index rows, then dropped. Transcript: `evidence/m6b-database-relocation.txt`. **Still open** — scheduled/off-machine backups, and a reviewed upgrade from an older M5 schema. Never reinitialise or drop existing data. |
-| B14 | Assessment acceptance and content | Open — tutor approval of the category, voluntary support as a sale, simulated checkout and local demonstration. The **game** content is now real; the studio's own name, biography and letter text are still marked PLACEHOLDER, and no itch.io address or release date has been supplied. The student's 1,500–2,000-word report is still required. |
+| B14 | Assessment acceptance and content | Open — tutor approval of the category, voluntary support as a sale, simulated checkout and local demonstration. The **game** content is now real, and so is the studio's working identity: `studio.js` holds one name plus `nameIsFinal: false`, so the name shows as a name labelled "studio name not final" rather than as bracketed scaffolding, and the letter marks its two missing paragraphs with labelled `gap` markers instead of placeholder prose — all of it checked by R25 on the served pages. Still unsupplied: a final name, a biography, contact details, an itch.io address and a release date — the full list is `docs/branding.md` §6. The student's 1,500–2,000-word report is still required. |
 | B15 | Desktop build actually runs | Open — the archive is verified file by file against the studio's export and its HTTP behaviour is measured (HEAD, byte range), but the `.exe` has never been launched on a Windows machine from this site, and it is unsigned, so SmartScreen will warn. |
 | B16 | Demo is playable end to end | Open — B7 proves the export starts, renders and takes focus inside the site frame. Nobody has completed the demo, and the developer's own build record states no unassisted first-time player has finished it. |
 | B17 | Browser export licence obligations | Open — the desktop archive carries the two font licence files the licences require. The web export is served byte-for-byte unmodified and its `.pck` is not inspected file by file, so whether the same fonts travel inside it — and therefore whether it needs the same licence text — has not been confirmed with the studio. |
@@ -460,6 +603,9 @@ build.
 ```bash
 npm run game:stage   # copy the studio export into public/ and rewrite src/js/data/builds.js
 npm run build
+npm run assets:check   # the palette pass on the three captured frames, plus the published sizes
+npm run test:metadata  # every derived title/description/OG/JSON-LD against the records
+npm run test:assets
 DB_DRIVER=memory npm run test:commerce
 npm run test:builds
 TEST_MYSQL_CONSTRAINTS=1 node --env-file=.env.mysql-admin.local --test tests/commerce.test.mjs
@@ -493,12 +639,19 @@ A development origin also works (`npm run dev:vite -- --host 127.0.0.1 --port 51
 but asks the browser for several hundred module requests, which is where this workstation's loopback
 denials concentrate; `tests/e2e/netRetry.mjs` retries only the transport signatures.
 
-Screenshot filenames are fixed by the suites, so a re-run overwrites the previous milestone's images:
-`routes.mjs` writes `m6-01`, `m6-02` and `m6-08`, `commerce.mjs` writes `m6-03`…`m6-07`, `m6-09`,
-`m6-10`, and `game-builds.mjs` writes `m6b-01`…`m6b-04` on whichever origin ran last. After a re-run the
-current captures are copied to `m6b-05`…`m6b-10` and the `m6-*` files restored from Git, so each
-milestone's images still show what that milestone verified. The deployable game-builds run is issued
-last for the same reason — `m6b-01`…`m6b-04` are attributed to that origin in the evidence index.
+Screenshot filenames are milestone-stamped. Every suite writes through `tests/e2e/evidence.mjs`, whose
+default stamp is `m6`; **set `EVIDENCE_PREFIX` to the current milestone on every browser run** or a
+re-run overwrites the images an earlier milestone's report cites. M8's retained captures were produced
+with `EVIDENCE_PREFIX=m8`, so `routes.mjs` writes `m8-01`, `m8-02` and `m8-08`, `commerce.mjs` writes
+`m8-03`…`m8-07`, `m8-09`, `m8-10`, `game-builds.mjs` writes `m8-01`…`m8-04` on whichever origin ran
+last, and the room suites write `m8-gate-*`, `m8-papers-*` and `m8-movement-*`. The deployable
+game-builds run is issued last for the same reason — `m8-01`…`m8-04` are attributed to that origin in
+the evidence index.
+
+`tests/e2e/visual.mjs` is the one suite that writes a *set* of images plus a stats file, and during M8
+it destroyed the committed M7 "before" captures by being run without a prefix. It is now guarded twice:
+its filename stem follows `EVIDENCE_PREFIX`, and every write goes through `target()`, which refuses to
+replace an existing capture unless `OVERWRITE=1` is passed deliberately.
 
 Run an explicit memory comparison on a different port, if needed:
 
@@ -516,6 +669,7 @@ overwritten.
 
 Useful handles while developing: `?view=list` forces the text view, `?view=room` requests the room,
 `?game=<slug>` preselects a cassette, and `window.__saleshiRoom` exposes `isRunning()`, `stats()`,
-`render()`, `snapshot()`, `start()`, `stop()`, `projectInteractable()` and the test-only
+`render()`, `snapshot()`, `start()`, `stop()`, `projectInteractable()`, `aim()` (the arbitrary
+look-at pose `tests/e2e/visual.mjs` uses to photograph the ten viewpoints) and the test-only
 `previewPanelGame()` fixture boundary. Those hooks exist in a dev server and in `dist-qa/` only; the
 deployable `dist/` ships without them (`src/js/testHooks.js`).

@@ -271,8 +271,67 @@ Provenance:
 | `m7-after-room-stats.json` | The same block on the final build, plus `walkMetresInTwoSeconds` (3.35), `reportedFpsDuringWalk` (18) and `walkModeConfirmed`. The walk figure is identical at 18 and 19 fps because movement now runs on a fixed 1/60 s step — the measurement that exposed the earlier bug, not a performance claim. |
 | `m7-regression.txt` | The Stage G matrix in one file: the QA origin and UTC timestamp, the Node suites run on the same build and database (`test:commerce` 13/1 skip, `test:database` 4/4 on real MySQL, `test:builds` 6/6, `game:check` OK, `npm run build` OK with hooks absent from `dist/`), then every browser assertion with its measured values — gate 12/12, papers 8/8, movement 15/0 + 2 noted, routes 29/0, game-builds 20/0, commerce 30/0. |
 
+## Milestone 8 — game content, studio identity and metadata, 4 November 2026
+
+M8 changed what the site *says* rather than what it looks like, so most of its evidence is textual: the
+matrix logs, the measured accessibility record and the six-sample performance comparison. The images
+below were all produced on the final M8 build — the one that includes D27, the boot-frame camera fix —
+with `EVIDENCE_PREFIX=m8`, so no earlier milestone's file was overwritten. Two origins are cited and
+they are not interchangeable: `http://127.0.0.1:5314` served `dist-qa` (room test hooks compiled in) and
+`http://127.0.0.1:5310` served the deployable `dist/` (hooks absent); both used real MySQL 8.0.46 on
+`127.0.0.1:3307`. `http://127.0.0.1:5313` served the deployable bundle with `DB_DRIVER=memory` and is
+**never** MySQL evidence.
+
+### Full-page captures
+
+| File | Suite and origin | What it shows |
+| --- | --- | --- |
+| `m8-01-computer-catalogue.png` | `routes.mjs`, QA origin | The monitor panel listing the catalogue from the record, with the provisional-cover label rendered as DOM text (R1c). |
+| `m8-02-phone-panel.png` | `routes.mjs`, QA origin | The 390 px panel as its own bounded region, not an overlay on the room (R5). |
+| `m8-08-phone-landscape.png` | `routes.mjs`, QA origin | 844×390 landscape: room, panel and controls all inside the first viewport with zero overflow (R10). |
+| `m8-01-game-details.png` | `game-builds.mjs`, deployable origin | The game page in the section order M8 §8 specifies — Overview through "Not supplied yet" — with the measured size figures. |
+| `m8-02-play-demo.png` | `game-builds.mjs`, deployable origin | The real Godot 4.7 WebAssembly build running inside the site frame, canvas 1150×718 (B7). |
+| `m8-03-catalogue.png` | `game-builds.mjs`, deployable origin | The catalogue with one filled card and the shelf's unfilled positions presented as empty, not as products (R14a, C1). |
+| `m8-04-room-computer.png` | `game-builds.mjs`, deployable origin | The room's computer panel offering the real demo and download actions with the same title, status and sizes as the page (R17). |
+| `m8-04-store.png`, `m8-05-cart.png`, `m8-06-checkout.png`, `m8-07-order-confirmation.png`, `m8-09-phone-order.png`, `m8-10-checkout-retry.png` | `commerce.mjs`, deployable origin + MySQL | The sales journey on the shipped bundle: offerings, cart, simulated checkout, confirmation and the retry path with focus moved to the error. No card details, no payment, no invented price. |
+| `m8-gate-desk-integrated.png`, `m8-gate-shelf-integrated.png`, `m8-gate-phone-room.png` | `gate.mjs`, QA origin | Keyboard activation and the focus chips over the M8 shelf. G3 and P1 both list the chips as `The Last Witness, Computer, Letter, Note` — the title chip that replaced the "Tape 1" label (D31) — and G1c shows the panel's four live actions. |
+| `m8-papers-wall-notes.png`, `m8-papers-paper-open.png` | `papers.mjs`, QA origin | The studio letter and instruction note pinned in the room, and the readable HTML view opened from a direct raycast click. |
+| `m8-movement-walk-midroom.png`, `m8-movement-walk-desk-anchored.png`, `m8-movement-walk-shelf-selected.png` | `movement.mjs`, QA origin | Walking against the same collision boundaries as M6/M7; 15 passed, 0 failed, 2 noted — the notes are human-review frames, not assertions. |
+
+### Room viewpoints on the final build
+
+`m8-visual-01-entry.png` … `m8-visual-10-shelf-wall-joint.png`, captured by `tests/e2e/visual.mjs` on
+the QA origin at 1280×800 after the D27 fix, with `m8-visual-02-shelf-page.png` and
+`m8-visual-03-desk-page.png` showing the DOM panel beside the same two poses. `m8-visual-01-entry.png`
+is the pose the room opens on with no input at all — the frame D27 was about. The M7 before/after set is
+untouched in this directory and remains the comparison for anything visual; M8 added no geometry, so
+the per-viewpoint deltas are in `m8-performance.txt` rather than in new photographs.
+
+### Logs and measured data
+
+| File | Evidence and limitation |
+| --- | --- |
+| `m8-baseline.txt` | The WP0 record, taken **before any file was changed**: the commit under test, the build output and bundle totals, the first-run test numbers, the entire photographic inventory of the site, and the nineteen places where the documentation contradicted the code. Items 1–19 are the audit M8 was written against; several became the defects in the test plan's M8 table. |
+| `m8-build.txt` | `npm run build`, `npm run build:qa`, `game:check`, `assets:check` and `npm audit --omit=dev` in one UTC-stamped file: 8 HTML routes, room chunk 668.81 kB (182.02 kB gzip), 9 web files and 5 archive entries matching the committed record, 3 PNGs 121.6 → 81.7 KiB, 0 production vulnerabilities. The >500 kB chunk warning is retained in the log, not silenced. |
+| `m8-metadata-tests.txt` | `npm run test:metadata` 12/12 — every derived title, description, Open Graph tag and JSON-LD block against the records, including the properties deliberately withheld. |
+| `m8-assets-tests.txt` | `npm run test:assets` 8/8 — the palette pass and the published-size claims. |
+| `m8-builds-tests.txt` | `npm run test:builds` 6/6 — staged binaries, archive contents, hashes, licence files. |
+| `m8-mysql-tests.txt` | `tests/commerce.test.mjs` under the administrator credential file with `TEST_MYSQL_CONSTRAINTS=1`: 14/14 on real MySQL, including the constraint cases the restricted runtime account cannot create. |
+| `m8-database-seed-tests.txt` | `npm run test:database` 4/4 — S1 projection equality, S2 pruning a superseded row, S3 retiring an offering that left the records, S4 order history untouched by seeding. |
+| `m8-memory-tests.txt` | `DB_DRIVER=memory npm run test:commerce` — 11 passed, 3 skipped. The skips are the MySQL-only cases; this file exists to show the adapter boundary, not to claim persistence. |
+| `m8-room-tests.txt` | gate 12/12, papers 8/8, movement 15/0 with 2 visual notes, on the QA origin with MySQL. |
+| `m8-routes-tests.txt` | The routes suite **47/47** on the QA origin, with every line retained. This file is how D27 was found: the failing check id and its `{"pose":"2.6535 m"}` detail survived because the whole log was captured instead of a tail. The 47th line is R25, added when `docs/branding.md` §5 turned out to cite a guardrail no check enforced; the suite was re-run against the same `dist-qa` build, so its screenshots and every other M8 log describe one build. |
+| `m8-game-builds-tests.txt` | 21/21 on the QA origin — includes the two room-hook checks that the deployable bundle cannot make. |
+| `m8-game-builds-deployable-tests.txt` | 20 passed, 1 skipped on the shipped `dist/` + MySQL. The skip is the hook-only check, reported as a skip rather than as a pass. |
+| `m8-commerce-tests.txt` | 30/30 on the shipped `dist/` + real MySQL — the sales journey on the deployable bundle. |
+| `m8-memory-commerce-tests.txt` | 30/30 with `DB_DRIVER=memory`. Adapter comparison only; see `m8-memory-origin.log` immediately below, which is the proof of what that origin actually ran. |
+| `m8-memory-origin.log` | The two lines the 5313 server printed at boot: `Database driver: memory; checkout: simulated`. Kept so no reader can mistake the memory-driver run for MySQL evidence. |
+| `m8-accessibility.txt` | R20/R21/R22's measured before-and-after: the `#b5583c` text that failed SC 1.4.3 at 3.97:1 and the `#a04a30` variant that passes at 5.00:1; the target sizes before and after the padding fixes (nav 21→32 px, panel link 15→26 px) with the arithmetic; and what was recorded rather than changed, including the canvas-drawn room text that no DOM measurement can reach. |
+| `m8-performance.txt` | The §17 comparison, six boot samples **per milestone** rather than one each, with the M7 build re-created from commit `d9b62e0` in a temporary worktree so both origins were idle-machine samples of the same measurement. It retracts the single-sample "40% slower boot" reading, shows the fast floors are 214 ms vs 216 ms, and states the byte cost of putting the words in the HTML. |
+
 These images cannot prove anything about performance on a real GPU, on another browser, on a physical
 phone, or with a screen reader; those remain unverified and are listed as limitations in
-`../art-direction.md` §11 and in [the test plan](../../tests/test-plan.md). Accepted visual compromises
-are recorded there too: the shelf interior is dim, the ceiling strip is still the brightest pixel in
-the wide shots, and the dark ceiling is deliberate but unlit by any measured source.
+`../art-direction.md` §11 and §14 and in [the test plan](../../tests/test-plan.md). Accepted visual compromises
+are recorded there too — the shelf interior is dim, the ceiling strip is still the brightest pixel in
+the wide shots, and the dark ceiling is deliberate but unlit by any measured source — and §14 states
+what M8's re-examination changed for each of the four and what it left standing.

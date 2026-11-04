@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url'
 import { staticContentPlugin } from './scripts/static-content.mjs'
+import { assetPipelinePlugin } from './scripts/asset-pipeline.mjs'
 
 const page = (path) => fileURLToPath(new URL(path, import.meta.url))
 
@@ -10,7 +11,7 @@ const page = (path) => fileURLToPath(new URL(path, import.meta.url))
 // visitors who actually enter the room.
 export default defineConfig({
   base: '/',
-  plugins: [vue(), staticContentPlugin()],
+  plugins: [vue(), staticContentPlugin(), assetPipelinePlugin()],
   build: {
     target: 'es2022',
     rollupOptions: {

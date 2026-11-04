@@ -3,8 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Games catalogue — Saleshi</title>
-    <meta name="description" content="The conventional, accessible catalogue of Saleshi game projects and their current availability." />
+    <title>Games catalogue — {{STUDIO_NAME}}</title>
+    <meta name="description" content="The conventional, accessible catalogue of {{STUDIO_NAME}} game projects and their current availability." />
+    {{SOCIAL_META}}
+    {{JSONLD_LIST}}
     <link rel="stylesheet" href="/src/styles/base.css" />
     <link rel="stylesheet" href="/src/styles/pages.css" />
     <script type="module" src="/src/js/pages/cartBadge.js"></script>
@@ -12,7 +14,7 @@
   <body>
     <a class="skip-link" href="#catalogue">Skip to the catalogue</a>
     <header class="site-header">
-      <a class="brand" href="/">Saleshi <span class="placeholder-flag">studio name not final</span></a>
+      <a class="brand" href="/">{{STUDIO_BRAND}}</a>
       <nav class="site-nav" aria-label="Main">
         <ul>
           <li><a href="/#room">The room</a></li>

@@ -16,6 +16,11 @@ const props = defineProps({
 
 const amounts = reactive({})
 const cartMessage = ref('')
+// A cover is the one thing on this screen that arrives over the network. If it fails the panel says
+// so in the space it would have occupied, rather than leaving a broken-image icon as the only answer.
+const coverFailed = ref(false)
+
+watch(() => props.game?.id, () => { coverFailed.value = false })
 
 const gameOfferings = computed(() => props.game ? offeringsForGame(props.game.id) : [])
 const supportOfferings = computed(() => gameOfferings.value.filter((offering) => offering.available))
@@ -66,18 +71,31 @@ function addSupport(offering) {
     </template>
 
     <template v-else>
+      <!-- Reading order is the M8 §7 sequence: title, status, artwork, description, details, actions, links. -->
       <h2>{{ game.title }}</h2>
       <p><span class="status-badge">{{ game.statusLabel }}</span></p>
-      <p v-if="game.genre">Genre: {{ game.genre }}</p>
-      <p>{{ game.summary }}</p>
+      <p v-if="game.statusDetail" class="screen-status-detail">{{ game.statusDetail }}</p>
 
-      <figure v-if="game.cover" class="screen-media">
-        <img :src="game.cover.url" :alt="game.cover.alt" />
+      <figure v-if="game.cover && !coverFailed" class="screen-media">
+        <img :src="game.cover.url" :alt="game.cover.alt" @error="coverFailed = true" />
+        <figcaption v-if="game.cover.provisional" class="screen-media-provenance">
+          {{ game.cover.provenance }}
+        </figcaption>
       </figure>
+      <p v-else-if="game.cover" class="screen-media-placeholder">
+        The cover image did not load. What it shows: {{ game.cover.alt }}
+      </p>
       <p v-else class="screen-media-placeholder">Cover artwork has not been supplied.</p>
 
+      <p>{{ game.summary }}</p>
+
+      <p v-if="game.genre">Genre: {{ game.genre }}</p>
       <p v-if="game.screenshots.length" class="screen-media-count">
         {{ game.screenshots.length }} screenshots are on the game page; they are too small to read here.
+      </p>
+      <p v-if="game.notSupplied?.length" class="screen-media-count">
+        {{ game.notSupplied.length }} further details have not been supplied, so this screen states
+        none of them. The game page lists what is missing.
       </p>
 
       <h3 class="screen-subheading">Available actions</h3>

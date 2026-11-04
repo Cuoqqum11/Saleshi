@@ -3,11 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Saleshi — indie game studio [PLACEHOLDER]</title>
+    <title>{{STUDIO_NAME}} — indie game studio</title>
     <meta
       name="description"
       content="A virtual studio room where games are shelved as cassette tapes. Select a tape and the room's computer shows the game's details and available actions, including a browser-playable demo."
     />
+    {{SOCIAL_META}}
+    {{JSONLD_STUDIO}}
+    {{JSONLD_WEBSITE}}
     <link rel="stylesheet" href="/src/styles/base.css" />
     <link rel="stylesheet" href="/src/styles/room.css" />
     <script type="module" src="/src/js/main.js"></script>
@@ -16,9 +19,7 @@
     <a class="skip-link" href="#studio-letter">Skip the 3D room and go to the studio letter</a>
 
     <header class="site-header">
-      <a class="brand" href="/">
-        Saleshi <span class="placeholder-flag">studio name not final</span>
-      </a>
+      <a class="brand" href="/">{{STUDIO_BRAND}}</a>
       <nav class="site-nav" aria-label="Main">
         <ul>
           <li><a href="#room">The room</a></li>
@@ -46,10 +47,7 @@
           <button class="button" type="button" data-action="enter-room">
             Enter the 3D room
           </button>
-          <p class="room-hint">
-            Drag to look around, use the arrow buttons below to move, and select a cassette
-            from the shelf. Keyboard and screen-reader access works the same way.
-          </p>
+          <div data-static-content="room-hint" data-key="launcher"></div>
         </div>
 
         <div class="stage" id="stage" hidden>
@@ -68,11 +66,7 @@
               <a class="station-button" href="#games">Browse the games as a list</a>
             </li>
           </ul>
-          <p class="room-hint" id="move-hint">
-            Drag inside the room to look around. Walk freely to move with W, A, S, D or the
-            arrow keys; Esc stops walking. Select a cassette to see it on the computer, or a
-            pinned note to read it.
-          </p>
+          <div data-static-content="room-hint" data-key="move"></div>
           <p class="room-hint" id="selection-status" role="status"></p>
         </div>
 
@@ -86,29 +80,10 @@
         </noscript>
       </section>
 
-      <!-- The paper letter: real HTML text, never baked into a texture. -->
+      <!-- The paper letter: real HTML text, never baked into a texture. The words are printed from
+           src/js/data/content.js at build time, so the room's note and this page cannot disagree. -->
       <section id="studio-letter" aria-labelledby="letter-heading">
-        <article class="paper">
-          <h2 id="letter-heading">
-            A note from the studio <span class="placeholder-flag">placeholder</span>
-          </h2>
-          <p>
-            PLACEHOLDER — this letter introduces the studio and explains what a visitor can do
-            here. The studio name has not been settled, so nothing is invented in its place.
-          </p>
-          <p>
-            PLACEHOLDER — one or two sentences on who makes these games and why they are
-            released free first. A biography has not been supplied, so none is written here.
-          </p>
-          <p>
-            What you can do: pick a cassette from the shelf and the computer on the desk will
-            show that game — what it is, how far along it is, and the ways you can get it or
-            support its making.
-          </p>
-          <p data-note-exclude>
-            <a href="#games">Or skip the room and read the list of games.</a>
-          </p>
-        </article>
+        <div data-static-content="studio-letter"></div>
       </section>
 
       <section id="games" aria-labelledby="games-heading">
@@ -122,7 +97,7 @@
         </header>
 
         <div data-static-content="home-games"></div>
-        <p><a href="/games/">Open the full catalogue</a> · <a href="/store/">View creator support</a></p>
+        <p class="link-pair"><a href="/games/">Open the full catalogue</a> · <a href="/store/">View creator support</a></p>
       </section>
     </main>
 
@@ -137,30 +112,15 @@
     </dialog>
 
     <template id="note-how-to">
-      <p>
-        You are standing inside the studio. Drag anywhere in the room to look around; the
-        buttons under the room move you to the shelf or the computer.
-      </p>
-      <p>
-        The shelf is the catalogue: each cassette is a real project. Select one and the
-        computer on the desk shows what it is, how far along it is, and only the actions that
-        genuinely exist for it today.
-      </p>
-      <p>
-        Papers pinned to the walls carry the studio's own words. Select one to read it at
-        full size; closing it returns you to exactly where you were standing.
-      </p>
-      <p>
-        Everything in this room also exists as ordinary text: use the list link under the
-        room, or scroll down.
-      </p>
+      <div data-static-content="how-to-note"></div>
     </template>
 
     <footer class="site-footer">
       <p>
-        Grey-box room presenting a real, playable demo. The studio's own name and biography are
-        still placeholder. Creator support uses a simulated checkout: no payment is taken.
-        Unresolved content and product decisions are recorded in
+        The room is a designed 3D environment and the game in it is a real, playable demo. The
+        studio's own name, biography and contact details have not been supplied, so they are
+        labelled as missing wherever they would appear. Creator support uses a simulated checkout:
+        no payment is taken. Unresolved content and product decisions are recorded in
         <code>docs/open-requirements.md</code>.
       </p>
     </footer>

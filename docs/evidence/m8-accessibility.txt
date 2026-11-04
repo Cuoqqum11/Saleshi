@@ -1,0 +1,92 @@
+M8 WP9 — responsive and accessibility measurement of the new content
+====================================================================
+
+Captured 4 November 2026 against the QA build (`npm run build:qa`) served from
+http://127.0.0.1:5314, in headless Chromium at 390x844 and 1280x844. The measurement is now
+permanent: `tests/e2e/routes.mjs` R20/R21/R22 re-run it on every future pass of the suite, and
+`m8-routes-tests.txt` in this directory holds that run (45 passed, 0 failed).
+
+Everything below was measured off the rendered page. No number here is a claim about a real
+handset, a real screen reader, a real browser engine other than Chromium, or a hosted site.
+
+1. Horizontal overflow
+----------------------
+Nine surfaces — the eight published routes plus the room with a cassette selected — at both
+widths: `document.documentElement.scrollWidth` never exceeded the viewport. The new catalogue
+cards, the cover figure and the three screenshot figures carry their true pixel `width`/`height`
+from the record, so the browser reserves the box before the image arrives and the image scales
+down inside it instead of widening the document.
+
+2. Text contrast (WCAG 2.2 SC 1.4.3)
+------------------------------------
+Relative luminance was computed on the *composited* backdrop, not on the first colour found.
+That distinction decided the result: the panels layer `rgba(255,255,255,0.03)` over a dark page,
+and a first pass that treated that wash as opaque reported 2.04:1 "failures" on body copy that
+actually measures 9.13:1. Every ancestor was therefore composited in turn until an opaque colour
+was reached, and the text colour composited over that result.
+
+One real failure was found and fixed:
+
+  element                        colour -> backdrop     measured   required   outcome
+  `.paper .placeholder-flag`     #b5583c on #f2e9d8     3.97:1     4.5:1      fail -> fixed
+  `--rust-deep` #a04a30 (same flag after the change)    5.00:1     4.5:1      pass
+
+`--rust` stays in use where it never carries words (`tokens.css` names the rule). The tightest
+sample anywhere on the site is now 4.76:1 — the "Playable demo" badge at 11.5px of #12140c on
+`--olive` #7f8462 — which clears AA, with 0.26 of margin. Smallest text anywhere is 9.9px: the
+two placeholder flags on the papers, at 5.00:1, restated in full sentences on the game page and
+in the catalogue, so nothing is *only* available at that size.
+
+3. Target size (WCAG 2.2 SC 2.5.8 — 24x24 CSS px)
+-------------------------------------------------
+Measured before the fix, then corrected, then re-measured. `padding-block: 0.35rem` is 5.6px on
+each side, so the "before" column is the current box minus 11.2px; both columns were read from
+`getBoundingClientRect()`, not calculated.
+
+  link                                        before   after   where
+  header brand / nav links                     21px    32px   `.site-nav a`
+  catalogue card title and detail links         21px    32px   `.game-card a`
+  "Read the full game details" on a card        20px    32px   `.game-card a`
+  homepage paper links                          18px    30px   `.paper a`
+  homepage "Open the full catalogue" pair       21px    32px   new `.link-pair` class
+  panel "Review cart and simulated checkout"    15px    26px   `#monitor-screen p > a`
+
+The last of those is why the panel needed its own rule: the other panel controls are
+`.screen-link` chips and already measured 30px, and this one link carries no chip class because
+it is a plain sentence-level hyperlink to the cart. It sits alone inside its own paragraph, so it
+cannot claim the Inline exemption; `index.html`'s catalogue/support pair could not claim it
+either — a paragraph holding two links and a "·" separator has three words of prose around it,
+not a sentence — which is why it was given a class rather than being waved through.
+
+After the fix, 11 measurements across the two widths still came in under 24px, and all 11 are the
+same six links inside running prose, which SC 2.5.8 exempts:
+
+  "Not supplied yet"          "game details"           "desktop build (35.1 MB)"
+  "The Last Witness"          "Return to cart"         "View this offering and its ..."
+
+The exemption is decided by counting the non-link words in the enclosing block (20 characters or
+more), not by whether the element merely happens to have siblings, so a future link dropped into
+a two-word line cannot hide behind it. Room controls were re-measured and unchanged: chips 27-28px,
+station buttons 35px, panel chips 30px, demo form field 33px.
+
+4. Recorded rather than changed
+-------------------------------
+- `#monitor-screen` scroll container: not given a `tabindex`. Its content ends with a focusable
+  link ("Review cart and simulated checkout"), so the whole panel is reachable by keyboard without
+  one, and adding a tab stop that only scrolls would create a stop that does nothing else.
+- The panel's `.screen-terms` block is 0.72rem. It measures 9.13:1, so it passes; it is small
+  because the panel is presented as the content of a physical monitor seen at a distance. The same
+  terms are published at 16px on the game page, so the size costs nothing that is not already
+  available elsewhere.
+- Room-surface text drawn procedurally onto canvases (pinned papers seen as physical sheets, the
+  cassette labels) is not reachable by this measurement at all. It is reachable as HTML: the paper
+  view, the catalogue and the game page carry the same words, which is the reason those routes
+  exist. A contrast value for a lit, shadowed 3D surface would be a guess and is not stated.
+
+5. Open, not closed
+-------------------
+One routes run in this session reported 44 passed / 1 failed. The failing id was not captured: the
+output was read with `tail -5` and the run's evidence file was then overwritten by the next pass.
+Seven subsequent runs of the same build reported 45 / 0. Recorded as an unreproduced transient;
+the same thing happened once during the M6 routes runs (28/1, then 29/29 twice), so the pattern is
+known and not dismissed as impossible.

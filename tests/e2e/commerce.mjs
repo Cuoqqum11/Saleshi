@@ -1,6 +1,7 @@
 import { chromium } from 'playwright'
 import { goto } from './netRetry.mjs'
 import { OUT } from './evidence.mjs'
+import { games, shelf } from '../../src/js/data/games.js'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5174'
 const results = []
@@ -28,9 +29,13 @@ try {
   await goto(page, `${BASE}/games/`)
   const catalogue = await page.evaluate(() => ({
     title: document.querySelector('.game-card h3')?.textContent.trim(),
-    cards: document.querySelectorAll('.game-card').length,
+    // Cards are counted by their link, because an unfilled position is a card without one.
+    cards: document.querySelectorAll('.game-card h3 a').length,
+    empty: document.querySelectorAll('.game-card.is-empty').length,
   }))
-  record('C1', 'catalogue renders from shared game data', catalogue.cards === 1 && catalogue.title.includes('The Last Witness'), JSON.stringify(catalogue))
+  record('C1', 'catalogue renders every game and marks every unfilled shelf position',
+    catalogue.cards === games.length && catalogue.empty === shelf.capacity - games.length
+    && catalogue.title.includes('The Last Witness'), JSON.stringify(catalogue))
   await page.screenshot({ path: OUT('m6-03-catalogue.png'), fullPage: true })
 
   await page.click('.game-card h3 a')

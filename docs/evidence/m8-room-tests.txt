@@ -1,0 +1,50 @@
+M8 room suites on dist-qa + MySQL, origin http://127.0.0.1:5314
+
+$ node tests/e2e/gate.mjs
+PASS  E1 a plain load starts the room and gives it the first viewport — stageTop=62 controlsBottom=800 letterTop=800 vh=800
+PASS  E1b the 3D screen colour and the panel CSS agree (shared room tokens) — bg=rgb(16, 19, 15) ink=rgb(207, 230, 184) expected=rgb(16, 19, 15)/rgb(207, 230, 184)
+PASS  E2 ?view=list keeps the room off and the text view first — running=false launcher=true letterTop=419
+PASS  E3 a narrow screen that explicitly enters the room lays out without overflow — scrollWidth=390 stageHeight=383 controlsBottom=844 vh=844
+PASS  E4 a capable phone enters the room by default and hides the keyboard-only walk control — coarse=true walkToggle=false stations=2
+PASS  E5 a touch tap on a cassette chip selects the game — selected=the-last-witness
+PASS  G1a Tab reaches the cassette button with real key events
+PASS  G1b Enter selects the cassette — selected=the-last-witness url=?view=room&game=the-last-witness
+PASS  G1c computer side panel is visible with live and unavailable actions — links=["View full game details","Play the browser demo","Download a game build","Review cart and simulated checkout"] chips=["The Last Witness","Computer","Letter","Note"] layout=side
+PASS  G4 the computer chip remains clickable at the desk with the panel open (D11) — hit=BUTTON.proxy
+PASS  G2 Space selects the cassette — selected=the-last-witness url=?view=room&game=the-last-witness
+PASS  G3 shelf station renders with every chip inside the room viewport — [{"label":"The Last Witness","inside":true},{"label":"Computer","inside":true},{"label":"Letter","inside":true},{"label":"Note","inside":true}]
+
+12/12 gate checks passed
+
+$ node tests/e2e/papers.mjs
+PASS  P1 both pinned papers render as focus-proxy chips — chips=["The Last Witness","Computer","Letter","Note"]
+PASS  P2 clicking the letter chip opens a readable HTML view — open=true title="A note from the studio" body starts "Hello. This is the website for Saleshi, …"
+PASS  P3 closing returns focus to the chip and preserves camera and selection — focus="The studio letter pinned to the wall. Opens the studio introduction at readable size." station=shelf drift=0.0000
+PASS  P4 Tab+Enter opens the instruction note and Escape closes it — reached="The instruction note pinned to the wall. Opens a short note on how to explore the room." opened=true closed=true
+PASS  P8 clicking the visible 3D instruction sheet opens it through raycast picking — point=150,209 hit=CANVAS. open=true title="How to explore this room"
+PASS  P5 a note opened mid-walk freezes movement and the selection survives — reached="The instruction note pinned to the wall. Opens a short note on how to explore the room." frozen=true resumedAfterClose=0.790m mode=walk selected=the-last-witness
+PASS  P6 the scene still renders with the papers added — chips=4 drawCalls=31
+PASS  P7 no uncaught error from the render loop
+
+8/8 paper checks passed
+
+$ node tests/e2e/movement.mjs
+PASS  W1 toggle enters walk mode at standing eye height — mode=walk y=1.50 station=null
+PASS  W1b toggle reports its state — aria-pressed=true label=Stop walking
+PASS  W2 walking forward stops at the desk instead of passing through it — z=-1.85 (desk front limit -1.85, started -1.62)
+PASS  W2b the side panel stays inside the stage and outside the room while walking at the desk — inside=true separate=true layout=side
+SKIP  W2c walk-mode view at the desk captured for human review — docs/evidence/m8-movement-walk-desk-anchored.png — judged by eye
+PASS  W3 strafing west is stopped by the chair instead of passing through it — x=1.028 (chair face 1.025, started x=1.60)
+PASS  W3b backing off the chair then strafing west reaches the west wall — z after backing up=0.20 (chair clears at -1.00) x=-3.25 (wall limit -3.25)
+PASS  W4 walking the clear corridor stops at the north wall — corridor x=-0.91 z=-2.75 (wall limit -2.75)
+PASS  W5 turning 180 degrees and walking reaches the south wall — yaw=3.09 z=2.75 (wall limit 2.75)
+PASS  W6 walking east stops at the east wall — x=3.25 (wall limit 3.25)
+PASS  W7 selecting a cassette while walking keeps the walker in place — mode=walk selected=the-last-witness drift=0.000
+PASS  W7b the side panel stays inside the stage and outside the room with the monitor out of view — inside=true separate=true layout=side
+PASS  W8 a station button leaves walk mode and travels — mode=station station=desk
+PASS  W9 stopping walk returns to the nearest station — station=desk
+SKIP  W10 mid-room walking screenshot captured for human review — docs/evidence/m8-movement-walk-midroom.png — judged by eye, not asserted
+PASS  W11 reduced motion: walking moves but stops on release with no coasting — reduced=true moved=0.88 coasted=0.000
+PASS  W12 reduced motion: station travel is an instant cut — pose=-2.20,-0.75 read in the same tick as the click
+
+15 passed, 0 failed, 2 noted

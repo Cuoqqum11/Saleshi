@@ -1,0 +1,25 @@
+M8 MySQL repository/integration suite — administrator constraint run
+Repository under test: mysql
+✔ server quote recomputes the total from validated offering lines (32.4373ms)
+✔ server quote rejects tampered, malformed and unavailable offerings (8.4525ms)
+✔ fixed offering prices come from the server record, not the submitted amount (0.3012ms)
+✔ customer validation trims and normalises valid values and rejects invalid values (0.8935ms)
+✔ order references are unguessable and match the confirmation route format (0.4865ms)
+✔ checkout interaction identifiers are valid UUIDs and normalised for storage (0.5099ms)
+✔ order fingerprints are deterministic and change with validated order details (1.8847ms)
+✔ selected adapter creates and retrieves one order with its validated lines (11.9509ms)
+✔ repeating the same checkout interaction returns the original order (10.5488ms)
+✔ reusing a checkout interaction for different details is rejected (9.9037ms)
+✔ concurrent retries do not exhaust the connection pool or duplicate orders (34.8986ms)
+✔ MySQL rolls back the order and first line when the second line fails (4.9069ms)
+✔ MySQL enforces checks, preserves snapshots and restricts referenced deletion (15.1471ms)
+✔ MySQL order survives a verified application process restart (876.0334ms)
+ℹ Persisted SAL-A85DC0775BA8DD557E0E7925C7C89F0C; terminated PID 34796, retrieved via PID 34472
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1273.6525

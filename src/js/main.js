@@ -3,6 +3,7 @@
  * is downloaded until a visitor actually chooses to enter the room.
  */
 import { TEST_HOOKS } from './testHooks.js'
+import { roomHints } from './data/content.js'
 
 const els = {
   html: document.documentElement,
@@ -79,8 +80,7 @@ async function startRoomInstance() {
   els.stage.hidden = false
   els.controlsEl.hidden = false
   if (!canWalkByDefault) {
-    els.moveHint.textContent =
-      'Drag inside the room to look around. Use the buttons to move to the shelf or the computer. Select a cassette to see it on the computer, or a pinned note to read it.'
+    els.moveHint.textContent = roomHints.moveTouch
   }
   try {
     const { startRoom } = await import('./room/startRoom.js')

@@ -1,0 +1,50 @@
+M8 routes suite on dist-qa + MySQL, origin http://127.0.0.1:5314 — re-run 2026-11-03T23:20:56Z after adding R25 (published-identity marker check)
+PASS  R1 direct room URL restores selection and readable computer state — [{"text":"rgb(22, 32, 15)","background":"rgb(207, 230, 184)"},{"text":"rgb(22, 32, 15)","background":"rgb(207, 230, 184)"},{"text":"rgb(22, 32, 15)","background":"rgb(207, 230, 184)"}]
+PASS  R1c the computer panel labels the provisional cover with the record value — "Provisional cover: a frame captured from the EV-044 demo build itself. Dedicated cover artwork has not been supplied."
+PASS  R17b the computer panel states the same title, status and summary as the record — three values match the record
+PASS  R2 test-only fixture proves cover, media count and available action rendering — {"cover":true,"drawn":0,"count":"2 screenshots are on the game page; they are too small to read here.","actions":[null,"/fixture-demo/","/fixture-download/","https://example.invalid/fixture"]}
+PASS  R2b a record with no artwork and nothing available states both instead of offering controls — {"images":0,"links":[]}
+PASS  R2c switching selection leaves no stale text, link or artwork — cover=/game/screenshots/the-last-witness-evidence-register.png
+PASS  R2d an address naming an absent record leaves the screen on standby and says why — {"heading":"The screen is on standby","status":"The address names a game this shelf does not hold, so the screen is on standby. The catalogue lists what is here.","param":"not-a-real-record"}
+PASS  R3 real routes support normal browser back and forward navigation
+PASS  R4-768 room and panel remain usable at 768px — {"overflow":false,"separate":true}
+PASS  R4-900 room and panel remain usable at 900px — {"overflow":false,"separate":true}
+PASS  R24 the room's first drawn frame already holds the entry pose — first reported frame sits 2.653 m from the origin at station shelf; the camera moved 0.0000 m between that frame and rest
+PASS  R9a emulated touch drag delivers trusted touch pointer events to the canvas — [{"type":"pointerdown","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointermove","trusted":true,"pointerType":"touch","target":"CANVAS"},{"type":"pointerup","trusted":true,"pointerType":"touch","target":"CANVAS"}]
+PASS  R9b touch drag changes actual camera yaw and pitch — {"before":{"x":-2.2,"y":1.28,"z":-0.75,"yaw":0.12622882121057954,"pitch":-0.09538896968421828},"after":{"x":-2.2,"y":1.28,"z":-0.75,"yaw":0.3782288212105795,"pitch":-0.24658896968421828},"yawDelta":0.25199999999999995,"pitchDelta":-0.1512}
+PASS  R9c touch drag does not accidentally select, travel, open a note or scroll the page — {}
+PASS  R5 phone selection uses a bounded drawer instead of covering the room — {"layout":"drawer","separate":true,"panelRatio":0.26505016722408026,"overflow":false}
+PASS  R10 landscape phone room, panel and controls fit 844x390 without overflow — {"width":844,"height":390,"layout":"side","roomWidth":476,"roomHeight":192.5625,"stageTop":62.4375,"stageBottom":255,"controlsBottom":390.4375,"separate":true,"contained":true,"firstViewport":true,"overflow":false,"panelOverflow":false}
+PASS  R6 no-WebGL entry retains useful catalogue navigation and no fake room control
+PASS  R7 reduced-data preference starts the text view with an optional room launcher
+PASS  R8 no-JS homepage has real shared content and no dead room launcher — {"cards":1,"launcherHidden":true,"statusHidden":true,"storeVisible":true}
+PASS  R11-1 / has page-specific title, metadata, lang and h1 — title=Saleshi — indie game studio; h1=Enter the studio
+PASS  R11-2 /games/ has page-specific title, metadata, lang and h1 — title=Games catalogue — Saleshi; h1=Games
+PASS  R11-3 /games/the-last-witness/ has page-specific title, metadata, lang and h1 — title=The Last Witness — Saleshi; h1=The Last Witness
+PASS  R11-4 /games/the-last-witness/play/ has page-specific title, metadata, lang and h1 — title=Play The Last Witness in the browser — Saleshi; h1=Play The Last Witness
+PASS  R11-5 /store/ has page-specific title, metadata, lang and h1 — title=Store and creator support — Saleshi; h1=Creator support
+PASS  R11-6 /cart/ has page-specific title, metadata, lang and h1 — title=Your cart — Saleshi; h1=Your cart
+PASS  R11-7 /checkout/ has page-specific title, metadata, lang and h1 — title=Simulated checkout — Saleshi; h1=Simulated checkout
+PASS  R11-8 /order/ has page-specific title, metadata, lang and h1 — title=Order confirmation — Saleshi; h1=Order confirmation
+PASS  R12-1 / and every local link resolve to HTTP routes and anchor targets — HTTP 200; 8 local links, 3 fragments
+PASS  R12-2 /games/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 7 local links, 2 fragments
+PASS  R12-3 /games/the-last-witness/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 10 local links, 4 fragments
+PASS  R12-4 /games/the-last-witness/play/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 9 local links, 2 fragments
+PASS  R12-5 /store/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 7 local links, 2 fragments
+PASS  R12-6 /cart/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+PASS  R12-7 /checkout/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+PASS  R12-8 /order/ and every local link resolve to HTTP routes and anchor targets — HTTP 200; 6 local links, 2 fragments
+PASS  R14a /games/ labels the provisional cover and the captured frames — cover label(s) present, no unfilled slot
+PASS  R14b /games/the-last-witness/ labels the provisional cover and the captured frames — cover + media label(s) present, no unfilled slot
+PASS  R15 no page links to an origin this suite cannot verify — zero off-origin http(s) links across 8 pages
+PASS  R25 the published identity is one record-driven name plus a provisional marker, never scaffolding — 8 pages carry "Saleshi" with one "studio name not final" flag each; the letter's 2 labelled blanks (biography not supplied, name not final) render; no unedited placeholder copy
+PASS  R18 every route emits exactly the structured data and sharing tags its records support — 8 pages: JSON-LD parses and matches the modules, sharing tags repeat each page own head, no canonical link
+PASS  R19 the built site states no origin and no unconfirmed property in its structured data — 28 distinct properties
+PASS  R16a the game page sections appear in the §8 order — found: Overview > Gameplay > Experience > Features > Availability > Status > Not supplied yet > Store and creator support
+PASS  R16b every prose sentence from the record appears once on the game page — 3 sentences; absent=0; duplicated=0; status stated 1×
+PASS  R17 title, status, summary and both measured sizes are identical on every surface — 4 pages plus the download, demo and archive figures
+PASS  R20 every published route and the room panel pass WCAG 2.2 AA text contrast — 9 surfaces x 2 widths, 38 text nodes each; smallest text 9.9px, tightest sample 4.76:1 (Playable demo 11.5px)
+PASS  R21 every non-inline interactive target is at least 24x24 CSS px — 11 controls measured under 24 px across both widths; 6 distinct links, all mid-sentence and exempted by SC 2.5.8 ("Not supplied yet", "game details", "desktop build (35.1 MB)", "The Last Witness", "Return to cart", "View this offering and its"); nothing else was under size
+PASS  R22 no audited surface overflows horizontally at 390 or 1280 px — 9 surfaces x 2 widths, none wider than the viewport
+
+47 passed, 0 failed

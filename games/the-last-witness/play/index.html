@@ -3,8 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Play The Last Witness in the browser — Saleshi</title>
-    <meta name="description" content="Run the exported browser build of The Last Witness, an archive-terminal deduction demo, without downloading or installing anything." />
+    <title>Play {{GAME_TITLE}} in the browser — {{STUDIO_NAME}}</title>
+    <meta name="description" content="Run the exported browser build of {{GAME_TITLE}}, an archive-terminal deduction demo, without downloading or installing anything." />
+    {{SOCIAL_META}}
     <link rel="stylesheet" href="/src/styles/base.css" />
     <link rel="stylesheet" href="/src/styles/pages.css" />
     <script type="module" src="/src/js/pages/cartBadge.js"></script>
@@ -13,7 +14,7 @@
   <body data-game-id="the-last-witness">
     <a class="skip-link" href="#demo">Skip to the demo</a>
     <header class="site-header">
-      <a class="brand" href="/">Saleshi <span class="placeholder-flag">studio name not final</span></a>
+      <a class="brand" href="/">{{STUDIO_BRAND}}</a>
       <nav class="site-nav" aria-label="Main">
         <ul>
           <li><a href="/#room">The room</a></li>

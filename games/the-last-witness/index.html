@@ -3,8 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{GAME_TITLE}} — Saleshi</title>
+    <title>{{GAME_TITLE}} — {{STUDIO_NAME}}</title>
     <meta name="description" content="{{GAME_SUMMARY}}" />
+    {{SOCIAL_META}}
+    {{JSONLD_GAME}}
     <link rel="stylesheet" href="/src/styles/base.css" />
     <link rel="stylesheet" href="/src/styles/pages.css" />
     <script type="module" src="/src/js/pages/cartBadge.js"></script>
@@ -12,7 +14,7 @@
   <body data-game-id="the-last-witness">
     <a class="skip-link" href="#game-summary">Skip to the game summary</a>
     <header class="site-header">
-      <a class="brand" href="/">Saleshi <span class="placeholder-flag">studio name not final</span></a>
+      <a class="brand" href="/">{{STUDIO_BRAND}}</a>
       <nav class="site-nav" aria-label="Main">
         <ul>
           <li><a href="/#room">The room</a></li>
@@ -29,7 +31,7 @@
       </article>
     </main>
     <footer class="site-footer">
-      <p>Game information comes from the same project record used by the room and catalogue. Placeholder fields identify information still awaiting the studio.</p>
+      <p>Game information comes from the same project record used by the room and catalogue. The "Not supplied yet" list is the information the studio has not provided; it is stated rather than guessed.</p>
     </footer>
   </body>
 </html>

@@ -11,17 +11,35 @@
  *   BASE_URL=http://127.0.0.1:5314 PREFIX=m7-before node tests/e2e/visual.mjs
  *   BASE_URL=http://127.0.0.1:5314 PREFIX=m7-after  node tests/e2e/visual.mjs
  *
+ * `PREFIX` defaults to `${EVIDENCE_PREFIX}-visual`, and an existing file is refused unless
+ * `OVERWRITE=1` is set. Both guards exist because this suite writes straight into the evidence
+ * folder: an unqualified run once replaced the committed M7 "before" baseline with the current
+ * build, which is the one thing a before/after camera must never do.
+ *
  * The counters are SwiftShader numbers from a headless tab. They compare like with like, and they
  * are not a real GPU's frame rate.
  */
 import { chromium } from 'playwright'
 import { goto } from './netRetry.mjs'
-import { writeFile } from 'node:fs/promises'
+import { writeFile, access } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
-const PREFIX = process.env.PREFIX ?? 'm7-before'
+const PREFIX = process.env.PREFIX ?? `${process.env.EVIDENCE_PREFIX ?? 'm6'}-visual`
 const EVIDENCE = (name) => fileURLToPath(new URL(`../../docs/evidence/${name}`, import.meta.url))
+
+async function target(file) {
+  const path = EVIDENCE(file)
+  if (process.env.OVERWRITE !== '1') {
+    try {
+      await access(path)
+      throw new Error(`visual: ${file} already exists; pass OVERWRITE=1 to replace a capture`)
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error
+    }
+  }
+  return path
+}
 
 // `station` uses the control bar the visitor uses. `aim` parks the eye at an absolute pose, which
 // is the only way to get the same close-up twice. Room space: floor y=0, x -3.5..3.5, z -3..3.
@@ -135,7 +153,7 @@ try {
     const dataUrl = await page.evaluate(() => window.__saleshiRoom.snapshot())
     if (!dataUrl || !dataUrl.startsWith('data:image/png')) throw new Error(`${view.id} produced no PNG`)
     const file = `${PREFIX}-${view.id}.png`
-    await writeFile(EVIDENCE(file), Buffer.from(dataUrl.split(',')[1], 'base64'))
+    await writeFile(await target(file), Buffer.from(dataUrl.split(',')[1], 'base64'))
 
     const shot = await page.evaluate(() => {
       const {
@@ -188,5 +206,5 @@ try {
   await browser.close()
 }
 
-await writeFile(EVIDENCE(`${PREFIX}-room-stats.json`), `${JSON.stringify(stats, null, 2)}\n`)
+await writeFile(await target(`${PREFIX}-room-stats.json`), `${JSON.stringify(stats, null, 2)}\n`)
 console.log(`\n${VIEWS.length} viewpoints captured → docs/evidence/${PREFIX}-*.png and ${PREFIX}-room-stats.json`)

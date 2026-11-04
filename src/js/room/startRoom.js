@@ -14,6 +14,7 @@ import { createFocusProxy } from './focusProxy.js'
 import { screenTone } from './palette.js'
 import { cassetteAnchor } from '../objects/shelf.js'
 import { games, shelf } from '../data/games.js'
+import { roomHints } from '../data/content.js'
 import { getSelectedGame, restoreFromUrl, selectGame, subscribe } from '../ui/selection.js'
 import { createPaperView } from '../ui/paperView.js'
 import MonitorPanel from '../ui/monitorPanel.vue'
@@ -73,7 +74,7 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
 
   function openPaper(id) {
     if (paperView.open(id)) {
-      announce('Opened a readable note. Press Escape or use the close button to return to the room.')
+      announce(roomHints.paperOpen)
     }
   }
 
@@ -108,7 +109,10 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
       id: game.id,
       object: cassette,
       anchor: cassetteAnchor(cassette),
-      shortLabel: `Tape ${game.slot + 1}`,
+      // The chip used to read "Tape 1", which describes the packaging and not the thing inside it.
+      // The visible label is the title now, so the shelf can be read without selecting anything; the
+      // longer accessible name keeps the object type, which the printed card cannot convey at all.
+      shortLabel: game.title,
       label: `Cassette: ${game.title}`,
       hint: 'Select to show this game on the computer screen.',
     }
@@ -189,7 +193,7 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
         announce(`Stopped walking. Back at ${controller.stations.find((s) => s.id === station).label.toLowerCase()}.`)
       } else {
         controller.enterWalk()
-        announce('Walking freely. W, A, S and D or the arrow keys move you, and dragging looks around. Stop walking to return to a station.')
+        announce(roomHints.walkStart)
       }
     })
     els.controlsEl.append(walkButton)
@@ -389,8 +393,19 @@ export function startRoom({ els, reducedMotion, canWalk = true, onLeave }) {
     focusProxy.setSelected(restored.id)
     controller.travelTo('desk')
     announce(`Restored ${restored.title} from the address.`)
+  } else if (new URL(window.location.href).searchParams.get('game')) {
+    // An address can name a record that does not exist: a mistyped id, a link to a project that was
+    // never published, or a saved URL from a shelf that has since changed. The screen stays on standby
+    // and says which, because the visitor can still see the parameter they asked for (M8 §7).
+    announce('The address names a game this shelf does not hold, so the screen is on standby. '
+      + 'The catalogue lists what is here.')
   }
   if (reducedMotion) els.stage.dataset.reducedMotion = 'true'
+  // The loop advances the camera through a fixed 1/60 s accumulator, so a first tick that arrives
+  // inside one step draws without ever calling `update` — and nothing else positions the camera.
+  // That painted the room's very first frame from the origin instead of the entry station. This
+  // runs the same apply the loop uses, so frame one already holds the pose the visitor settles into.
+  controller.update(0)
 
   return {
     dispose() {

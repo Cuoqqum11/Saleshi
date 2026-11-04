@@ -1,0 +1,25 @@
+M8 metadata unit suite — npm run test:metadata, 2026-11-03T23:01:45Z
+
+> saleshi@0.0.0 test:metadata
+> node --test tests/metadata.test.mjs
+
+✔ every generated document is valid JSON that round-trips unchanged (1.9144ms)
+✔ serialised JSON-LD carries no character that could close its script element (0.2573ms)
+✔ each document type carries only its allowed properties (0.4043ms)
+✔ no document asserts a contact route, a mark, a figure, a verdict or a price (0.2154ms)
+✔ while no host is configured, every URL is a path rather than an origin (0.384ms)
+✔ one configured host makes every structured-data URL absolute, without a doubled slash (0.3513ms)
+✔ a record with no answer removes the property instead of emitting an empty one (0.8966ms)
+✔ the catalogue lists exactly the published records, in shelf order (0.2003ms)
+✔ the game document repeats the record and claims nothing beside it (0.4052ms)
+✔ social tags repeat the page title and description and withhold what needs a host (0.3242ms)
+✔ the sharing image waits for both a host and the studio approving the artwork (0.2389ms)
+✔ stated image dimensions are the dimensions of the files being served (0.9854ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97.4381

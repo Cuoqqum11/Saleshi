@@ -152,6 +152,10 @@ html[data-room='on'] .room-controls {
 .screen-subheading { margin: 0.25rem 0 0; color: #eaf6dc; font-size: 0.86rem; }
 .screen-media { margin: 0; }
 .screen-media img { display: block; width: 100%; height: auto; }
+/* What the status badge means, and what the cover image actually is. Both are stated on the screen
+   because both are claims a visitor would otherwise have to take on trust. */
+.screen-status-detail { color: #bcd0aa; }
+.screen-media figcaption { margin-top: 0.25rem; color: #8ba07a; font-size: 0.78rem; }
 .screen-media-count { color: #8ba07a; font-size: 0.78rem; }
 .screen-media-placeholder {
   padding: 0.6rem;
@@ -177,6 +181,10 @@ button.screen-link { border: 0; font: inherit; cursor: pointer; }
 #monitor-screen a.screen-link { color: #16200f; }
 #monitor-screen a:hover { color: #fff; }
 #monitor-screen a.screen-link:hover { color: #16200f; }
+/* The panel's one link that carries no `.screen-link` chip sits alone in its own paragraph, so it is
+   not the "inline in a sentence" case that WCAG 2.2 SC 2.5.8 exempts, and it measured 15 px tall. Same
+   0.35rem vertical padding as `base.css` explains; the excluded chip links already have it. */
+#monitor-screen p > a:not(.screen-link) { padding-block: 0.35rem; }
 
 /* --- Control bar: the stable keyboard path, independent of the camera. --- */
 .room-controls {

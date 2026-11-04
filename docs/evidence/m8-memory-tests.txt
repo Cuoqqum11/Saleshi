@@ -1,0 +1,28 @@
+M8 memory-adapter comparison, repository level — DB_DRIVER=memory npm run test:commerce
+
+> saleshi@0.0.0 test:commerce
+> node --test tests/commerce.test.mjs
+
+Repository under test: memory
+✔ server quote recomputes the total from validated offering lines (1.2765ms)
+✔ server quote rejects tampered, malformed and unavailable offerings (1.0564ms)
+✔ fixed offering prices come from the server record, not the submitted amount (0.277ms)
+✔ customer validation trims and normalises valid values and rejects invalid values (1.0113ms)
+✔ order references are unguessable and match the confirmation route format (0.5383ms)
+✔ checkout interaction identifiers are valid UUIDs and normalised for storage (0.7058ms)
+✔ order fingerprints are deterministic and change with validated order details (0.8799ms)
+✔ selected adapter creates and retrieves one order with its validated lines (1.5262ms)
+✔ repeating the same checkout interaction returns the original order (0.5973ms)
+✔ reusing a checkout interaction for different details is rejected (0.773ms)
+✔ concurrent retries do not exhaust the connection pool or duplicate orders (0.8561ms)
+﹣ MySQL rolls back the order and first line when the second line fails (0.1484ms) # SKIP
+﹣ MySQL enforces checks, preserves snapshots and restricts referenced deletion (0.122ms) # SKIP
+﹣ MySQL order survives a verified application process restart (0.127ms) # SKIP
+ℹ tests 14
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 3
+ℹ todo 0
+ℹ duration_ms 275.8042

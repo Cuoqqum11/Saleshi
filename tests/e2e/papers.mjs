@@ -73,7 +73,7 @@ try {
   await page.waitForTimeout(250)
   let d = await dialogState(page)
   record('P2', 'clicking the letter chip opens a readable HTML view',
-    d.open && d.title === 'A note from the studio' && d.body.includes('PLACEHOLDER')
+    d.open && d.title === 'A note from the studio' && d.body.includes('biography not supplied')
       && !d.body.includes('skip the room'),
     `open=${d.open} title="${d.title}" body starts "${d.body.slice(0, 40)}…"`)
   await page.screenshot({ path: OUT('m6-papers-paper-open.png'), fullPage: true })
@@ -94,7 +94,10 @@ try {
   await page.keyboard.press('Enter')
   await page.waitForTimeout(250)
   d = await dialogState(page)
-  const openedByKeyboard = d.open && d.body.includes('standing inside the studio')
+  // The sentence asserted here is the one M8 §3.2 exists to protect: the note must tell the truth
+  // about controls that do not exist. If the note is reworded this check moves with it, on purpose.
+  const noteSentence = 'the mouse wheel and a pinch gesture do nothing here'
+  const openedByKeyboard = d.open && d.body.includes(noteSentence)
   await page.keyboard.press('Escape')
   await page.waitForTimeout(250)
   d = await dialogState(page)

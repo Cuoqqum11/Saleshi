@@ -14,16 +14,31 @@ body {
   margin: 0;
   background: var(--ink);
   color: var(--text-on-dark);
-  font-family: system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
-  font-size: 1rem;
+  font-family: var(--font-body);
+  font-size: var(--type-5);
   line-height: 1.6;
 }
 
 h1, h2, h3 {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-weight: 600;
   line-height: 1.2;
   text-wrap: balance;
+}
+h1 { font-size: var(--type-1); }
+h2 { font-size: var(--type-2); }
+h3 { font-size: var(--type-3); }
+
+/* Keys and controls named in the papers' instruction text. It inherits its colour so the same
+   markup reads correctly on the dark pages and on a cream sheet. */
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 0.05em 0.35em;
+  border: 1px solid currentColor;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  white-space: nowrap;
 }
 
 p { max-width: var(--measure); }
@@ -35,6 +50,18 @@ img, video { max-width: 100%; height: auto; }
 
 a { color: var(--amber); text-underline-offset: 0.2em; }
 a:hover { color: var(--text-on-dark); }
+
+/* WCAG 2.2 SC 2.5.8 — Target Size (Minimum), 24×24 CSS px. Measured at 390 and 1280 px, the styled
+   controls (`.button`, `.screen-link`, the room chips, the form fields) already clear the floor, and
+   links inside a sentence are exempt from the criterion; what failed were the bare text links — 18–21 px
+   in the header, the cards and the papers. Vertical padding grows a link's own box without changing the
+   line box, so the words stay exactly where they were while the hit area reaches 26–32 px. `.link-pair`
+   is here rather than exempt because it is a standing pair of links, not prose. The room's own panel
+   link is covered by the same rule in `room.css`; the links left under 24 px are all mid-sentence. */
+.site-nav a,
+.game-card a,
+.paper a,
+.link-pair a { padding-block: 0.35rem; }
 
 /* Visible keyboard focus everywhere. Never removed, only restyled. */
 :focus-visible {
@@ -57,8 +84,10 @@ a:hover { color: var(--text-on-dark); }
 .skip-link:focus-visible { top: var(--space-2); }
 
 .placeholder-flag {
-  font-family: system-ui, sans-serif;
-  font-size: 0.68rem;
+  font-family: var(--font-body);
+  /* Relative, because the marker sits beside a page title, inside a brand link and under a
+     paragraph — a fixed rem would be either shouty or invisible depending on where it landed. */
+  font-size: 0.66em;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-on-dark-muted);
@@ -75,14 +104,13 @@ a:hover { color: var(--text-on-dark); }
 }
 
 .brand {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: 1.15rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-on-dark);
   text-decoration: none;
 }
-.brand .placeholder-flag { font-size: 0.7rem; color: var(--text-on-dark-muted); }
 
 .site-nav ul {
   display: flex;
@@ -124,7 +152,7 @@ section > header { margin-bottom: var(--space-2); }
   color: var(--text-on-paper);
   border-radius: 2px;
   box-shadow: 0 18px 40px -22px rgb(0 0 0 / 85%);
-  font-family: ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.94rem;
   line-height: 1.7;
   background-image: linear-gradient(180deg, rgb(0 0 0 / 3%) 0 3px, transparent 3px);
@@ -134,11 +162,10 @@ section > header { margin-bottom: var(--space-2); }
 .paper a { color: var(--text-on-paper); }
 .paper .placeholder-flag {
   display: inline-block;
-  font-family: system-ui, sans-serif;
-  font-size: 0.7rem;
+  font-family: var(--font-body);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--rust);
+  color: var(--rust-deep);
   border: 1px solid currentColor;
   border-radius: 2px;
   padding: 0 0.35em;
@@ -162,7 +189,7 @@ section > header { margin-bottom: var(--space-2); }
   border: 1px solid var(--ink-3);
   border-radius: var(--radius);
 }
-.game-card h3 { margin: 0; font-size: 1.1rem; }
+.game-card h3 { margin: 0; font-size: var(--type-3); }
 .game-card p { margin: 0; color: var(--text-on-dark-muted); font-size: 0.92rem; }
 .game-card.is-empty {
   border-style: dashed;
@@ -181,6 +208,15 @@ section > header { margin-bottom: var(--space-2); }
   white-space: nowrap;
 }
 .game-cover { display: block; width: min(100%, 32rem); height: auto; }
+/* What the cover image actually is (M8 §5.3). It belongs to the image rather than to a caption
+   because the claim is about provenance, not about the picture's contents. */
+.media-provenance {
+  margin: 0.3rem 0 0;
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--olive);
+  color: var(--text-on-dark-muted);
+  font-size: var(--type-6);
+}
 .media-placeholder,
 .empty-state {
   padding: var(--space-2);

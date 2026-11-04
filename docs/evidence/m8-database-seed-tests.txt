@@ -1,0 +1,17 @@
+M8 seed projection suite — npm run test:database
+
+> saleshi@0.0.0 test:database
+> node --test tests/database-seed.test.mjs
+
+✔ S1 seed projects the shared records into MySQL with no extra rows (295.5557ms)
+✔ S2 a superseded game row is pruned and re-running the seed changes nothing (790.59ms)
+✔ S3 an offering that leaves the records is retired, and its game survives while orders need it (534.4513ms)
+✔ S4 historical orders are untouched by seeding and still retrieve (509.944ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2386.092

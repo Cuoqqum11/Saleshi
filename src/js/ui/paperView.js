@@ -14,9 +14,16 @@ export function createPaperView({ dialog, titleEl, bodyEl, sources, onOpen, onCl
   function open(id) {
     const source = sources[id]
     if (!source) return false
-    titleEl.textContent = source.title
     const content = source.content()
+    const headingEl = content.querySelector?.('h1, h2, h3') ?? null
+    // A paper that carries its own heading lends that heading to the title bar, so the label the room
+    // announces and the words on the sheet come from the same DOM node. `source.title` stays as the
+    // fallback for a note that is all body and no heading.
+    titleEl.textContent = headingEl?.textContent?.trim() || source.title
     if (content.querySelector) {
+      // The clone, never the page's own copy. Left in, the heading would repeat the line the title bar
+      // has just spoken and would duplicate its `id` inside the dialog.
+      if (headingEl) headingEl.remove()
       for (const exclude of content.querySelectorAll('[data-note-exclude]')) exclude.remove()
     }
     bodyEl.replaceChildren(content)

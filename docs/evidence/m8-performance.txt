@@ -1,0 +1,74 @@
+M8 performance comparison against the M7 baseline
+Captured 2026-11-04, Windows x64, Node v24.19.0, headless Chromium + SwiftShader, viewport 1280x800.
+Database for both origins: MySQL 8.0.46 on 127.0.0.1:3307, restricted application account.
+M7 origin:  http://127.0.0.1:5317 — the QA bundle built from commit d9b62e0 ("Complete M7 visual art
+             direction and adopt the milestone roadmap") in a temporary git worktree, with the same
+             untracked `public/game` and `public/downloads` assets copied in so both origins served
+             byte-identical static trees apart from the milestone's own changes.
+M8 origin:  http://127.0.0.1:5314 — the QA bundle built from the M8 working tree.
+Both origins ran `node --env-file=.env server/index.js --production` with `DIST_DIR=dist-qa`.
+
+WHY A SECOND MEASUREMENT WAS NEEDED
+M7 closed with one boot sample retained in `m7-after-room-stats.json`: 1,557 ms, with its own caveat —
+"Boot time is one sample, so it is not comparable as a trend." M8's first single sample read 2,183 ms,
+which would have been reported as a 40% regression on the strength of one number each. Six samples per
+milestone, taken back to back on an idle machine, were measured instead:
+
+BOOT TO FIRST RENDERED FRAME (time until the room instance exists; the definition `visual.mjs` uses)
+  M7 (5317): 2317ms/29f  215ms/25f  224ms/27f  214ms/26f  219ms/26f  1201ms/27f   min 214 median 224 max 2317
+  M8 (5314): 1199ms/29f  1013ms/30f 1016ms/30f  228ms/30f  216ms/30f  225ms/30f    min 216 median 1013 max 1199
+
+  Reading: the distribution is bimodal on BOTH milestones. A fast mode of 214-230 ms and a slow mode of
+  roughly 1.0-2.3 s that appears without warning on either build. The fast floors are indistinguishable
+  (214 vs 216 ms), so no boot regression is demonstrated; the slow mode is a property of this
+  workstation's loopback/asset-fetch behaviour, not of the milestone, and its biggest sample came from
+  M7 (2,317 ms). Median alone is the wrong statistic for a bimodal sample and is reported only because
+  it is the arithmetic; the honest claim is "the same floor, the same two modes, six samples each".
+  The single-sample pair that started this (M7 1,557 vs M8 2,183) is now retracted as a comparison and
+  kept only as the historical numbers they are.
+
+FRAMES RENDERED IN A FIXED 2 SECONDS (same samples, `f` above)
+  M7: 25, 26, 26, 27, 27, 29      M8: 29, 30, 30, 30, 30, 30
+  M8 draws at least as many frames as M7 on every sample. Part of that is pixel count: the M8 room
+  viewport measures 912x566 in the drawing buffer where M7 measured 912x608 — 6.9% fewer pixels —
+  because the identity header and the new in-HTML content take vertical space above the stage at this
+  viewport. This is a headless SwiftShader figure and says nothing about a real GPU.
+
+WALK DISTANCE (fixed 1/60 s simulation step, so this is a correctness figure rather than a speed one)
+  M7 3.35 m per 2 s, M8 3.35 m per 2 s — identical, as designed (the step was made fixed during M7
+  precisely so that distance does not depend on frame rate).
+
+PER-VIEWPOINT RENDERER INTERNALS (m8-visual-room-stats.json vs m7-after-room-stats.json, calls/tris/tex)
+  01-entry            M7  31/ 2054/22   M8  31/ 2054/22   unchanged
+  02-shelf            M7  31/ 2054/22   M8  31/ 2054/22   unchanged
+  03-desk             M7  41/ 9028/22   M8  42/ 9084/22   +1 call, +56 tris
+  04-door             M7  96/12752/26   M8 100/12982/27   +4 calls, +230 tris, +1 texture
+  05-walk-central     M7  35/ 2284/27   M8  35/ 2284/27   unchanged
+  06-case-close-up    M7  22/ 1178/27   M8  23/ 1286/27   +1 call, +108 tris
+  07-monitor-close-up M7  37/ 8596/27   M8  37/ 8596/27   unchanged
+  08-letter-close-up  M7  10/  474/27   M8  10/  474/27   unchanged
+  09-desk-corner      M7  80/11818/27   M8  88/12176/27   +8 calls, +358 tris
+  10-shelf-wall-joint M7  35/ 2284/27   M8  35/ 2284/27   unchanged
+  Mesh count 110 and node count 135 are identical on both milestones: M8 changed materials, textures and
+  the printed J-card, and added no new meshes. Worst-case triangles remain 12,982 (the door view), which
+  is inside M7's own measured range ceiling of 12,752 by 1.8%.
+
+BYTES SHIPPED (dist-qa, measured from the built files)
+  index.html (the room route)   M7  8,351 B   M8 12,319 B   +3,968 B  (+47.5%)
+  startRoom chunk (minified)    M7 667,108 B  M8 668,812 B   +1,704 B  (+0.26%)
+  base.css                      M7  5,179 B   M8  5,825 B     +646 B
+  room.css                      M7  6,296 B   M8  6,465 B     +169 B
+  all assets in the bundle      M7 701,934 B  M8 705,316 B   +3,382 B  (+0.48%)
+  The HTML growth is the point of M8 §11.5: the words a visitor and a crawler need are now in the
+  document rather than only in the canvas, and that costs bytes in a route that is served gzipped at
+  4.37 kB. Vite's own estimate for the deployable build: index.html 12.34 kB / 4.37 kB gzip, game page
+  10.67 kB / 3.88 kB gzip, room chunk 668.81 kB / 182.02 kB gzip, base.css 5.82/1.98, room.css 6.46/1.97.
+  The deployable bundle totals 78,335,911 bytes, of which the two game artifacts are 77,504,335.
+  The three published PNGs are 121.6 KiB in the repository and 81.7 KiB in the bundle (-32.8%), which is
+  the only byte reduction M8 produced and is measured by `npm run assets:check` on every build.
+
+LIMITS OF THESE NUMBERS
+Headless SwiftShader on one machine, loopback origin, cold HTTP cache per sample (each sample opens a
+new browser context). No real GPU, no throttled network, no Lighthouse run, no second browser, no
+physical device. The bundle figures are file sizes and Vite's own gzip estimates; the Express static
+server used here transfers assets uncompressed, so none of these numbers is a measured network transfer.

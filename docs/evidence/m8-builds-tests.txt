@@ -1,0 +1,19 @@
+M8 build-record unit suite — npm run test:builds
+
+> saleshi@0.0.0 test:builds
+> node --test tests/game-builds.test.mjs
+
+✔ the committed build record still matches what is staged in public/ (178.9266ms)
+✔ the browser export is served with the exact bytes that were measured (86.3629ms)
+✔ the desktop archive unpacks to the recorded files, unchanged (462.798ms)
+✔ the archive carries the font licence text that the bundled fonts require (0.6137ms)
+✔ the site states build numbers taken from the measured record, not retyped ones (0.3859ms)
+✔ staged binaries still match the studio export folder when it is present (239.4536ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1060.545

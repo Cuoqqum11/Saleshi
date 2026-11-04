@@ -1,0 +1,84 @@
+M8 build matrix — captured 2026-11-03T23:01:45Z on Windows x64, Node v24.19.0
+
+$ npm run build
+
+> saleshi@0.0.0 build
+> vite build
+
+[36mvite v8.3.5 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 58 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/order/index.html                          1.86 kB │ gzip:   0.80 kB
+dist/cart/index.html                           2.14 kB │ gzip:   0.94 kB
+dist/checkout/index.html                       3.34 kB │ gzip:   1.30 kB
+dist/store/index.html                          4.06 kB │ gzip:   1.56 kB
+dist/games/index.html                          4.09 kB │ gzip:   1.55 kB
+dist/games/the-last-witness/play/index.html    4.36 kB │ gzip:   1.67 kB
+dist/games/the-last-witness/index.html        10.67 kB │ gzip:   3.88 kB
+dist/index.html                               12.34 kB │ gzip:   4.37 kB
+dist/assets/cartBadge-BI2OB36o.css             2.27 kB │ gzip:   0.85 kB
+dist/assets/base-16e1dItz.css                  5.82 kB │ gzip:   1.98 kB
+dist/assets/room-CTscgyaV.css                  6.46 kB │ gzip:   1.97 kB
+dist/assets/cartBadge-B75gsEhh.js              0.12 kB │ gzip:   0.13 kB
+dist/assets/api-DV7cCjh9.js                    0.27 kB │ gzip:   0.20 kB
+dist/assets/store-rBagp5YY.js                  0.54 kB │ gzip:   0.36 kB
+dist/assets/base-Ct0pzC_t.js                   0.67 kB │ gzip:   0.38 kB
+dist/assets/order-krV1o0oK.js                  1.61 kB │ gzip:   0.75 kB
+dist/assets/browserDemo-ZFPMJj1Y.js            1.90 kB │ gzip:   0.96 kB
+dist/assets/builds-Cp8Jc6kT.js                 2.43 kB │ gzip:   1.22 kB
+dist/assets/checkout-BA4EAp65.js               2.44 kB │ gzip:   1.12 kB
+dist/assets/cart-BXjFFtgr.js                   2.74 kB │ gzip:   1.19 kB
+dist/assets/cart-uropzHsE.js                   2.83 kB │ gzip:   1.36 kB
+dist/assets/room-CYIjHwoI.js                   6.05 kB │ gzip:   2.57 kB
+dist/assets/startRoom-DCuR7g-O.js            668.81 kB │ gzip: 182.02 kB
+
+[32m✓ built in 401ms[39m
+[33m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+  game/screenshots/the-last-witness-briefing.png  26.0 KiB → 17.4 KiB (palette of 190 colours, written)
+  game/screenshots/the-last-witness-case-stage-1.png  45.0 KiB → 30.9 KiB (palette of 104 colours, written)
+  game/screenshots/the-last-witness-evidence-register.png  50.7 KiB → 33.4 KiB (palette of 87 colours, written)
+asset-pipeline (dist): 3 PNG(s), 121.6 KiB → 81.7 KiB (−32.8%).
+
+$ npm run build:qa
+
+> saleshi@0.0.0 build:qa
+> node scripts/build-qa.mjs
+
+[33m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+  game/screenshots/the-last-witness-briefing.png  26.0 KiB → 17.4 KiB (palette of 190 colours, written)
+  game/screenshots/the-last-witness-case-stage-1.png  45.0 KiB → 30.9 KiB (palette of 104 colours, written)
+  game/screenshots/the-last-witness-evidence-register.png  50.7 KiB → 33.4 KiB (palette of 87 colours, written)
+asset-pipeline (dist-qa): 3 PNG(s), 121.6 KiB → 81.7 KiB (−32.8%).
+QA build written to dist-qa (room test hooks ON). Serve it with: DIST_DIR=dist-qa node server/index.js --production
+Deployable build is separate: npm run build → dist/ (hooks compiled away).
+
+$ npm run game:check
+
+> saleshi@0.0.0 game:check
+> node scripts/stage-game-build.mjs --check
+
+Game builds verified against the committed record: 9 web files, 5 archive entries.
+
+$ npm run assets:check
+
+> saleshi@0.0.0 assets:check
+> node scripts/asset-pipeline.mjs --check
+
+  game/screenshots/the-last-witness-briefing.png  26.0 KiB → 17.4 KiB (palette of 190 colours, not written)
+  game/screenshots/the-last-witness-case-stage-1.png  45.0 KiB → 30.9 KiB (palette of 104 colours, not written)
+  game/screenshots/the-last-witness-evidence-register.png  50.7 KiB → 33.4 KiB (palette of 87 colours, not written)
+assets:check: 3 PNG(s), 121.6 KiB → 81.7 KiB (−32.8%).
+Every committed frame is still eligible for the lossless palette pass.
+
+$ npm audit --omit=dev
+found 0 vulnerabilities

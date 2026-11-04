@@ -1,6 +1,31 @@
 import { chromium } from 'playwright'
 import { goto, request } from './netRetry.mjs'
 import { OUT } from './evidence.mjs'
+import { games } from '../../src/js/data/games.js'
+import { identityIsProvisional, studio } from '../../src/js/data/studio.js'
+import { studioLetter } from '../../src/js/data/content.js'
+import {
+  catalogueJsonLd, gameJsonLd, organizationJsonLd, socialTags, webSiteJsonLd,
+} from '../../src/js/data/metadata.js'
+
+const realGame = games.find((entry) => entry.id === 'the-last-witness')
+
+/**
+ * What each route is expected to assert about itself (M8 §11.3, §11.4). A page not carrying structured
+ * data must carry none: the transactional routes have no entity to describe, and an `offers`-shaped
+ * block would be the invention §9 forbids. `social` is which routes the site offers for sharing — the
+ * cart, checkout and confirmation pages are conversation state, not something to advertise.
+ */
+const METADATA = {
+  '/': { social: true, image: null, jsonLd: [organizationJsonLd(), webSiteJsonLd()] },
+  '/games/': { social: true, image: null, jsonLd: [catalogueJsonLd()] },
+  '/games/the-last-witness/': { social: true, image: realGame.cover, jsonLd: [gameJsonLd(realGame)] },
+  '/games/the-last-witness/play/': { social: true, image: realGame.cover, jsonLd: [] },
+  '/store/': { social: true, image: null, jsonLd: [] },
+  '/cart/': { social: false, image: null, jsonLd: [] },
+  '/checkout/': { social: false, image: null, jsonLd: [] },
+  '/order/': { social: false, image: null, jsonLd: [] },
+}
 
 // BASE_URL must expose the room test hooks: pose and previewPanelGame come from window.__saleshiRoom.
 // A dev server or `npm run build:qa` both qualify; `npm run build` compiles the hooks away.
@@ -8,7 +33,7 @@ import { OUT } from './evidence.mjs'
 const BASE = process.env.BASE_URL ?? 'http://localhost:5174'
 const ROUTES_BASE = process.env.ROUTES_BASE_URL ?? BASE
 const REAL_PAGES = [
-  ['/', 'Saleshi — indie game studio [PLACEHOLDER]'],
+  ['/', 'Saleshi — indie game studio'],
   ['/games/', 'Games catalogue — Saleshi'],
   ['/games/the-last-witness/', 'The Last Witness — Saleshi'],
   ['/games/the-last-witness/play/', 'Play The Last Witness in the browser — Saleshi'],
@@ -38,12 +63,32 @@ async function auditRealPages(browser) {
           return {
             title: document.title,
             titleCount: document.querySelectorAll('title').length,
+            // The unrendered source, so a build-time content slot can be checked even in a tab where
+            // the section it lives in is below the fold or hidden by a drawer.
+            text: raw.body.textContent,
             lang: document.documentElement.lang,
             charset: document.characterSet,
             descriptions: [...document.querySelectorAll('meta[name="description"]')].map((meta) => meta.content.trim()),
             viewport: document.querySelector('meta[name="viewport"]')?.content ?? '',
             headings: [...document.querySelectorAll('h1')].map((heading) => heading.textContent.trim()),
             targets: [...document.querySelectorAll('[id], a[name]')].map((element) => element.id || element.getAttribute('name')),
+            // Structured data is parsed here rather than string-compared in the source, so a value the
+            // browser cannot parse is a failure even if the bytes look right.
+            jsonLd: [...document.querySelectorAll('script[type="application/ld+json"]')].map((element) => {
+              try {
+                return { ok: true, value: JSON.parse(element.textContent) }
+              } catch {
+                return { ok: false, value: element.textContent.slice(0, 60) }
+              }
+            }),
+            social: Object.fromEntries([...document.querySelectorAll('meta[property^="og:"]')]
+              .map((meta) => [meta.getAttribute('property'), meta.content])),
+            canonical: document.querySelectorAll('link[rel="canonical"]').length,
+            // The provisional-identity flag and the letter's labelled blanks, read out of the served
+            // source rather than the live DOM: a marker that only exists after hydration would not be
+            // the build-time guarantee M8 §2.3 asks for.
+            identityFlags: [...raw.querySelectorAll('[data-provisional-identity]')].map((flag) => flag.textContent.trim()),
+            paperGaps: [...raw.querySelectorAll('[data-paper-gap]')].map((flag) => flag.textContent.trim()),
             // Include authored noscript links as well as links rendered by JavaScript.
             links: [...new Set([...document.querySelectorAll('a[href]'), ...raw.querySelectorAll('a[href]')]
               .map((link) => link.getAttribute('href')))],
@@ -108,6 +153,313 @@ async function auditRealPages(browser) {
       record(`R12-${index + 1}`, `${path} and every local link resolve to HTTP routes and anchor targets`, problems.length === 0,
         `HTTP ${source.status}; ${localLinks} local links, ${fragments} fragments${problems.length ? `; ${problems.join('; ')}` : ''}`)
     }
+
+    // M8 §5.3 lets a stand-in cover be used but requires it to be labelled. The label is one value in
+    // the game record, so each DOM surface that shows the image as information is checked against that
+    // value here; a template edit that drops it fails instead of quietly becoming unlabelled art.
+    for (const [id, path, needs] of [
+      ['R14a', '/games/', ['cover']],
+      ['R14b', '/games/the-last-witness/', ['cover', 'media']],
+    ]) {
+      const source = documents.get(new URL(path, ROUTES_BASE).href)
+      const text = source.text ?? ''
+      const missing = []
+      if (needs.includes('cover') && !text.includes(realGame.cover.provenance)) missing.push('cover provenance')
+      if (needs.includes('media') && !text.includes(realGame.mediaProvenance)) missing.push('gallery provenance')
+      record(id, `${path} labels the provisional cover and the captured frames`,
+        text.includes('{{') === false && missing.length === 0,
+        missing.length ? `missing: ${missing.join(', ')}` : `${needs.join(' + ')} label(s) present, no unfilled slot`)
+    }
+
+    // M8 §7 asks for handling of dead external links. The site's answer is that it publishes none:
+    // the only destination that would be external (itch.io) has no supplied URL, so it renders as a
+    // statement rather than an href. This records the absence rather than trusting it, because the
+    // day a store URL is approved this check is where the link audit has to grow.
+    const external = [...new Set([...documents.values()]
+      .flatMap((source) => source.links ?? [])
+      .map((href) => { try { return new URL(href, ROUTES_BASE) } catch { return null } })
+      .filter((url) => url && ['http:', 'https:'].includes(url.protocol) && url.origin !== new URL(ROUTES_BASE).origin)
+      .map((url) => url.href))]
+    record('R15', 'no page links to an origin this suite cannot verify', external.length === 0,
+      external.length ? external.join(', ') : 'zero off-origin http(s) links across 8 pages')
+
+    // M8 §2.3 and §9: an unconfirmed identity may be *shown*, but only as a name the visitor can see is
+    // provisional, and a fact the studio has not given may be left blank but never filled with
+    // scaffolding. Both halves are read from the records rather than typed here, so this is a check on
+    // the mechanism, not on one sentence: setting `nameIsFinal` true retires the marker on all eight
+    // pages at once and the check then fails if any page still carries it.
+    const brandProblems = []
+    for (const [path] of REAL_PAGES) {
+      const source = documents.get(new URL(path, ROUTES_BASE).href)
+      const text = source.text ?? ''
+      const flags = source.identityFlags ?? []
+      if (!text.includes(studio.name)) brandProblems.push(`${path}: name absent`)
+      if (/\bPLACEHOLDER\b/.test(`${source.title ?? ''} ${text}`)) brandProblems.push(`${path}: unedited placeholder copy`)
+      if (identityIsProvisional && (flags.length !== 1 || flags[0] !== studio.nameMarker)) {
+        brandProblems.push(`${path}: markers ${JSON.stringify(flags)}`)
+      }
+      if (!identityIsProvisional && flags.length !== 0) brandProblems.push(`${path}: marker outlives nameIsFinal`)
+    }
+    // The letter is the one page that carries the studio's own words, so its labelled blanks are the
+    // place where a guessed biography would be most convincing — and the gaps are compared with the
+    // record's own labels, not with strings copied into this file.
+    const expectedGaps = studioLetter.paragraphs.filter((paragraph) => paragraph.gap).map((paragraph) => paragraph.gap)
+    const letterFlags = documents.get(new URL('/', ROUTES_BASE).href)?.paperGaps ?? []
+    if (expectedGaps.some((gap) => !letterFlags.includes(gap))) {
+      brandProblems.push(`/: letter gaps ${JSON.stringify(letterFlags)} lack ${JSON.stringify(expectedGaps.filter((gap) => !letterFlags.includes(gap)))}`)
+    }
+    if (letterFlags.length !== expectedGaps.length) brandProblems.push(`/: ${letterFlags.length} gap flag(s), ${expectedGaps.length} labelled paragraph(s)`)
+    record('R25', 'the published identity is one record-driven name plus a provisional marker, never scaffolding',
+      brandProblems.length === 0,
+      brandProblems.length ? brandProblems.join('; ')
+        : `8 pages carry "${studio.name}" with one "${studio.nameMarker}" flag each; the letter's ${expectedGaps.length} labelled blanks (${expectedGaps.join(', ')}) render; no unedited placeholder copy`)
+
+    // M8 §11: the metadata a route emits is compared against the modules that generate it, not against
+    // a copy of the expected text. Two failures this catches that "is the tag there" would not: a route
+    // whose block was dropped by a template edit, and a social preview stating a title or description
+    // the page itself does not show.
+    const metadataProblems = []
+    for (const [path, expected] of Object.entries(METADATA)) {
+      const source = documents.get(new URL(path, ROUTES_BASE).href)
+      if (source.jsonLd.length !== expected.jsonLd.length) {
+        metadataProblems.push(`${path}: ${source.jsonLd.length} structured-data block(s), expected ${expected.jsonLd.length}`)
+      }
+      source.jsonLd.forEach((block, index) => {
+        if (!block.ok) metadataProblems.push(`${path}: block ${index + 1} is not parseable JSON (${block.value})`)
+        else if (JSON.stringify(block.value) !== JSON.stringify(expected.jsonLd[index])) {
+          metadataProblems.push(`${path}: block ${index + 1} differs from the record`)
+        }
+      })
+      const wanted = expected.social
+        ? Object.fromEntries(socialTags({
+          path, title: source.title, description: source.descriptions[0], image: expected.image,
+        }))
+        : {}
+      if (JSON.stringify(source.social) !== JSON.stringify(wanted)) {
+        metadataProblems.push(`${path}: social tags ${JSON.stringify(source.social)}, expected ${JSON.stringify(wanted)}`)
+      }
+      // No host has been chosen, so no route may claim one. M9 adds the canonical link.
+      if (source.canonical !== 0) metadataProblems.push(`${path}: emits a canonical link before a host exists`)
+    }
+    record('R18', 'every route emits exactly the structured data and sharing tags its records support',
+      metadataProblems.length === 0,
+      metadataProblems.join('; ') || '8 pages: JSON-LD parses and matches the modules, sharing tags repeat each page own head, no canonical link')
+
+    // The rules that hold for *every* block on the site, checked on the built documents rather than on
+    // the module: nothing points at an origin the project has not been given, and none of the
+    // properties that would turn this into a claim about a commercial identity has appeared.
+    const absolute = []
+    const properties = new Set()
+    const walk = (value) => {
+      if (Array.isArray(value)) return value.forEach(walk)
+      if (!value || typeof value !== 'object') return
+      for (const [key, item] of Object.entries(value)) {
+        properties.add(`${value['@type'] ?? 'document'}.${key}`)
+        if (typeof item === 'string' && item.includes('://') && key !== '@context') absolute.push(`${key}=${item}`)
+        walk(item)
+      }
+    }
+    for (const source of documents.values()) source.jsonLd?.forEach((block) => walk(block.value))
+    const invented = [...properties].filter((key) => /\.(offers|logo|email|address|telephone|sameAs|aggregateRating|review|datePublished|price|downloadCount)$/.test(key))
+    record('R19', 'the built site states no origin and no unconfirmed property in its structured data',
+      absolute.length === 0 && invented.length === 0,
+      [`${properties.size} distinct properties`, ...absolute, ...invented].join('; '))
+
+    // M8 §8 fixes the game page's section order, and the record's `prose` keys decide which paragraph
+    // belongs to which section. Both halves are checked: the headings in order, and every sentence
+    // present exactly once, so a later re-split cannot drop a claim or print one twice.
+    const gameUrl = new URL('/games/the-last-witness/', ROUTES_BASE).href
+    await goto(audit, gameUrl)
+    const headings = await audit.evaluate(() => [...document.querySelectorAll('main h2')]
+      .map((heading) => heading.textContent.trim()))
+    const wanted = ['Overview', 'Gameplay', 'Experience', 'Features', 'Availability', 'Status']
+    const sentences = Object.values(realGame.prose).flat()
+    const pageText = documents.get(gameUrl)?.text ?? ''
+    const absent = sentences.filter((sentence) => !pageText.includes(sentence))
+    const twice = sentences.filter((sentence) => pageText.split(sentence).length - 1 !== 1)
+    // The status paragraph is one sentence in the record, so it must be one sentence on the page.
+    // It used to exist twice, in `statusDetail` and in a `prose.status` copy.
+    const stated = pageText.split(realGame.statusDetail).length - 1
+    record('R16a', 'the game page sections appear in the §8 order',
+      headings.slice(0, wanted.length).join(' > ') === wanted.join(' > '),
+      `found: ${headings.join(' > ')}`)
+    record('R16b', 'every prose sentence from the record appears once on the game page',
+      sentences.length === 3 && absent.length === 0 && twice.length === 0 && stated === 1,
+      `${sentences.length} sentences; absent=${absent.length}; duplicated=${twice.length}; status stated ${stated}×`)
+
+    // M8 §8's consistency requirement, checked rather than asserted in prose: the three strings a
+    // visitor uses to identify the product have to be the same words on every page that shows them.
+    const fields = { title: realGame.title, statusLabel: realGame.statusLabel, summary: realGame.summary }
+    const surfaces = [
+      ['/games/', ['title', 'statusLabel', 'summary']],
+      ['/games/the-last-witness/', ['title', 'statusLabel', 'summary']],
+      ['/games/the-last-witness/play/', ['title']],
+      ['/store/', ['title', 'statusLabel']],
+    ]
+    const drift = []
+    for (const [path, keys] of surfaces) {
+      const text = documents.get(new URL(path, ROUTES_BASE).href)?.text ?? ''
+      for (const key of keys) if (!text.includes(fields[key])) drift.push(`${path} does not carry ${key}`)
+    }
+    // The download control is the one place a page could disagree with the measured record, so its
+    // destination and its stated size are compared against the same two values.
+    const gamePage = documents.get(new URL('/games/the-last-witness/', ROUTES_BASE).href)
+    if (!gamePage.links.includes(realGame.availability.download.url)) drift.push('download href is not the staged archive')
+    if (!gamePage.text.includes(realGame.availability.download.sizeLabel)) drift.push('download size is not the measured one')
+    if (!gamePage.text.includes(realGame.availability.browserDemo.sizeLabel)) drift.push('demo size is not the measured one')
+    record('R17', 'title, status, summary and both measured sizes are identical on every surface',
+      drift.length === 0, drift.join('; ') || `${surfaces.length} pages plus the download, demo and archive figures`)
+  } finally {
+    await context.close()
+  }
+}
+
+/**
+ * M8 §12 / WP9 — the two WCAG 2.2 measures a content change can regress silently, plus the horizontal
+ * overflow the new card and screenshot markup could introduce. Both are properties of the finished CSS,
+ * so they are read off the rendered page at a phone and a desktop width.
+ *
+ * The contrast maths is the relative-luminance formula; the part that is easy to get wrong is the
+ * backdrop. This site layers translucent panels (`rgba(255,255,255,0.03)`) over a dark page, and a probe
+ * that treats a translucent background as opaque reports 2:1 "failures" on text that really measures 9:1.
+ * Every ancestor colour is therefore composited in turn until an opaque one is found, and the text
+ * colour itself is composited over that result before either luminance is taken.
+ *
+ * Target size (SC 2.5.8) is 24x24 CSS px with an exception for links that sit inside a sentence, where
+ * enlarging the target would disturb the prose. That exception is decided by counting the words the
+ * reader sees around the link, not by whether the element happens to have siblings: a paragraph holding
+ * two links and a separator has three words of surrounding text, so it is a standing pair of controls
+ * and must clear the floor. A paragraph of actual prose has twenty or more characters that are not a
+ * link. `inline` display is still required, because a block-level link is never mid-sentence.
+ */
+function WCAG_AUDIT() {
+  const split = (value) => {
+    const numbers = (value.match(/[\d.]+/g) ?? []).map(Number)
+    return { r: numbers[0] ?? 0, g: numbers[1] ?? 0, b: numbers[2] ?? 0, a: numbers[3] === undefined ? 1 : numbers[3] }
+  }
+  const over = (top, bottom) => ({
+    r: top.r * top.a + bottom.r * (1 - top.a),
+    g: top.g * top.a + bottom.g * (1 - top.a),
+    b: top.b * top.a + bottom.b * (1 - top.a),
+  })
+  const behind = (element) => {
+    const layers = []
+    for (let node = element; node; node = node.parentElement) {
+      const layer = split(getComputedStyle(node).backgroundColor)
+      if (layer.a > 0) layers.push(layer)
+      if (layer.a === 1) break
+    }
+    let colour = { r: 255, g: 255, b: 255 }
+    for (const layer of layers.reverse()) colour = layer.a === 1 ? layer : over(layer, colour)
+    return colour
+  }
+  const luminance = ({ r, g, b }) => {
+    const channel = (v) => (v / 255 <= 0.03928 ? v / 255 / 12.92 : ((v / 255 + 0.05) / 1.05) ** 2.4)
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+  }
+  const shown = (element) => {
+    const box = element.getBoundingClientRect()
+    return box.width > 0 && box.height > 0
+  }
+
+  const samples = [...document.querySelectorAll('body *')]
+    .filter((element) => [...element.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim().length > 2) && shown(element))
+    .map((element) => {
+      const style = getComputedStyle(element)
+      const backdrop = behind(element)
+      const paint = over(split(style.color), backdrop)
+      const a = luminance(paint)
+      const b = luminance(backdrop)
+      const size = Number.parseFloat(style.fontSize)
+      return {
+        text: element.textContent.trim().replace(/\s+/g, ' ').slice(0, 28),
+        size,
+        bold: Number(style.fontWeight) >= 700,
+        ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
+      }
+    })
+
+  const inline = (element) => {
+    if (element.tagName !== 'A' || getComputedStyle(element).display !== 'inline') return false
+    const block = element.closest('p, li, dd, dt, h1, h2, h3, div, section, footer, header')
+    if (!block) return false
+    const labels = [...block.querySelectorAll('a[href], button')].reduce(
+      (total, link) => total + link.textContent.replace(/\s+/g, ' ').trim().length, 0)
+    return block.textContent.replace(/\s+/g, ' ').length - labels >= 20
+  }
+  const underSize = [...document.querySelectorAll('a[href], button, summary, input:not([type=hidden]), select, [role=button]')]
+    .filter(shown)
+    .filter((element) => { const box = element.getBoundingClientRect(); return box.width < 24 || box.height < 24 })
+  const nameOf = (element) => {
+    const name = (element.textContent || element.getAttribute('aria-label') || element.value || element.tagName).trim()
+    return `"${name.slice(0, 26) || element.tagName.toLowerCase()}"`
+  }
+  const label = (element) => {
+    const box = element.getBoundingClientRect()
+    return `${nameOf(element)} ${Math.round(box.width)}x${Math.round(box.height)}`
+  }
+  const targets = underSize.filter((element) => !inline(element)).map(label)
+
+  const worst = samples.reduce((a, b) => (a.ratio <= b.ratio ? a : b), { ratio: Infinity, text: '', size: 0 })
+  return {
+    textNodes: samples.length,
+    controls: underSize.length,
+    exempt: underSize.filter(inline).map(nameOf),
+    smallest: Math.min(...samples.map((sample) => sample.size)),
+    tightest: worst.ratio,
+    tightestLabel: `${worst.text} ${worst.size.toFixed(1)}px`,
+    contrast: samples
+      .filter((sample) => sample.ratio < (sample.size >= 24 || (sample.size >= 18.66 && sample.bold) ? 3 : 4.5))
+      .map((sample) => `"${sample.text}" ${sample.size}px ${sample.ratio.toFixed(2)}:1`),
+    targets,
+    overflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+  }
+}
+
+async function auditAccessibility(browser) {
+  const context = await browser.newContext()
+  const audit = await context.newPage()
+  const tally = { textNodes: 0, smallest: Infinity, tightest: Infinity, tightestLabel: '', contrast: [], targets: [], overflow: [] }
+  let small = 0
+  const exempt = new Set()
+  const surfaces = [...REAL_PAGES.map(([path]) => ({ path })), { path: '/?view=room&game=the-last-witness', room: true }]
+  try {
+    for (const width of [390, 1280]) {
+      await audit.setViewportSize({ width, height: 844 })
+      for (const surface of surfaces) {
+        await goto(audit, new URL(surface.path, ROUTES_BASE).href)
+        if (surface.room) {
+          await audit.waitForFunction(() => window.__saleshiRoom?.stats()?.selectedGameId === 'the-last-witness',
+            null, { timeout: 30000 })
+        } else {
+          // The Vue islands mount after `load`, so an unmixed measurement needs them present.
+          await audit.waitForTimeout(150)
+        }
+        // The panel is written by a watcher after the selection lands, so both cases need a beat.
+        await audit.waitForTimeout(200)
+        const found = await audit.evaluate(WCAG_AUDIT)
+        tally.textNodes += found.textNodes
+        small += found.controls
+        for (const item of found.exempt) exempt.add(item)
+        tally.smallest = Math.min(tally.smallest, found.smallest)
+        if (found.tightest <= tally.tightest) {
+          tally.tightest = found.tightest
+          tally.tightestLabel = found.tightestLabel
+        }
+        for (const item of found.contrast) tally.contrast.push(`${width}px ${surface.path} ${item}`)
+        for (const item of found.targets) tally.targets.push(`${width}px ${surface.path} ${item}`)
+        if (found.overflow) tally.overflow.push(`${width}px ${surface.path}`)
+      }
+    }
+    const reading = `${surfaces.length} surfaces x 2 widths, ${(tally.textNodes / surfaces.length / 2).toFixed(0)} text nodes each`
+    record('R20', 'every published route and the room panel pass WCAG 2.2 AA text contrast', tally.contrast.length === 0,
+      tally.contrast.join('; ')
+      || `${reading}; smallest text ${tally.smallest.toFixed(1)}px, tightest sample ${tally.tightest.toFixed(2)}:1 (${tally.tightestLabel})`)
+    record('R21', 'every non-inline interactive target is at least 24x24 CSS px',
+      tally.targets.length === 0, tally.targets.join('; ')
+      || `${small} controls measured under 24 px across both widths; ${exempt.size} distinct links, all mid-sentence and exempted by SC 2.5.8 (${[...exempt].join(', ')}); nothing else was under size`)
+    record('R22', 'no audited surface overflows horizontally at 390 or 1280 px', tally.overflow.length === 0,
+      tally.overflow.join('; ') || `${surfaces.length} surfaces x 2 widths, none wider than the viewport`)
   } finally {
     await context.close()
   }
@@ -130,6 +482,20 @@ try {
     && (await page.locator('#selection-status').textContent()).includes('Restored')
     && actionStyles.length > 0 && actionStyles.every((style) => style.text !== style.background), JSON.stringify(actionStyles))
   await page.screenshot({ path: OUT('m6-01-computer-catalogue.png'), fullPage: true })
+
+  // The panel is the surface a visitor reads *after* picking the case off the shelf, so it is where
+  // M8 §5.3's label has to be. Compared against the record value, not a copy of the sentence.
+  const panelLabel = await page.locator('#monitor-screen .screen-media-provenance').first()
+    .textContent().catch(() => null)
+  record('R1c', 'the computer panel labels the provisional cover with the record value',
+    (panelLabel ?? '').trim() === realGame.cover.provenance, JSON.stringify((panelLabel ?? '').trim()))
+
+  // The panel is the fourth surface, and the one inside the room, so it is checked the same way.
+  const panelText = await page.locator('#monitor-screen').textContent()
+  const panelDrift = [realGame.title, realGame.statusLabel, realGame.summary]
+    .filter((value) => !panelText.includes(value))
+  record('R17b', 'the computer panel states the same title, status and summary as the record',
+    panelDrift.length === 0, panelDrift.length ? `missing: ${panelDrift.join(', ')}` : 'three values match the record')
 
   await page.evaluate(() => window.__saleshiRoom.previewPanelGame({
     id: 'the-last-witness', title: '[TEST FIXTURE] Panel states', statusLabel: 'Fixture only',
@@ -158,6 +524,59 @@ try {
     && fixture.actions.includes('/fixture-demo/') && fixture.actions.includes('/fixture-download/')
     && fixture.actions.includes('https://example.invalid/fixture'), JSON.stringify(fixture))
 
+  // M8 §7 asks for failure handling on the two shapes a real record cannot show yet: no artwork at
+  // all, and nothing genuinely available. The id differs from the real game's because the panel
+  // resets its per-record state on an id change — reusing the real id would exercise the template
+  // and not the reset.
+  await page.evaluate(() => window.__saleshiRoom.previewPanelGame({
+    id: 'fixture-empty', title: '[TEST FIXTURE] Nothing supplied', statusLabel: 'Fixture only',
+    summary: 'Synthetic record with no artwork and no available action.',
+    screenshots: [],
+    availability: {
+      details: { available: false, reason: 'Fixture: no page exists.' },
+      browserDemo: { available: false, reason: 'Fixture: no demo exists.' },
+      download: { available: false, reason: 'Fixture: no build exists.' },
+      itch: { available: false, reason: 'Fixture: no store page exists.' },
+    },
+  }))
+  await page.waitForFunction(() => document.querySelector('#monitor-screen h2')?.textContent.includes('Nothing supplied'))
+  const empty = await page.evaluate(() => ({
+    images: document.querySelectorAll('#monitor-screen img').length,
+    links: [...document.querySelectorAll('#monitor-screen a')].map((a) => a.getAttribute('href')),
+    text: document.querySelector('#monitor-screen').textContent,
+  }))
+  record('R2b', 'a record with no artwork and nothing available states both instead of offering controls',
+    empty.images === 0 && empty.text.includes('Cover artwork has not been supplied')
+    && empty.links.every((href) => !href?.includes('/fixture-')) && empty.text.includes('Fixture: no demo exists.'),
+    JSON.stringify({ images: empty.images, links: empty.links }))
+
+  // And back again: the previous record's sentences, links and picture must all be gone.
+  await page.evaluate((game) => window.__saleshiRoom.previewPanelGame(game), realGame)
+  await page.waitForFunction(() => document.querySelector('#monitor-screen h2')?.textContent.includes('The Last Witness'))
+  const back = await page.evaluate(() => ({
+    text: document.querySelector('#monitor-screen').textContent,
+    hrefs: [...document.querySelectorAll('#monitor-screen a')].map((a) => a.getAttribute('href')),
+    cover: document.querySelector('#monitor-screen .screen-media img')?.getAttribute('src'),
+  }))
+  const stale = ['[TEST FIXTURE]', 'Fixture only', '/fixture-demo/', '/fixture-download/', 'example.invalid']
+    .filter((needle) => back.text.includes(needle) || back.hrefs.some((href) => href?.includes(needle)))
+  record('R2c', 'switching selection leaves no stale text, link or artwork',
+    stale.length === 0 && back.cover === realGame.cover.url,
+    stale.length ? `stale: ${stale.join(', ')}` : `cover=${back.cover}`)
+
+  // An address can name a record the shelf does not hold. The screen must say so rather than pretend
+  // the parameter was never typed.
+  await goto(page, `${BASE}/?view=room&game=not-a-real-record`)
+  await page.waitForFunction(() => window.__saleshiRoom?.stats()?.drawCalls > 0)
+  const unknown = await page.evaluate(() => ({
+    heading: document.querySelector('#monitor-screen h2')?.textContent.trim(),
+    status: document.querySelector('#selection-status')?.textContent.trim(),
+    param: new URL(window.location.href).searchParams.get('game'),
+  }))
+  record('R2d', 'an address naming an absent record leaves the screen on standby and says why',
+    unknown.heading === 'The screen is on standby' && /does not hold/.test(unknown.status)
+    && unknown.param === 'not-a-real-record', JSON.stringify(unknown))
+
   await goto(page, `${ROUTES_BASE}/games/`)
   await page.locator('.game-card h3 a').click()
   await page.waitForURL('**/games/the-last-witness/')
@@ -182,6 +601,12 @@ try {
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
   await goto(phone, `${BASE}/?view=room`)
   await phone.waitForFunction(() => window.__saleshiRoom?.stats()?.drawCalls > 0)
+  // The pose on the first frame the room reports as drawn. Before M8 the fixed-step loop could
+  // render this frame without ever positioning the camera, so the room opened from the origin.
+  const firstFrame = await phone.evaluate(() => {
+    const { pose, station } = window.__saleshiRoom.stats()
+    return { pose, station, distance: Math.hypot(pose.x, pose.y, pose.z) }
+  })
 
   // CDP dispatches browser-trusted touch input, not synthetic DOM events or mouse movement.
   const touchState = () => phone.evaluate(() => {
@@ -193,8 +618,8 @@ try {
       scrollX, scrollY,
     }
   })
-  // Station travel is eased, so the pose on the first rendered frame is still in flight — reading it
-  // there would make the 4 px-per-step drag look like a 2.6 m camera move. Wait for two consecutive
+  // Station travel is eased, so the pose on the first rendered frame can still be in flight — reading
+  // it there would make the 4 px-per-step drag look like a camera move. Wait for two consecutive
   // samples to agree before taking the before-state.
   await phone.waitForFunction(() => {
     const { pose } = window.__saleshiRoom.stats()
@@ -204,6 +629,15 @@ try {
       && Math.hypot(pose.x - previous.x, pose.y - previous.y, pose.z - previous.z) < 0.0005
   }, null, { timeout: 20000 })
   const beforeDrag = await touchState()
+  const bootDrift = Math.hypot(
+    beforeDrag.pose.x - firstFrame.pose.x,
+    beforeDrag.pose.y - firstFrame.pose.y,
+    beforeDrag.pose.z - firstFrame.pose.z,
+  )
+  record('R24', "the room's first drawn frame already holds the entry pose",
+    firstFrame.distance > 0.5 && bootDrift < 0.001,
+    `first reported frame sits ${firstFrame.distance.toFixed(3)} m from the origin at station `
+    + `${firstFrame.station}; the camera moved ${bootDrift.toFixed(4)} m between that frame and rest`)
   const start = await phone.evaluate(() => {
     const canvas = document.querySelector('#room-viewport canvas')
     const rect = canvas.getBoundingClientRect()
@@ -366,6 +800,15 @@ try {
   await auditRealPages(browser)
 } catch (error) {
   record('R13', 'real-page audit completed without an exception', false, error.stack)
+}
+
+// The accessibility numbers are measured here rather than asserted in a document, because both of them
+// are properties of the finished CSS rather than of the source: a later colour change or a shorter
+// label can move a route under the floor without touching a line of markup.
+try {
+  await auditAccessibility(browser)
+} catch (error) {
+  record('R23', 'accessibility audit completed without an exception', false, error.stack)
 } finally {
   await browser.close()
 }

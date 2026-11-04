@@ -1,0 +1,31 @@
+M8 game-builds suite on dist-qa + MySQL, origin http://127.0.0.1:5314
+Game build suite: http://127.0.0.1:5314
+PASS  B1 game page states the measured browser and archive sizes — 38.8 MB, 35.1 MB, 35.1 MB, 98.3 MB, 2.4 MB, 38.8 MB, 35.1 MB
+PASS  B2 archive contents are published file by file — LICENSE/font-licenses.md — 5 KB | LICENSE/upheaval.txt — 3 KB | README-WINDOWS.txt — 1 KB | The Last Witness.exe — 98.3 MB | The Last Witness.pck — 2.4 MB
+PASS  B3 cover and screenshots load as real images — ["the-last-witness-evidence-register.png=1280","the-last-witness-briefing.png=1280","the-last-witness-case-stage-1.png=1280","the-last-witness-evidence-register.png=1280"]
+PASS  B3b the frames the origin serves decode to the same pixels as the captured files — the-last-witness-evidence-register.png = 1280x800:b9ebd77 the-last-witness-briefing.png = 1280x800:61aa735c the-last-witness-case-stage-1.png = 1280x800:26ee6b52
+PASS  B4 download responds to HEAD and to a byte range — status=200 bytes=36761734 range=206
+PASS  B5 the unmodified export is reachable with its engine files — entry=200 wasm=200 application/wasm
+PASS  B6 play page offers an explicit load action — 0 export requests before the click
+PASS  B7 the Godot build starts inside the site frame — 1712 ms, canvas {"width":1150,"height":718}, frame 1150x718
+PASS  B8 loading the frame fetched the engine and data files — The Last Witness.js, The Last Witness.wasm, The Last Witness.pck
+PASS  B9 stopping releases the frame and allows a reload — Stopped. The downloaded data stays in the browser cache, so loading again is faster.
+PASS  B10 the demo journey produced no uncaught browser errors
+PASS  B11 catalogue card shows the real game and its routes — {"title":"The Last Witness","summary":"A small experimental deduction game about contradictions, evidence, and the limits of certainty.","badges":["Play in browser","Desktop download"],"cover":"/game/screenshots/the-last-witness-evidence-register.png"}
+PASS  B12 room computer offers the real demo and download actions — {"title":"The Last Witness","actions":[{"text":"View full game details","href":"/games/the-last-witness/"},{"text":"Play the browser demo","href":"/games/the-last-witness/play/"},{"text":"Download a game build","href":"/downloads/the-last-witness-windows-x64.zip"}],"media":1,"gallery":0}
+PASS  B12h the room scene reports the URL-selected cassette and is drawing — selected=the-last-witness, drawCalls=31
+PASS  B13 the panel download action points at a serving file — HTTP 200
+PASS  B14 no-JS play page keeps requirements and working alternatives — 
+      
+        Browser demo · nothing is installed
+        
+PASS  B15 no-JS game page still lists play, download and build facts — 
+    Availability
+    In the browser
+      Play the browser 
+PASS  B16-390 game page stays inside 390px and scales its media — overflow=0px drawn=358
+PASS  B16-768 game page stays inside 768px and scales its media — overflow=0px drawn=512
+PASS  B16-1280 game page stays inside 1280px and scales its media — overflow=0px drawn=512
+PASS  B17 the published hashes are the measured ones
+
+21 passed, 0 failed, 0 skipped

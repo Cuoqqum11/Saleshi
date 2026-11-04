@@ -382,3 +382,61 @@ That is the whole answer to "do not introduce huge texture files": the room's de
 the incremental download cost of all this work is the JS that generates it — the room chunk grew from
 626.67 kB (169.34 kB gzipped) to 667.10 kB (181.45 kB gzipped), +6.5% raw and +7.2% gzipped.
 
+## 13. M8 addendum — what the content milestone changed in the room
+
+Added at the end of M8 rather than edited into §1–§12, because those sections are a plan written before
+the M7 work and rewriting them would destroy the comparison they exist to make.
+
+**The shelf chip says the title.** `proxyEntries` used to label a cassette "Tape 1", which describes the
+packaging and not the thing inside it; the chip now carries `game.title` and the accessible name keeps
+the object type (`Cassette: The Last Witness`). This is the only room change the content milestone made
+to input presentation. G3 asserts every chip stays inside the stage after the widening, and G1c and P1
+both print the new chip set: `["The Last Witness", "Computer", "Letter", "Note"]`.
+
+**The geometry is still data.** M8 §6.4 forbids hard-coding the featured game into the shelf, and
+`shelf.js:77-87` is the check: one loop over `0 … capacity-1`, `games.find(entry => entry.slot === slot)`,
+a real case if a record answers and `createEmptySlot()` if not. `capacity` is a value in `games.js`
+(4), not a constant in the room, so a second title is a record and not a geometry edit. The close-up
+viewpoint `m8-visual-06-case-close-up.png` shows what the case actually presents: the captured frame,
+the status line "PLAYABLE DEMO" and the title, all three read from the record.
+
+**The selection response was left alone.** A selected case slides 0.055 m forward and turns 0.22 rad,
+a hovered one 60% of the way; reduced motion jumps between those states instead of easing. Only
+`position.z` and `rotation.y` are written, which is what lets the per-slot `rotation.z` lean in
+`cassette.js` survive. One consequence is worth stating rather than fixing: the proxy chip's anchor is
+computed once, so the chip does not follow the 5.5 cm slide. At the shelf station the label sits just
+behind the moved case, and because the chip is a label and not a pointer, G3's containment assertion is
+the test that matters.
+
+**The provisional cover is not stamped on the card.** M8 §5.3 requires a stand-in cover to be labelled,
+and it is — in the panel, on the catalogue card and on the game page, all three from the one record
+value (R1c, R14a, R14b). The printed J-card does not carry the sentence, and
+[ADR-014](decisions/ADR-014-provisional-cover-label-lives-in-the-dom.md) records why: §3.3 and ADR-007
+keep readable words out of textures, and type small enough to fit a provenance line on a 0.129 × 0.184 m
+card is type nobody can read.
+
+**Current cost of the room chunk** is 668.69 kB (181.97 kB gzipped), against the 667.10 kB (181.45 kB)
+that §12 closed on. The difference is M8's content wiring, and the M8 milestone report carries the
+before/after table rather than this document.
+
+## 14. M8 addendum — the four accepted M7 compromises, re-examined
+
+M8 §10 asks whether the four limitations accepted at the end of M7 are still the right call now that
+the room carries real content. Each was re-read against `m8-visual-02-shelf.png` and
+`m8-visual-06-case-close-up.png` rather than against the M7 notes, because the question is what a
+visitor sees today.
+
+| # | The compromise as M7 accepted it | What M8 changed | Verdict now |
+| --- | --- | --- | --- |
+| 1 | The shelf interior is dim below the strip: the underside-mounted light grazes the J-card faces and lights the plank rather than the case fronts behind the first row. | The one real case now carries the captured frame, the status line and the title on its card, and the close-up shows all three legible at the shelf station even though the case stands at the dim end of the pool rather than under it. The lower board holds one flat empty case (`shelf.js:70`), deliberately unlabelled so it reads as packaging, so nothing M8 added has to be read down there. | Still accepted, and cheaper to accept than it was. The dimness used to hide an empty shelf; it now hides only blank cases, which are blank until the studio supplies titles. The fix remains a second, lower wash light and it is still not spent. |
+| 2 | The strip fitting is the brightest pixel in the wide compositions even at 0.28 intensity. | Nothing. M8 touched no light, no material and no exposure value. | Still accepted. A diffuser cover mesh is the only real answer and it is geometry plus a translucent material for one fitting. |
+| 3 | The ceiling reads dark from the door although its albedo is the lightest surface in the room. | Nothing, and no content was added to it. | Still accepted. It is physically correct for a downward-facing surface lit by a key and fill that cannot reach it. |
+| 4 | `m7-after-01-entry` and `m7-after-02-shelf` are the same pose, because the room opens facing the shelf. | The pose now shows a titled case instead of a labelled box, so the entry frame carries more information than it did. | Still kept, and the duplication is now the point: the first thing a visitor sees is the shelf, and the shelf is where the game lives. Faking the two frames apart would be a worse document, not a better room. |
+
+One limitation is new and belongs with these four rather than hidden in a test log: the room's text is
+drawn procedurally onto canvases at runtime, so the WCAG contrast and target-size measurements in
+`evidence/m8-accessibility.txt` cannot reach it. The words are not lost — the paper view, the
+catalogue and the game page carry all of them as HTML, which is why those routes exist — but no
+contrast number is stated for a lit, shadowed 3D surface, because none could be measured honestly.
+
+
